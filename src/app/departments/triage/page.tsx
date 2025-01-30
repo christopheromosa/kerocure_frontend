@@ -12,7 +12,7 @@ export async function getMemberData(): Promise<PatientType[]> {
   return await response.json();
 }
 
-export default async function MembersPage() {
+export default async function TriagePage() {
   const data = await getMemberData();
 
   return (
