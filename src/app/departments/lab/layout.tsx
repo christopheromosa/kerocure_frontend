@@ -1,3 +1,4 @@
+"use client"
 import {
   SidebarInset,
   SidebarProvider,
@@ -51,7 +52,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </div>
         </header>
         <main>
-          <SidebarTrigger />
+
           {children}
         </main>
       </SidebarInset>

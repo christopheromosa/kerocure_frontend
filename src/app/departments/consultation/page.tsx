@@ -11,7 +11,8 @@ export async function getMemberData(): Promise<consultationType[]> {
 }
 
 export default async function ConsultationPage() {
-  const data = await getMemberData();
+  // const data = await getMemberData();
+  const data = []
 
   return (
     <div className="">

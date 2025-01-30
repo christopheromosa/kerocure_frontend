@@ -1,3 +1,5 @@
+
+"use client"
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { Users, Settings, LayoutDashboard } from "lucide-react";
@@ -36,7 +38,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </div>
         </header>
         <main>
-          <SidebarTrigger />
+          {/* <SidebarTrigger /> */}
           {children}
         </main>
       </SidebarInset>

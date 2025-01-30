@@ -13,7 +13,8 @@ export async function getMemberData(): Promise<PatientType[]> {
 }
 
 export default async function TriagePage() {
-  const data = await getMemberData();
+  // const data = await getMemberData();
+  const data = []
 
   return (
     <div className="">

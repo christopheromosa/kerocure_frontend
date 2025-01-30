@@ -12,7 +12,8 @@ export async function getMemberData(): Promise<MedicationType[]> {
 }
 
 export default async function PharmacyPage() {
-  const data = await getMemberData();
+  // const data = await getMemberData();
+  const data = []
 
   return (
     <div className="">

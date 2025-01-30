@@ -1,35 +1,47 @@
 "use client";
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-} from "@/components/ui/card";
-
-import { useParams } from "next/navigation";
-import React, { FormEvent } from "react";
-import { useEffect, useState } from "react";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { PatientType } from "@/components/tables/triage-data-table/columns";
-import Loading from "@/components/loading";
-import { Terminal } from "lucide-react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { useParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import Loading from "@/components/loading";
+
+const triageSchema = z.object({
+  patientName: z.string().min(1, "Patient Name is required"),
+  weight: z.coerce.number().min(1, "Weight must be a valid number"),
+  height: z.coerce.number().min(1, "Height must be a valid number"),
+  systolic: z.coerce.number().min(1, "Systolic pressure is required"),
+  diastolic: z.coerce.number().min(1, "Diastolic pressure is required"),
+  pulse: z.coerce.number().min(1, "Pulse rate is required"),
+});
+
+type PatientType = {
+  id: string;
+  name: string;
+  dob: string;
+  phone: string;
+};
 
 const Patient = () => {
   const { patientId } = useParams();
   const [patientData, setPatientData] = useState<PatientType | null>(null);
-  const [weight,setWeight] = useState<string>("");
-  const [height,setHeight] = useState<string>("");
-  const [bloodPressure,setBloodPressure] = useState<string>("");
-  const [bmi,setBMI] = useState<string>("");
+
+const {
+  register,
+  handleSubmit,
+  formState: { errors },
+} = useForm({ resolver: zodResolver(triageSchema) });
+
+const [formData, setFormData] = useState(null);
 
   useEffect(() => {
     if (!patientId) return;
-    // todo:  patients data from patient db
     const fetchPatientData = async () => {
       const res = await fetch(
         `http://localhost:8001/members?memberId=${patientId}`
@@ -41,109 +53,121 @@ const Patient = () => {
         setPatientData(null);
       }
     };
-
     fetchPatientData();
   }, [patientId]);
-  if (!patientId)
-    return (
-      <div>
-        <Loading />
-      </div>
-    );
-  console.log(patientData);
 
-  const handleSubmit = (e: FormEvent) => {
-    e.preventDefault();
+  if (!patientId) return <Loading />;
 
-
-    // TODO: Add api endpoint to post staff data return username and password
-
-    console.log("Submitted contribution data:");
-    // Submit contributionData to the server or process it as needed
-  };
+ const onSubmit = (data) => {
+   setFormData(data);
+   console.log("Form Data Submitted:", formData);
+ };
 
   return (
-    <div className="grid grid-rows-2 border gap-2 p-2 mx-auto md:w-3/4 sm:w-full ">
-      <div className="row-span-1 border flex gap-2 p-2">
-        <Alert>
-          <Terminal />
-          <AlertTitle>Patient Details</AlertTitle>
-          <AlertDescription>
-            <Card className="w-1/2">
-              <CardHeader>
-                <CardDescription>
-                  Patient Name: {patientData?.name}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p>ID: {patientData?.id}</p>
-                <p>DOB: {patientData?.dob}</p>
-                <p>Contact: {patientData?.patientId}</p>
-              </CardContent>
-              <CardFooter>
-                <Badge className="bg-green-400">
-                  {patientData?.name.split("")[0]}
-                </Badge>
-              </CardFooter>
-            </Card>
-          </AlertDescription>
-        </Alert>
-      </div>
-      <div className="row-span-1 border p-4">
-        <Card className="w-1/2">
-          <form onSubmit={handleSubmit} className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="weight" className="text-right">
-                Weight
-              </Label>
-              <Input
-                id="weight"
-                type="text"
-                value={weight}
-                onChange={(e) => setWeight(e.target.value)}
-                className="col-span-3"
-              />
+    <div className="max-w-2xl mx-auto space-y-6 p-4">
+      {/* Patient Card */}
+      {patientData && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Patient Information</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <p>
+                <strong>Name:</strong> {patientData.name}
+              </p>
+              <p>
+                <strong>ID:</strong> {patientData.id}
+              </p>
+              <p>
+                <strong>DOB:</strong> {patientData.dob}
+              </p>
+              <p>
+                <strong>Contact:</strong> {patientData.phone}
+              </p>
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="height" className="text-right">
-                Height
-              </Label>
-              <Input
-                id="height"
-                type="text"
-                value={height}
-                onChange={(e) => setHeight(e.target.value)}
-                className="col-span-3"
-              />
-            </div>
-
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="bloodPressure" className="text-right">
-                Blood Pressure
-              </Label>
-              <Input
-                id="bloodPressure"
-                type="text"
-                value={bloodPressure}
-                onChange={(e) => setBloodPressure(e.target.value)}
-                className="col-span-3"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="bmi" className="text-right">
-                Blood Pressure
-              </Label>
-              <Input
-                id="bmi"
-                type="text"
-                value={bmi}
-                onChange={(e) => setBMI(e.target.value)}
-                className="col-span-3"
-              />
-            </div>
-          </form>
+            <Badge className="mt-2">{patientData.name[0]}</Badge>
+          </CardContent>
         </Card>
-      </div>
+      )}
+
+      {/* Triage Form */}
+
+      <Card className="w-full max-w-md mx-auto p-6 shadow-md border rounded-lg">
+        <CardHeader className="text-center font-bold text-lg">
+          TRIAGE FORM APPLICATION
+        </CardHeader>
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <CardContent className="grid gap-4">
+            <div>
+              <Label htmlFor="patientName">Patient Name</Label>
+              <Input id="patientName" {...register("patientName")} />
+              {errors.patientName && (
+                <p className="text-red-500 text-sm">
+                  {errors.patientName?.message as string}
+                </p>
+              )}
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="weight">Weight</Label>
+                <Input id="weight" type="number" {...register("weight")} />
+                {errors.weight && (
+                  <p className="text-red-500 text-sm">
+                    {errors.weight?.message as string}
+                  </p>
+                )}
+              </div>
+              <div>
+                <Label htmlFor="height">Height</Label>
+                <Input id="height" type="number" {...register("height")} />
+                {errors.height && (
+                  <p className="text-red-500 text-sm">
+                    {errors.height?.message as string}
+                  </p>
+                )}
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="systolic">Systolic</Label>
+                <Input id="systolic" type="number" {...register("systolic")} />
+                {errors.systolic && (
+                  <p className="text-red-500 text-sm">
+                    {errors.systolic.message as string}
+                  </p>
+                )}
+              </div>
+              <div>
+                <Label htmlFor="pulse">Pulse / Min</Label>
+                <Input id="pulse" type="number" {...register("pulse")} />
+                {errors.pulse && (
+                  <p className="text-red-500 text-sm">
+                    {errors.pulse.message as string}
+                  </p>
+                )}
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="diastolic">Diastolic</Label>
+              <Input id="diastolic" type="number" {...register("diastolic")} />
+              {errors.diastolic && (
+                <p className="text-red-500 text-sm">
+                  {errors.diastolic.message as string}
+                </p>
+              )}
+            </div>
+          </CardContent>
+          <CardFooter className="flex justify-between">
+            <Button type="submit" className="bg-blue-500 text-white">
+              Save
+            </Button>
+            <Button type="button" className="bg-gray-400 text-white">
+              Cancel
+            </Button>
+          </CardFooter>
+        </form>
+      </Card>
     </div>
   );
 };

@@ -13,7 +13,8 @@ export async function getMemberData(): Promise<BillingType[]> {
 }
 
 export default async function LabPage() {
-  const data = await getMemberData();
+  // const data = await getMemberData();
+  const data = []
 
   return (
     <div className="">
