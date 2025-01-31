@@ -25,14 +25,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       icon: LayoutDashboard,
     },
     { label: "patients", href: "/departments/lab", icon: Users },
-    { label: "reports", href: "/departments/reports", icon: Users },
+    { label: "reports", href: "/departments/lab/reports", icon: Users },
   ];
   const pathname = usePathname();
   return (
     <SidebarProvider>
       <AppSidebar links={links} />
       <SidebarInset>
-        <header className="flex h-12 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
+        <header className="flex h-12 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12 bg-background">
           <div className="flex items-center gap-2 px-4">
             <SidebarTrigger className="-ml-1" />
             <Separator orientation="vertical" className="mr-2 h-4" />
@@ -51,10 +51,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             </Breadcrumb>
           </div>
         </header>
-        <main>
-
-          {children}
-        </main>
+        <main className="h-full bg-background border p-4">{children}</main>
       </SidebarInset>
     </SidebarProvider>
   );
