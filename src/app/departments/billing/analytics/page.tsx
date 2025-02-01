@@ -1,11 +1,12 @@
+import { DataTable } from "@/components/tables/billing-data-table/billing-data-table";
 import {
+  BillingType,
   columns,
-  PatientType,
-} from "@/components/tables/triage-data-table/columns";
-import { DataTable } from "@/components/tables/triage-data-table/triage-data-table";
+} from "@/components/tables/billing-data-table/columns";
+
 import React from "react";
 
-export async function getTriageData(): Promise<PatientType[]> {
+export async function getBillingData(): Promise<BillingType[]> {
   // todo: implement fetch patients functionality
   const response = await fetch("http://localhost:8001/members", {
     cache: "no-store",
@@ -13,8 +14,8 @@ export async function getTriageData(): Promise<PatientType[]> {
   return await response.json();
 }
 
-export default async function TriagePage() {
-  // const data = await getTriageData();
+export default async function LabPage() {
+  // const data = await getBillingData();
   const data = [];
 
   return (

@@ -18,7 +18,7 @@ export type PatientType = {
   id: number;
   patientId: string;
   name: string;
-  dob: string;
+  dob: Date;
   contactNumber: string;
 };
 

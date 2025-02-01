@@ -38,6 +38,8 @@ const mockPatient = {
   vitals: "BP: 120/80, HR: 72",
   historySummary: "Hypertension, Diabetes",
 };
+ 
+
 
 const testRequestsSchema = z.object({
   testName: z.string().min(1, "Test name is required"),
@@ -201,13 +203,16 @@ const handleSaveDiagnosis = async () => {
   });
 
   return (
-    <div className="p-6">
+    <div className="px-6">
       {/* Patient Header */}
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle>{mockPatient.name}</CardTitle>
-          <p>Vitals: {mockPatient.vitals}</p>
-          <p>History: {mockPatient.historySummary}</p>
+          
+          <CardTitle>Name: {mockPatient.name}</CardTitle>
+          <span>Vitals: {mockPatient.vitals}</span>
+          <span>History: {mockPatient.historySummary}</span>
+
+         
           <Button variant="outline" onClick={() => console.log("Go back")}>
             Back to Patient List
           </Button>

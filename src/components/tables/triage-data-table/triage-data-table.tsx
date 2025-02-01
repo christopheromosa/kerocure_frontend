@@ -34,6 +34,8 @@ import React from "react";
 
 import { Button } from "@/components/ui/button";
 import { DataTablePagination } from "./triage-data-table-pagination";
+import { AddPatientDialog } from "@/components/forms/add-patient";
+
 
 
 
@@ -162,7 +164,8 @@ export function DataTable<TData, TValue>({
                   colSpan={columns.length}
                   className="h-24 text-center"
                 >
-                  No results.
+                  <p>No patient found create new</p>
+                  <AddPatientDialog />
                 </TableCell>
               </TableRow>
             )}
