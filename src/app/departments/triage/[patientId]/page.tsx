@@ -1,6 +1,12 @@
 "use client";
 
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,9 +17,10 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Loading from "@/components/loading";
+import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
 
 const triageSchema = z.object({
-  patientName: z.string().min(1, "Patient Name is required"),
   weight: z.coerce.number().min(1, "Weight must be a valid number"),
   height: z.coerce.number().min(1, "Height must be a valid number"),
   systolic: z.coerce.number().min(1, "Systolic pressure is required"),
@@ -23,45 +30,131 @@ const triageSchema = z.object({
 
 type PatientType = {
   id: string;
-  name: string;
+  first_name: string;
+  last_name: string;
   dob: string;
   phone: string;
 };
+interface triageType {
+  weight: number;
+  height: number;
+  systolic: number;
+  diastolic: number;
+  pulse: number;
+}
 
 const Patient = () => {
   const { patientId } = useParams();
+  console.log(patientId);
+  
+  
+  
   const [patientData, setPatientData] = useState<PatientType | null>(null);
+  const { authState } = useAuth();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<triageType>({ resolver: zodResolver(triageSchema) });
 
-const {
-  register,
-  handleSubmit,
-  formState: { errors },
-} = useForm({ resolver: zodResolver(triageSchema) });
-
-const [formData, setFormData] = useState(null);
+  const [visitId, setVisitId] = useState<number | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     if (!patientId) return;
+    console.log(patientId);
+    
+
     const fetchPatientData = async () => {
       const res = await fetch(
-        `http://localhost:8001/members?memberId=${patientId}`
+        `http://localhost:8000/patients/${Number(patientId)}/`
       );
       if (res.ok) {
         const data = await res.json();
-        setPatientData(data[0]);
+               
+        setPatientData(data);
       } else {
         setPatientData(null);
       }
     };
+       
+
+    const createVisit = async () => {
+      const visitData = {
+        patient: Number(patientId),
+        current_state: "triage",
+        next_state: "consultation",
+        total_cost: 0,
+      };
+
+      try {
+        const res = await fetch("http://localhost:8000/visits/", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Token ${authState?.token}`,
+          },
+          body: JSON.stringify(visitData),
+        });
+
+        if (res.ok) {
+          const visit = await res.json();
+                   
+          setVisitId(visit.visit_id);
+        } else {
+          console.error("Failed to create visit");
+        }
+      } catch (error) {
+        console.error("Error creating visit:", error);
+      }
+    };
+
     fetchPatientData();
-  }, [patientId]);
+    createVisit();
+  }, [patientId, authState?.token]);
 
-  if (!patientId) return <Loading />;
+  if (!patientId || !visitId) return <Loading />;
 
- const onSubmit = (data) => {
-   setFormData(data);
-   console.log("Form Data Submitted:", formData);
- };
+  const onSubmit = async (data: triageType) => {
+    if (!visitId) {
+      console.error("No visit ID found.");
+      return;
+    }
+
+    const triageData = {
+      visit: visitId,
+      vital_signs: {
+        weight: data.weight,
+        height: data.height,
+        systolic: data.systolic,
+        diastolic: data.diastolic,
+        pulse: data.pulse,
+      },
+      recorded_by: authState?.user_id,
+    };
+
+    console.log(triageData);
+
+    try {
+      const res = await fetch("http://localhost:8000/triage/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Token ${authState?.token}`,
+        },
+        body: JSON.stringify(triageData),
+      });
+
+      if (res.ok) {
+        console.log("Triage data submitted successfully!");
+        router.push("/departments/triage");
+      } else {
+        console.error("Failed to submit triage data");
+      }
+    } catch (error) {
+      console.error("Error submitting triage data:", error);
+    }
+  };
 
   return (
     <div className="max-w-2xl mx-auto space-y-6 p-4">
@@ -74,7 +167,8 @@ const [formData, setFormData] = useState(null);
           <CardContent>
             <div className="space-y-2">
               <p>
-                <strong>Name:</strong> {patientData.name}
+                <strong>First Name:</strong> {patientData.first_name}
+                <strong>Last Name:</strong> {patientData.first_name}
               </p>
               <p>
                 <strong>ID:</strong> {patientData.id}
@@ -86,7 +180,7 @@ const [formData, setFormData] = useState(null);
                 <strong>Contact:</strong> {patientData.phone}
               </p>
             </div>
-            <Badge className="mt-2">{patientData.name[0]}</Badge>
+            <Badge className="mt-2">{patientData.first_name}</Badge>
           </CardContent>
         </Card>
       )}
@@ -99,15 +193,6 @@ const [formData, setFormData] = useState(null);
         </CardHeader>
         <form onSubmit={handleSubmit(onSubmit)}>
           <CardContent className="grid gap-4">
-            <div>
-              <Label htmlFor="patientName">Patient Name</Label>
-              <Input id="patientName" {...register("patientName")} />
-              {errors.patientName && (
-                <p className="text-red-500 text-sm">
-                  {errors.patientName?.message as string}
-                </p>
-              )}
-            </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="weight">Weight</Label>

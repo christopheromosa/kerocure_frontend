@@ -47,27 +47,36 @@ export const columns: ColumnDef<PatientType>[] = [
   },
   {
     accessorKey: "id",
-    header: "ID",
+    header: "PatientID",
   },
   {
-    accessorKey: "patientId",
-    header: "Patient ID",
-  },
-  {
-    accessorKey: "name",
+    accessorKey: "first_name",
     header: ({ column }) => {
       return (
         <Button
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          Names
+          First Name
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       );
     },
   },
-
+  {
+    accessorKey: "last_name",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Last Name
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      );
+    },
+  },
   {
     accessorKey: "dob",
     header: ({ column }) => {
@@ -84,7 +93,7 @@ export const columns: ColumnDef<PatientType>[] = [
   },
 
   {
-    accessorKey: "contactNumber",
+    accessorKey: "contact_number",
     header: "Contact Number",
   },
 
@@ -111,7 +120,7 @@ export const columns: ColumnDef<PatientType>[] = [
             <DropdownMenuSeparator />
             <DropdownMenuItem>
               {" "}
-              <Link href={`/departments/triage/${patient.patientId}`}>
+              <Link href={`/departments/triage/${patient.id}`}>
                 View patient
               </Link>{" "}
             </DropdownMenuItem>

@@ -1,20 +1,19 @@
 import { columns, PatientType } from "@/components/tables/triage-data-table/columns";
 import { DataTable } from "@/components/tables/triage-data-table/triage-data-table";
-import React from "react";
 
 
-
-export async function getMemberData(): Promise<PatientType[]> {
+export async function getPatientsData(): Promise<PatientType[]> {
   // todo: implement fetch patients functionality
-  const response = await fetch("http://localhost:8001/members", {
+  const response = await fetch("http://localhost:8000/patients", {
     cache: "no-store",
   });
   return await response.json();
 }
 
 export default async function TriagePage() {
-  // const data = await getMemberData();
-  const data = []
+ 
+      const data = await getPatientsData(); 
+    console.log(data);
 
   return (
     <div className="">

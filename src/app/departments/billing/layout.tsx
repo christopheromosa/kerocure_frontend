@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/breadcrumb";
 import { usePathname } from "next/navigation";
 import { Separator } from "@/components/ui/separator";
+import { AuthProvider } from "@/context/AuthContext";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const links = [
@@ -29,6 +30,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   ];
   const pathname = usePathname();
   return (
+    <AuthProvider>
     <SidebarProvider>
       <AppSidebar links={links} />
       <SidebarInset>
@@ -51,8 +53,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             </Breadcrumb>
           </div>
         </header>
-        <main className="h-full bg-background border p-4">{children}</main>
+        <main className="h-full bg-background border p-4">
+          {children}
+        </main>
       </SidebarInset>
     </SidebarProvider>
+   </AuthProvider>
   );
 }

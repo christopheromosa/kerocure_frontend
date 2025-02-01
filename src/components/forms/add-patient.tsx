@@ -12,6 +12,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "../ui/label";
 import { FormEvent, useState } from "react";
+import { useAuth } from "@/context/AuthContext";
 
 export type patientType = {
   patientId: number;
@@ -22,6 +23,8 @@ export type patientType = {
 };
 
 export function AddPatientDialog() {
+  const {authState} = useAuth();
+
   const [isOpen, setIsOpen] = useState(false);
   const [patientId, setPatientId] = useState<number>(0);
   const [first_name, setFirst_name] = useState<string>("");
@@ -29,7 +32,8 @@ export function AddPatientDialog() {
   const [dob, setDob] = useState<Date>(new Date());
   const [contact_number, setContact_number] = useState<string>("");
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
+
     e.preventDefault();
     const patientData: patientType = {
       patientId,
@@ -38,6 +42,27 @@ export function AddPatientDialog() {
       dob,
       contact_number,
     };
+    console.log(patientData);
+    const formattedDob = dob.toISOString().split("T")[0];
+    try {
+      const response = await fetch("http://localhost:8000/patients/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Token ${authState?.token}`,
+        },
+        body: JSON.stringify({ ...patientData, dob: formattedDob }),
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+          errorData.non_field_errors[0] || "Patients Registration failed"
+        );
+      }
+    } catch (error) {
+      console.error(error);
+    }
+
     // TODO: Add api endpoint to post patient data return first_name and last_name
   };
   const resetForm = () => {
