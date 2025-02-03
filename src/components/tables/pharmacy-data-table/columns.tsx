@@ -13,6 +13,7 @@ import {
 import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown, MoreHorizontal } from "lucide-react";
 import Link from "next/link";
+import { PatientType } from "../consultation-data-table/columns";
 
 export type MedicationType = {
   id: number;
@@ -22,7 +23,7 @@ export type MedicationType = {
   cost: number;
 };
 
-export const columns: ColumnDef<MedicationType>[] = [
+export const columns: ColumnDef<PatientType>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -100,7 +101,7 @@ export const columns: ColumnDef<MedicationType>[] = [
   {
     id: "actions",
     cell: ({ row }) => {
-      const pharmacy = row.original;
+      const patient = row.original;
 
       return (
         <DropdownMenu>
@@ -114,7 +115,7 @@ export const columns: ColumnDef<MedicationType>[] = [
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
             <DropdownMenuItem
               onClick={() =>
-                navigator.clipboard.writeText(pharmacy.medication_id)
+                navigator.clipboard.writeText(patient.patientId.toString())
               }
             >
               Copy Patient ID
@@ -122,7 +123,7 @@ export const columns: ColumnDef<MedicationType>[] = [
             <DropdownMenuSeparator />
             <DropdownMenuItem>
               {" "}
-              <Link href={`/departments/pharmacy/${pharmacy.medication_id}`}>
+              <Link href={`/departments/pharmacy/${patient.patientId}`}>
                 View patient
               </Link>{" "}
             </DropdownMenuItem>

@@ -19,6 +19,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import Loading from "@/components/loading";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
+import PageTransition from "@/components/PageTransition";
+import LoadingPage from "@/components/loading_animation";
 
 const triageSchema = z.object({
   weight: z.coerce.number().min(1, "Weight must be a valid number"),
@@ -46,6 +48,7 @@ interface triageType {
 const Patient = () => {
   const { patientId } = useParams();
   console.log(patientId);
+   const [isLoading, setIsLoading] = useState(false);
   
   
   
@@ -62,18 +65,17 @@ const Patient = () => {
 
   useEffect(() => {
     if (!patientId) return;
-    console.log(patientId);
- 
-    
+    console.log(patientId);  
 
     const fetchPatientData = async () => {
+       setIsLoading(true);
       const res = await fetch(
         `http://localhost:8000/patients/${Number(patientId)}/`
       );
       if (res.ok) {
-        const data = await res.json();
-               
+        const data = await res.json();               
         setPatientData(data);
+        setIsLoading(false);
       } else {
         setPatientData(null);
       }
@@ -92,6 +94,8 @@ const onSubmit = async (data: triageType) => {
     console.error("No patient ID found.");
     return;
   }
+  
+  
 
   // Create visit instance before submitting triage data
   const visitData = {
@@ -155,104 +159,116 @@ const onSubmit = async (data: triageType) => {
 
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6 p-4">
-      {/* Patient Card */}
-      {patientData && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Patient Information</CardTitle>
+    <PageTransition>
+      {isLoading && <LoadingPage />}
+
+      <div className="max-w-2xl mx-auto space-y-6 p-4">
+        {/* Patient Card */}
+        {patientData && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Patient Information</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-6">
+                {/* Patient Badge with Full Name */}
+                <Badge className="px-4 py-2 text-lg">{`${patientData.first_name} ${patientData.last_name}`}</Badge>
+
+                {/* Patient Details in a Row */}
+                <div className="flex flex-wrap gap-4 text-sm">
+                  <p>
+                    <strong>ID:</strong> {patientData.id}
+                  </p>
+                  <p>
+                    <strong>DOB:</strong> {patientData.dob}
+                  </p>
+                  <p>
+                    <strong>Contact:</strong> {patientData.contact_number}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Triage Form */}
+
+        <Card className="w-full max-w-md mx-auto p-6 shadow-md border rounded-lg">
+          <CardHeader className="text-center font-bold text-lg">
+            TRIAGE FORM APPLICATION
           </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-6">
-              {/* Patient Badge with Full Name */}
-              <Badge className="px-4 py-2 text-lg">{`${patientData.first_name} ${patientData.last_name}`}</Badge>
-
-              {/* Patient Details in a Row */}
-              <div className="flex flex-wrap gap-4 text-sm">
-                <p>
-                  <strong>ID:</strong> {patientData.id}
-                </p>
-                <p>
-                  <strong>DOB:</strong> {patientData.dob}
-                </p>
-                <p>
-                  <strong>Contact:</strong> {patientData.contact_number}
-                </p>
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <CardContent className="grid gap-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="weight">Weight</Label>
+                  <Input id="weight" type="number" {...register("weight")} />
+                  {errors.weight && (
+                    <p className="text-red-500 text-sm">
+                      {errors.weight?.message as string}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <Label htmlFor="height">Height</Label>
+                  <Input id="height" type="number" {...register("height")} />
+                  {errors.height && (
+                    <p className="text-red-500 text-sm">
+                      {errors.height?.message as string}
+                    </p>
+                  )}
+                </div>
               </div>
-            </div>
-          </CardContent>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="systolic">Systolic</Label>
+                  <Input
+                    id="systolic"
+                    type="number"
+                    {...register("systolic")}
+                  />
+                  {errors.systolic && (
+                    <p className="text-red-500 text-sm">
+                      {errors.systolic.message as string}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <Label htmlFor="pulse">Pulse / Min</Label>
+                  <Input id="pulse" type="number" {...register("pulse")} />
+                  {errors.pulse && (
+                    <p className="text-red-500 text-sm">
+                      {errors.pulse.message as string}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <div>
+                <Label htmlFor="diastolic">Diastolic</Label>
+                <Input
+                  id="diastolic"
+                  type="number"
+                  {...register("diastolic")}
+                />
+                {errors.diastolic && (
+                  <p className="text-red-500 text-sm">
+                    {errors.diastolic.message as string}
+                  </p>
+                )}
+              </div>
+            </CardContent>
+            <CardFooter className="flex justify-between">
+              <Button type="submit" className="bg-blue-500 text-white">
+                Save
+              </Button>
+              <Button type="button" className="bg-gray-400 text-white">
+                Cancel
+              </Button>
+            </CardFooter>
+          </form>
         </Card>
-      )}
-
-      {/* Triage Form */}
-
-      <Card className="w-full max-w-md mx-auto p-6 shadow-md border rounded-lg">
-        <CardHeader className="text-center font-bold text-lg">
-          TRIAGE FORM APPLICATION
-        </CardHeader>
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <CardContent className="grid gap-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="weight">Weight</Label>
-                <Input id="weight" type="number" {...register("weight")} />
-                {errors.weight && (
-                  <p className="text-red-500 text-sm">
-                    {errors.weight?.message as string}
-                  </p>
-                )}
-              </div>
-              <div>
-                <Label htmlFor="height">Height</Label>
-                <Input id="height" type="number" {...register("height")} />
-                {errors.height && (
-                  <p className="text-red-500 text-sm">
-                    {errors.height?.message as string}
-                  </p>
-                )}
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="systolic">Systolic</Label>
-                <Input id="systolic" type="number" {...register("systolic")} />
-                {errors.systolic && (
-                  <p className="text-red-500 text-sm">
-                    {errors.systolic.message as string}
-                  </p>
-                )}
-              </div>
-              <div>
-                <Label htmlFor="pulse">Pulse / Min</Label>
-                <Input id="pulse" type="number" {...register("pulse")} />
-                {errors.pulse && (
-                  <p className="text-red-500 text-sm">
-                    {errors.pulse.message as string}
-                  </p>
-                )}
-              </div>
-            </div>
-            <div>
-              <Label htmlFor="diastolic">Diastolic</Label>
-              <Input id="diastolic" type="number" {...register("diastolic")} />
-              {errors.diastolic && (
-                <p className="text-red-500 text-sm">
-                  {errors.diastolic.message as string}
-                </p>
-              )}
-            </div>
-          </CardContent>
-          <CardFooter className="flex justify-between">
-            <Button type="submit" className="bg-blue-500 text-white">
-              Save
-            </Button>
-            <Button type="button" className="bg-gray-400 text-white">
-              Cancel
-            </Button>
-          </CardFooter>
-        </form>
-      </Card>
-    </div>
+      </div>
+    </PageTransition>
   );
 };
 

@@ -115,13 +115,15 @@ export const columns: ColumnDef<PatientType>[] = [
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
             <DropdownMenuItem
-              onClick={() => navigator.clipboard.writeText(patient.patientId)}
+              onClick={() =>
+                navigator.clipboard.writeText(patient.id.toString())
+              }
             >
               Copy payment ID
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={async()=>{ await fetchVisitId(patientId, authState?.token);}}>
-              <Link href={`/departments/consultation/${patient.patientId}`}>
+            <DropdownMenuItem>
+              <Link href={`/departments/consultation/${patient.id}`}>
                 View patient
               </Link>{" "}
             </DropdownMenuItem>

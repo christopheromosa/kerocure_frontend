@@ -32,12 +32,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useVisit } from "@/context/VisitContext";
 import { useAuth } from "@/context/AuthContext";
+import PageTransition from "@/components/PageTransition";
 
 const testRequestsSchema = z.object({
-  testName: z.string().min(1, "Test name is required"),
+  test_name: z.string().min(1, "Test name is required"),
 });
 
 const prescriptionSchema = z.object({
@@ -50,35 +51,45 @@ type Prescription = z.infer<typeof prescriptionSchema>;
 
 const PatientManagementPage = () => {
   const { patientId } = useParams();
-  const { visitId } = useVisit();
-  const { authState } = useAuth();
-  
-
+  const router = useRouter();
+  const { visitData, fetchVisitData } = useVisit();
   const [diagnosis, setDiagnosis] = useState<string>("");
   const [testRequests, setTestRequests] = useState<TestRequest[]>([]);
   const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
   const [showTestRequestPreview, setShowTestRequestPreview] = useState(false);
   const [showPrescriptionPreview, setShowPrescriptionPreview] = useState(false);
   const [isDiagnosisSaved, setIsDiagnosisSaved] = useState<boolean>(false);
-  const [patient, setPatient] = useState(null);
+  const [consultationId, setConsultationId] = useState<number>();
+  // const [labResults, setLabResults] = useState([]);
+  const { authState } = useAuth();
 
   useEffect(() => {
-
-    const fetchPatientData = async () => {
-      try {
-        const response = await axios.get(`/consultation/${patientId}`);
-        setPatient(response.data);
-      } catch (error) {
-        console.error("Failed to fetch patient data:", error);
-      }
-    };
-
-    fetchPatientData();
-  }, [patientId]);
+    if (patientId) {
+      fetchVisitData(patientId.toString());
+    }
+  }, [fetchVisitData, patientId]);
 
   const handleSaveDiagnosis = async () => {
     try {
-      await axios.post(`/consultation/${patientId}`, { diagnosis });
+      const res = await fetch(`/consultation/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Token ${authState?.token}`,
+        },
+        body: JSON.stringify({
+          diagnosis,
+          prescription: null,
+          lab_tests_ordered: null,
+          physician: authState.user_id,
+          visit: visitData?.visit_id,
+          triage: visitData?.triage_data?.triage_id,
+        }),
+      });
+      if (res.ok) {
+        const consultation = await res.json();
+        setConsultationId(consultation.note);
+      }
       setIsDiagnosisSaved(true);
       alert("Diagnosis saved successfully!");
     } catch (error) {
@@ -123,7 +134,7 @@ const PatientManagementPage = () => {
 
   const handleSaveTestRequests = async () => {
     try {
-      await axios.post(`/consultation/${patientId}`, {
+      await axios.patch(`/consultation/${consultationId}`, {
         lab_tests_ordered: testRequests,
       });
       setShowTestRequestPreview(false);
@@ -135,7 +146,7 @@ const PatientManagementPage = () => {
 
   const handleSavePrescriptions = async () => {
     try {
-      await axios.post(`/consultation/${patientId}`, { prescriptions });
+      await axios.post(`/consultation/${consultationId}`, { prescriptions });
       setShowPrescriptionPreview(false);
       alert("Prescriptions saved successfully!");
     } catch (error) {
@@ -145,7 +156,7 @@ const PatientManagementPage = () => {
 
   const testRequestColumns: ColumnDef<TestRequest>[] = [
     {
-      accessorKey: "testName",
+      accessorKey: "test_name",
       header: "Test Name",
     },
     {
@@ -198,285 +209,297 @@ const PatientManagementPage = () => {
   });
 
   return (
-    <div className="px-6">
-      {/* Patient Header */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>Name: {patient?.name}</CardTitle>
-          <span>Vitals: {patient?.vitals}</span>
-          <span>History: {patient?.historySummary}</span>
-          <Button variant="outline" onClick={() => console.log("Go back")}>
-            Back to Patient List
-          </Button>
-        </CardHeader>
-      </Card>
+    <PageTransition>
+      <div className="px-6">
+        {/* Patient Header */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Name: {visitData?.visit_id}</CardTitle>
+            <span>Vitals: {visitData?.triage_data?.triage_id}</span>
+            <Button
+              variant="outline"
+              onClick={() => router.push("/departments/consultation")}
+            >
+              Back to Patient List
+            </Button>
+          </CardHeader>
+        </Card>
 
-      {/* Dynamic Tabs */}
-      <Tabs defaultValue="diagnosis" className="w-full">
-        <TabsList>
-          <TabsTrigger value="diagnosis">Diagnosis</TabsTrigger>
-          <TabsTrigger value="medicalHistory">Medical History</TabsTrigger>
-          <TabsTrigger value="testRequests">Test Requests</TabsTrigger>
-          <TabsTrigger value="labResults">Lab Results</TabsTrigger>
-          <TabsTrigger value="prescriptions">Prescriptions</TabsTrigger>
-        </TabsList>
+        {/* Dynamic Tabs */}
+        <Tabs defaultValue="diagnosis" className="w-full">
+          <TabsList>
+            <TabsTrigger value="diagnosis">Diagnosis</TabsTrigger>
+            <TabsTrigger value="medicalHistory">Medical History</TabsTrigger>
+            <TabsTrigger value="testRequests">Test Requests</TabsTrigger>
+            <TabsTrigger value="labResults">Lab Results</TabsTrigger>
+            <TabsTrigger value="prescriptions">Prescriptions</TabsTrigger>
+          </TabsList>
 
-        {/* Diagnosis Section */}
-        <TabsContent value="diagnosis">
-          <Card>
-            <CardHeader>
-              <CardTitle>Diagnosis</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Textarea
-                value={diagnosis}
-                onChange={(e) => {
-                  setDiagnosis(e.target.value);
-                  setIsDiagnosisSaved(false);
-                }}
-                placeholder="Enter diagnosis..."
-              />
-              <Button
-                className="mt-4"
-                onClick={handleSaveDiagnosis}
-                disabled={isDiagnosisSaved}
-              >
-                {isDiagnosisSaved ? "Diagnosis Saved" : "Save Diagnosis"}
-              </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Medical History Section */}
-        <TabsContent value="medicalHistory">
-          <Card>
-            <CardHeader>
-              <CardTitle>Medical History</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p>Fetch and display past records here.</p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Test Requests Section */}
-        <TabsContent value="testRequests">
-          <Card>
-            <CardHeader>
-              <CardTitle>Test Requests</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleTestRequestSubmit(handleAddTestRequest)}>
-                <Controller
-                  name="testName"
-                  control={testRequestControl}
-                  render={({ field }) => (
-                    <Input {...field} placeholder="Enter test name" />
-                  )}
+          {/* Diagnosis Section */}
+          <TabsContent value="diagnosis">
+            <Card>
+              <CardHeader>
+                <CardTitle>Diagnosis</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Textarea
+                  value={diagnosis}
+                  onChange={(e) => {
+                    setDiagnosis(e.target.value);
+                    setIsDiagnosisSaved(false);
+                  }}
+                  placeholder="Enter diagnosis..."
                 />
-                <Button type="submit" className="mt-4">
-                  Add Test Request
+                <Button
+                  className="mt-4"
+                  onClick={handleSaveDiagnosis}
+                  disabled={isDiagnosisSaved}
+                >
+                  {isDiagnosisSaved ? "Diagnosis Saved" : "Save Diagnosis"}
                 </Button>
-              </form>
-              <Table>
-                <TableHeader>
-                  {testRequestTable.getHeaderGroups().map((headerGroup) => (
-                    <TableRow key={headerGroup.id}>
-                      {headerGroup.headers.map((header) => (
-                        <TableHead key={header.id}>
-                          {header.column.columnDef.header as string}
-                        </TableHead>
-                      ))}
-                    </TableRow>
-                  ))}
-                </TableHeader>
-                <TableBody>
-                  {testRequestTable.getRowModel().rows.map((row) => (
-                    <TableRow key={row.id}>
-                      {row.getVisibleCells().map((cell) => (
-                        <TableCell key={cell.id}>
-                          {cell.renderValue() as string}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-              <Button
-                className="mt-4"
-                onClick={() => setShowTestRequestPreview(true)}
-              >
-                Save Test Requests
-              </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-        {/* Lab Results Section */}
-        <TabsContent value="labResults">
-          <Card>
-            <CardHeader>
-              <CardTitle>Lab Results</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p>Display lab results here once updated by the lab.</p>
-            </CardContent>
-          </Card>
-        </TabsContent>
+          {/* Medical History Section */}
+          <TabsContent value="medicalHistory">
+            <Card>
+              <CardHeader>
+                <CardTitle>Medical History</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p>Fetch and display past records coming soon.</p>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-        {/* Prescriptions Section */}
-        <TabsContent value="prescriptions">
-          <Card>
-            <CardHeader>
-              <CardTitle>Prescriptions</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handlePrescriptionSubmit(handleAddPrescription)}>
-                <Controller
-                  name="medication"
-                  control={prescriptionControl}
-                  render={({ field }) => (
-                    <Input {...field} placeholder="Enter medication" />
-                  )}
-                />
-                <div className="mt-4">
+          {/* Test Requests Section */}
+          <TabsContent value="testRequests">
+            <Card>
+              <CardHeader>
+                <CardTitle>Test Requests</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleTestRequestSubmit(handleAddTestRequest)}>
                   <Controller
-                    name="dosage"
-                    control={prescriptionControl}
+                    name="test_name"
+                    control={testRequestControl}
                     render={({ field }) => (
-                      <Input {...field} placeholder="Enter dosage" />
+                      <Input {...field} placeholder="Enter test name" />
                     )}
                   />
-                </div>
-                <Button type="submit" className="mt-4">
-                  Add Prescription
+                  <Button type="submit" className="mt-4">
+                    Add Test Request
+                  </Button>
+                </form>
+                <Table>
+                  <TableHeader>
+                    {testRequestTable.getHeaderGroups().map((headerGroup) => (
+                      <TableRow key={headerGroup.id}>
+                        {headerGroup.headers.map((header) => (
+                          <TableHead key={header.id}>
+                            {header.column.columnDef.header as string}
+                          </TableHead>
+                        ))}
+                      </TableRow>
+                    ))}
+                  </TableHeader>
+                  <TableBody>
+                    {testRequestTable.getRowModel().rows.map((row) => (
+                      <TableRow key={row.id}>
+                        {row.getVisibleCells().map((cell) => (
+                          <TableCell key={cell.id}>
+                            {cell.renderValue() as string}
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+                <Button
+                  className="mt-4"
+                  onClick={() => setShowTestRequestPreview(true)}
+                >
+                  Save Test Requests
                 </Button>
-              </form>
-              <Table>
-                <TableHeader>
-                  {prescriptionTable.getHeaderGroups().map((headerGroup) => (
-                    <TableRow key={headerGroup.id}>
-                      {headerGroup.headers.map((header) => (
-                        <TableHead key={header.id}>
-                          {header.column.columnDef.header as string}
-                        </TableHead>
-                      ))}
-                    </TableRow>
-                  ))}
-                </TableHeader>
-                <TableBody>
-                  {prescriptionTable.getRowModel().rows.map((row) => (
-                    <TableRow key={row.id}>
-                      {row.getVisibleCells().map((cell) => (
-                        <TableCell key={cell.id}>
-                          {cell.renderValue() as string}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-              <Button
-                className="mt-4"
-                onClick={() => setShowPrescriptionPreview(true)}
-              >
-                Save Prescriptions
-              </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-      {/* Test Request Preview Dialog */}
-      <AlertDialog
-        open={showTestRequestPreview}
-        onOpenChange={setShowTestRequestPreview}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Review Test Requests</AlertDialogTitle>
-            <AlertDialogDescription>
-              Please review the test requests before saving.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <Table>
-            <TableHeader>
-              {testRequestTable.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => (
-                    <TableHead key={header.id}>
-                      {header.column.columnDef.header as string}
-                    </TableHead>
-                  ))}
-                </TableRow>
-              ))}
-            </TableHeader>
-            <TableBody>
-              {testRequestTable.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {cell.renderValue() as string}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleSaveTestRequests}>
-              Save
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+          {/* Lab Results Section */}
+          <TabsContent value="labResults">
+            <Card>
+              <CardHeader>
+                <CardTitle>Lab Results</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {visitData?.lab_data?.length === 0 ? (
+                  <p>Display lab results here once updated by the lab.</p>
+                ) : (
+                  visitData?.lab_data?.map((result, index) => (
+                    <span key={index}>{result.result}</span>
+                  ))
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-      {/* Prescription Preview Dialog */}
-      <AlertDialog
-        open={showPrescriptionPreview}
-        onOpenChange={setShowPrescriptionPreview}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Review Prescriptions</AlertDialogTitle>
-            <AlertDialogDescription>
-              Please review the prescriptions before saving.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <Table>
-            <TableHeader>
-              {prescriptionTable.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => (
-                    <TableHead key={header.id}>
-                      {header.column.columnDef.header as string}
-                    </TableHead>
-                  ))}
-                </TableRow>
-              ))}
-            </TableHeader>
-            <TableBody>
-              {prescriptionTable.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {cell.renderValue() as string}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleSavePrescriptions}>
-              Save
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </div>
+          {/* Prescriptions Section */}
+          <TabsContent value="prescriptions">
+            <Card>
+              <CardHeader>
+                <CardTitle>Prescriptions</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form
+                  onSubmit={handlePrescriptionSubmit(handleAddPrescription)}
+                >
+                  <Controller
+                    name="medication"
+                    control={prescriptionControl}
+                    render={({ field }) => (
+                      <Input {...field} placeholder="Enter medication" />
+                    )}
+                  />
+                  <div className="mt-4">
+                    <Controller
+                      name="dosage"
+                      control={prescriptionControl}
+                      render={({ field }) => (
+                        <Input {...field} placeholder="Enter dosage" />
+                      )}
+                    />
+                  </div>
+                  <Button type="submit" className="mt-4">
+                    Add Prescription
+                  </Button>
+                </form>
+                <Table>
+                  <TableHeader>
+                    {prescriptionTable.getHeaderGroups().map((headerGroup) => (
+                      <TableRow key={headerGroup.id}>
+                        {headerGroup.headers.map((header) => (
+                          <TableHead key={header.id}>
+                            {header.column.columnDef.header as string}
+                          </TableHead>
+                        ))}
+                      </TableRow>
+                    ))}
+                  </TableHeader>
+                  <TableBody>
+                    {prescriptionTable.getRowModel().rows.map((row) => (
+                      <TableRow key={row.id}>
+                        {row.getVisibleCells().map((cell) => (
+                          <TableCell key={cell.id}>
+                            {cell.renderValue() as string}
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+                <Button
+                  className="mt-4"
+                  onClick={() => setShowPrescriptionPreview(true)}
+                >
+                  Save Prescriptions
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+
+        {/* Test Request Preview Dialog */}
+        <AlertDialog
+          open={showTestRequestPreview}
+          onOpenChange={setShowTestRequestPreview}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Review Test Requests</AlertDialogTitle>
+              <AlertDialogDescription>
+                Please review the test requests before saving.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <Table>
+              <TableHeader>
+                {testRequestTable.getHeaderGroups().map((headerGroup) => (
+                  <TableRow key={headerGroup.id}>
+                    {headerGroup.headers.map((header) => (
+                      <TableHead key={header.id}>
+                        {header.column.columnDef.header as string}
+                      </TableHead>
+                    ))}
+                  </TableRow>
+                ))}
+              </TableHeader>
+              <TableBody>
+                {testRequestTable.getRowModel().rows.map((row) => (
+                  <TableRow key={row.id}>
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {cell.renderValue() as string}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleSaveTestRequests}>
+                Save
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Prescription Preview Dialog */}
+        <AlertDialog
+          open={showPrescriptionPreview}
+          onOpenChange={setShowPrescriptionPreview}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Review Prescriptions</AlertDialogTitle>
+              <AlertDialogDescription>
+                Please review the prescriptions before saving.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <Table>
+              <TableHeader>
+                {prescriptionTable.getHeaderGroups().map((headerGroup) => (
+                  <TableRow key={headerGroup.id}>
+                    {headerGroup.headers.map((header) => (
+                      <TableHead key={header.id}>
+                        {header.column.columnDef.header as string}
+                      </TableHead>
+                    ))}
+                  </TableRow>
+                ))}
+              </TableHeader>
+              <TableBody>
+                {prescriptionTable.getRowModel().rows.map((row) => (
+                  <TableRow key={row.id}>
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {cell.renderValue() as string}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleSavePrescriptions}>
+                Save
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
+    </PageTransition>
   );
 };
 

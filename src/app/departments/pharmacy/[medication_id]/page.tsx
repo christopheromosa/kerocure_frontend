@@ -23,7 +23,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/context/AuthContext";
-import { PatientType } from "@/components/tables/triage-data-table/columns";
+import { useVisit } from "@/context/VisitContext";
 
 // Define the type for a prescription
 interface Prescription {
@@ -36,58 +36,19 @@ interface Prescription {
 
 const PharmacyDetailsPage = () => {
   const params = useParams();
+  const { visitData, fetchVisitData } = useVisit();
   const patientId = params.patient_id as string;
   const { authState } = useAuth();
-  const [patient, setPatient] = useState<PatientType>();
   const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
   const [showSuccessDialog, setShowSuccessDialog] = useState<boolean>(false);
   const [showErrorDialog, setShowErrorDialog] = useState<boolean>(false);
 
   // Fetch patient details and prescriptions on page load
   useEffect(() => {
-    const fetchPatientAndPrescriptions = async () => {
-      try {
-        // Fetch patient details
-        const patientRes = await fetch(
-          `http://localhost:8000/patients/${patientId}/`,
-          {
-            headers: {
-              Authorization: `Token ${authState?.token}`,
-            },
-          }
-        );
-
-        if (!patientRes.ok) {
-          throw new Error("Failed to fetch patient details");
-        }
-
-        const patientData = await patientRes.json();
-        setPatient(patientData);
-
-        // Fetch prescriptions for the patient's visit
-        const visitRes = await fetch(
-          `http://localhost:8000/consultation/${patientData.visit_id}/`,
-          {
-            headers: {
-              Authorization: `Token ${authState?.token}`,
-            },
-          }
-        );
-
-        if (!visitRes.ok) {
-          throw new Error("Failed to fetch prescriptions");
-        }
-
-        const visitData = await visitRes.json();
-        setPrescriptions(visitData.prescriptions || []);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-        setShowErrorDialog(true);
-      }
-    };
-
-    fetchPatientAndPrescriptions();
-  }, [patientId, authState?.token]);
+    if (patientId) {
+      fetchVisitData(patientId.toString());
+    }
+  }, [patientId, fetchVisitData]);
 
   // Function to calculate total cost
   const calculateTotalCost = () => {
@@ -107,7 +68,7 @@ const PharmacyDetailsPage = () => {
         },
         body: JSON.stringify({
           prescriptions,
-          totalCost: calculateTotalCost(),
+          cost: calculateTotalCost(),
         }),
       });
 
@@ -122,7 +83,7 @@ const PharmacyDetailsPage = () => {
     }
   };
 
-  if (!patient) {
+  if (!patientId) {
     return <div className="p-6">Loading patient details...</div>;
   }
 
@@ -131,7 +92,8 @@ const PharmacyDetailsPage = () => {
       <Card>
         <CardHeader>
           <CardTitle>
-            Prescriptions for {patient.first_name} {patient.last_name}
+            Prescriptions for {visitData?.patient_data?.first_name}{" "}
+            {visitData?.patient_data?.last_name}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -145,42 +107,44 @@ const PharmacyDetailsPage = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {prescriptions.map((prescription) => (
-                <TableRow key={prescription.id}>
-                  <TableCell>{prescription.medication_name}</TableCell>
-                  <TableCell>{prescription.quantity}</TableCell>
-                  <TableCell>
-                    <Checkbox
-                      checked={prescription.dispensed}
-                      onCheckedChange={(checked) =>
-                        setPrescriptions((prev) =>
-                          prev.map((p) =>
-                            p.id === prescription.id
-                              ? { ...p, dispensed: checked as boolean }
-                              : p
+              {visitData?.consultation_data?.prescription.map(
+                (prescription) => (
+                  <TableRow key={prescription.id}>
+                    <TableCell>{prescription.medication_name}</TableCell>
+                    <TableCell>{prescription.quantity}</TableCell>
+                    <TableCell>
+                      <Checkbox
+                        checked={prescription.dispensed}
+                        onCheckedChange={(checked) =>
+                          setPrescriptions((prev) =>
+                            prev.map((p) =>
+                              p.id === prescription.id
+                                ? { ...p, dispensed: checked as boolean }
+                                : p
+                            )
                           )
-                        )
-                      }
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Input
-                      type="number"
-                      value={prescription.cost}
-                      onChange={(e) =>
-                        setPrescriptions((prev) =>
-                          prev.map((p) =>
-                            p.id === prescription.id
-                              ? { ...p, cost: parseFloat(e.target.value) }
-                              : p
+                        }
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        type="number"
+                        value={prescription.cost}
+                        onChange={(e) =>
+                          setPrescriptions((prev) =>
+                            prev.map((p) =>
+                              p.id === prescription.id
+                                ? { ...p, cost: parseFloat(e.target.value) }
+                                : p
+                            )
                           )
-                        )
-                      }
-                      placeholder="Enter cost"
-                    />
-                  </TableCell>
-                </TableRow>
-              ))}
+                        }
+                        placeholder="Enter cost"
+                      />
+                    </TableCell>
+                  </TableRow>
+                )
+              )}
             </TableBody>
           </Table>
           <div className="mt-4">

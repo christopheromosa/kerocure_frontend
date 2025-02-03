@@ -1,9 +1,14 @@
-import React from 'react'
+import PageTransition from "@/components/PageTransition";
+import React from "react";
 
 const page = () => {
   return (
-    <div>page</div>
-  )
-}
+    <>
+      <PageTransition>
+        <div>page</div>
+      </PageTransition>
+    </>
+  );
+};
 
-export default page
+export default page;

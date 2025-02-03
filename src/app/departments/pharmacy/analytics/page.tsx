@@ -22,8 +22,10 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/components/ui/use-toast";
+// import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/context/AuthContext";
+import PageTransition from "@/components/PageTransition";
+import LoadingPage from "@/components/loading_animation";
 
 // Define the schema for medication data
 const medicationSchema = z.object({
@@ -44,8 +46,9 @@ export default function MedicationTable() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedMedication, setSelectedMedication] =
     useState<MedicationType | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const { authState } = useAuth();
-  const { toast } = useToast();
+  // const { toast } = useToast();
 
   const {
     register,
@@ -59,6 +62,7 @@ export default function MedicationTable() {
   // Fetch medication data
   useEffect(() => {
     const fetchMedicationData = async () => {
+      setIsLoading(true);
       try {
         const res = await fetch("http://localhost:8000/pharmacy/", {
           headers: {
@@ -69,6 +73,7 @@ export default function MedicationTable() {
         if (res.ok) {
           const data = await res.json();
           setMedicationData(data);
+          setIsLoading(false);
         } else {
           console.error("Failed to fetch medication data");
         }
@@ -118,10 +123,10 @@ export default function MedicationTable() {
           )
         );
         setIsEditDialogOpen(false);
-        toast({
-          title: "Success",
-          description: "Medication data updated successfully!",
-        });
+        // toast({
+        //   title: "Success",
+        //   description: "Medication data updated successfully!",
+        // });
       } else {
         console.error("Failed to update medication data");
       }
@@ -150,10 +155,10 @@ export default function MedicationTable() {
           prev.filter((m) => m.id !== selectedMedication.id)
         );
         setIsDeleteDialogOpen(false);
-        toast({
-          title: "Success",
-          description: "Medication data deleted successfully!",
-        });
+        // toast({
+        //   title: "Success",
+        //   description: "Medication data deleted successfully!",
+        // });
       } else {
         console.error("Failed to delete medication data");
       }
@@ -163,111 +168,124 @@ export default function MedicationTable() {
   };
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-6">Medication Data</h1>
+    <PageTransition>
+      {isLoading && <LoadingPage />}
 
-      {/* Medication Data Table */}
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>ID</TableHead>
-            <TableHead>Medication Name</TableHead>
-            <TableHead>Quantity</TableHead>
-            <TableHead>Cost</TableHead>
-            <TableHead>Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {medicationData.map((medication) => (
-            <TableRow key={medication.id}>
-              <TableCell>{medication.id}</TableCell>
-              <TableCell>{medication.medication_name}</TableCell>
-              <TableCell>{medication.quantity}</TableCell>
-              <TableCell>${medication.cost.toFixed(2)}</TableCell>
-              <TableCell>
-                <Button
-                  variant="outline"
-                  className="mr-2"
-                  onClick={() => handleEditClick(medication)}
-                >
-                  Edit
-                </Button>
-                <Button
-                  variant="destructive"
-                  onClick={() => handleDeleteClick(medication)}
-                >
-                  Delete
-                </Button>
-              </TableCell>
+      <div className="p-6">
+        <h1 className="text-2xl font-bold mb-6">Medication Data</h1>
+
+        {/* Medication Data Table */}
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>ID</TableHead>
+              <TableHead>Medication Name</TableHead>
+              <TableHead>Quantity</TableHead>
+              <TableHead>Cost</TableHead>
+              <TableHead>Actions</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {medicationData.map((medication) => (
+              <TableRow key={medication.id}>
+                <TableCell>{medication.id}</TableCell>
+                <TableCell>{medication.medication_name}</TableCell>
+                <TableCell>{medication.quantity}</TableCell>
+                <TableCell>${medication.cost.toFixed(2)}</TableCell>
+                <TableCell>
+                  <Button
+                    variant="outline"
+                    className="mr-2"
+                    onClick={() => handleEditClick(medication)}
+                  >
+                    Edit
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={() => handleDeleteClick(medication)}
+                  >
+                    Delete
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
 
-      {/* Edit Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Edit Medication Data</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleSubmit(onSubmit)}>
-            <div className="grid gap-4 py-4">
-              <div>
-                <Label htmlFor="medication_name">Medication Name</Label>
-                <Input id="medication_name" {...register("medication_name")} />
-                {errors.medication_name && (
-                  <p className="text-red-500 text-sm">
-                    {errors.medication_name.message}
-                  </p>
-                )}
+        {/* Edit Dialog */}
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Edit Medication Data</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleSubmit(onSubmit)}>
+              <div className="grid gap-4 py-4">
+                <div>
+                  <Label htmlFor="medication_name">Medication Name</Label>
+                  <Input
+                    id="medication_name"
+                    {...register("medication_name")}
+                  />
+                  {errors.medication_name && (
+                    <p className="text-red-500 text-sm">
+                      {errors.medication_name.message}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <Label htmlFor="quantity">Quantity</Label>
+                  <Input
+                    id="quantity"
+                    type="number"
+                    {...register("quantity")}
+                  />
+                  {errors.quantity && (
+                    <p className="text-red-500 text-sm">
+                      {errors.quantity.message}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <Label htmlFor="cost">Cost</Label>
+                  <Input id="cost" type="number" {...register("cost")} />
+                  {errors.cost && (
+                    <p className="text-red-500 text-sm">
+                      {errors.cost.message}
+                    </p>
+                  )}
+                </div>
               </div>
-              <div>
-                <Label htmlFor="quantity">Quantity</Label>
-                <Input id="quantity" type="number" {...register("quantity")} />
-                {errors.quantity && (
-                  <p className="text-red-500 text-sm">
-                    {errors.quantity.message}
-                  </p>
-                )}
-              </div>
-              <div>
-                <Label htmlFor="cost">Cost</Label>
-                <Input id="cost" type="number" {...register("cost")} />
-                {errors.cost && (
-                  <p className="text-red-500 text-sm">{errors.cost.message}</p>
-                )}
-              </div>
-            </div>
+              <DialogFooter>
+                <Button type="submit">Save Changes</Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Confirmation Dialog */}
+        <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Are you sure?</DialogTitle>
+            </DialogHeader>
+            <p>
+              This action cannot be undone. This will permanently delete the
+              medication data.
+            </p>
             <DialogFooter>
-              <Button type="submit">Save Changes</Button>
+              <Button
+                variant="outline"
+                onClick={() => setIsDeleteDialogOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button variant="destructive" onClick={handleDeleteConfirm}>
+                Delete
+              </Button>
             </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Are you sure?</DialogTitle>
-          </DialogHeader>
-          <p>
-            This action cannot be undone. This will permanently delete the
-            medication data.
-          </p>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setIsDeleteDialogOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button variant="destructive" onClick={handleDeleteConfirm}>
-              Delete
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+    </PageTransition>
   );
 }

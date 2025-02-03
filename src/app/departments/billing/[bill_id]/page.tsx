@@ -1,17 +1,11 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Table,
-  TableHeader,
-  TableRow,
-  TableHead,
-  TableBody,
-  TableCell,
-} from "@/components/ui/table";
+import { useAuth } from "@/context/AuthContext";
+import { useVisit } from "@/context/VisitContext";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,120 +15,95 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useAuth } from "@/context/AuthContext";
-
-// Define the type for lab test and pharmacy data
-interface LabTest {
-  id: number;
-  test_name: string;
-  cost: number;
-}
-
-interface PharmacyMedication {
-  id: number;
-  medication_name: string;
-  cost: number;
-}
+import PageTransition from "@/components/PageTransition";
+import LoadingPage from "@/components/loading_animation";
 
 const BillingDetailsPage = () => {
   const params = useParams();
-  const billId = params.bill_id as string;
+  const patientId = params.patientId as string;
   const { authState } = useAuth();
-  const [patient, setPatient] = useState<any>(null);
+  const { fetchVisitData, visitData } = useVisit();
   const [consultationFee, setConsultationFee] = useState<number>(0);
-  const [labTests, setLabTests] = useState<LabTest[]>([]);
-  const [pharmacy, setPharmacy] = useState<PharmacyMedication[]>([]);
+  const [labCost, setLabCost] = useState<number>(0);
+  const [pharmacyCost, setPharmacyCost] = useState<number>(0);
+  const [totalCost, setTotalCost] = useState<number>(0);
   const [showSuccessDialog, setShowSuccessDialog] = useState<boolean>(false);
   const [showErrorDialog, setShowErrorDialog] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  // Fetch patient details, consultation fees, lab tests, and pharmacy data on page load
   useEffect(() => {
-    const fetchBillingData = async () => {
-      try {
-        // Fetch patient details
-        const patientRes = await fetch(
-          `http://localhost:8000/patients/${billId}/`,
-          {
-            headers: {
-              Authorization: `Token ${authState?.token}`,
-            },
-          }
-        );
+    if (patientId) {
+      fetchVisitData(patientId.toString());
+    }
+  }, [patientId, fetchVisitData]);
 
-        if (!patientRes.ok) {
-          throw new Error("Failed to fetch patient details");
+  // Fetch consultation fee from the server
+  const fetchConsultationFee = async () => {
+    setIsLoading(true);
+    try {
+      const res = await fetch(
+        `http://localhost:8000/consultation-fee/${visitData?.visit_id}`,
+        {
+          headers: {
+            Authorization: `Token ${authState?.token}`,
+          },
         }
-
-        const patientData = await patientRes.json();
-        setPatient(patientData);
-
-        // Fetch consultation fees
-        const consultationRes = await fetch(
-          `http://localhost:8000/consultation/${patientData.visit_id}/`,
-          {
-            headers: {
-              Authorization: `Token ${authState?.token}`,
-            },
-          }
-        );
-
-        if (!consultationRes.ok) {
-          throw new Error("Failed to fetch consultation fees");
-        }
-
-        const consultationData = await consultationRes.json();
-        setConsultationFee(consultationData.fee || 0);
-
-        // Fetch lab tests
-        const labRes = await fetch(
-          `http://localhost:8000/lab/${patientData.visit_id}/`,
-          {
-            headers: {
-              Authorization: `Token ${authState?.token}`,
-            },
-          }
-        );
-
-        if (!labRes.ok) {
-          throw new Error("Failed to fetch lab tests");
-        }
-
-        const labData = await labRes.json();
-        setLabTests(labData.tests || []);
-
-        // Fetch pharmacy data
-        const pharmacyRes = await fetch(
-          `http://localhost:8000/pharmacy/${patientData.visit_id}/`,
-          {
-            headers: {
-              Authorization: `Token ${authState?.token}`,
-            },
-          }
-        );
-
-        if (!pharmacyRes.ok) {
-          throw new Error("Failed to fetch pharmacy data");
-        }
-
-        const pharmacyData = await pharmacyRes.json();
-        setPharmacy(pharmacyData.medications || []);
-      } catch (error) {
-        console.error("Error fetching billing data:", error);
-        setShowErrorDialog(true);
-      }
-    };
-
-    fetchBillingData();
-  }, [billId, authState?.token]);
-
-  // Function to calculate total cost
-  const calculateTotalCost = () => {
-    const labTotal = labTests.reduce((total, test) => total + test.cost, 0);
-    const pharmacyTotal = pharmacy.reduce((total, med) => total + med.cost, 0);
-    return consultationFee + labTotal + pharmacyTotal;
+      );
+      const data = await res.json();
+      setConsultationFee(data.fee);
+      setIsLoading(false);
+    } catch (error) {
+      console.error("Error fetching consultation fee:", error);
+    }
   };
 
-  // Function to save billing details
+  // Fetch lab cost from the server
+  const fetchLabCost = async () => {
+    setIsLoading(true);
+    try {
+      const res = await fetch(
+        `http://localhost:8000/lab-cost/${visitData?.visit_id}`,
+        {
+          headers: {
+            Authorization: `Token ${authState?.token}`,
+          },
+        }
+      );
+      const data = await res.json();
+      setLabCost(data.cost);
+      setIsLoading(false);
+    } catch (error) {
+      console.error("Error fetching lab cost:", error);
+    }
+  };
+
+  // Fetch pharmacy cost from the server
+  const fetchPharmacyCost = async () => {
+    setIsLoading(true);
+    try {
+      const res = await fetch(
+        `http://localhost:8000/pharmacy-cost/${visitData?.visit_id}`,
+        {
+          headers: {
+            Authorization: `Token ${authState?.token}`,
+          },
+        }
+      );
+      const data = await res.json();
+      setPharmacyCost(data.cost);
+      setIsLoading(false);
+    } catch (error) {
+      console.error("Error fetching pharmacy cost:", error);
+    }
+  };
+
+  // Calculate total cost
+  const calculateTotalCost = () => {
+    const total = consultationFee + labCost + pharmacyCost;
+    setTotalCost(total);
+  };
+
+  // Save billing details
   const handleSaveBilling = async () => {
     try {
       const res = await fetch("http://localhost:8000/billing/", {
@@ -145,9 +114,9 @@ const BillingDetailsPage = () => {
         },
         body: JSON.stringify({
           consultationFee,
-          labTests,
-          pharmacy,
-          totalCost: calculateTotalCost(),
+          labCost,
+          pharmacyCost,
+          totalCost,
         }),
       });
 
@@ -162,142 +131,138 @@ const BillingDetailsPage = () => {
     }
   };
 
-  if (!patient) {
-    return <div className="p-6">Loading patient details...</div>;
-  }
+  // Print receipt
+  const handlePrintReceipt = () => {
+    const receiptContent = `
+      <h1>Receipt</h1>
+      <p>Patient Name: ${visitData?.patient_data?.first_name} ${
+      visitData?.patient_data?.last_name
+    }</p>
+      <p>Consultation Fee: $${consultationFee.toFixed(2)}</p>
+      <p>Lab Cost: $${labCost.toFixed(2)}</p>
+      <p>Pharmacy Cost: $${pharmacyCost.toFixed(2)}</p>
+      <p>Total Cost: $${totalCost.toFixed(2)}</p>
+    `;
+    const printWindow = window.open("", "_blank");
+    printWindow?.document.write(receiptContent);
+    printWindow?.document.close();
+    printWindow?.print();
+  };
 
   return (
-    <div className="p-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Billing Details for {patient.first_name} {patient.last_name}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {/* Consultation Fee */}
-          <div className="mb-4">
-            <p className="font-medium">Consultation Fee:</p>
-            <Input
-              type="number"
-              value={consultationFee}
-              onChange={(e) => setConsultationFee(parseFloat(e.target.value))}
-              placeholder="Enter consultation fee"
-            />
-          </div>
+    <PageTransition>
+      {isLoading && <LoadingPage />}
+      <div className="p-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              Billing Details for {visitData?.patient_data?.first_name}{" "}
+              {visitData?.patient_data?.last_name}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {/* Consultation Fee */}
+            <div className="mb-4">
+              <p className="font-medium">Consultation Fee:</p>
+              <div className="flex gap-2">
+                <Input
+                  type="number"
+                  value={consultationFee}
+                  readOnly
+                  placeholder="Consultation fee"
+                />
+                <Button onClick={fetchConsultationFee}>
+                  Generate Consultation Fee
+                </Button>
+              </div>
+            </div>
 
-          {/* Lab Tests */}
-          <div className="mb-4">
-            <p className="font-medium">Lab Tests:</p>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Test Name</TableHead>
-                  <TableHead>Cost</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {labTests.map((test) => (
-                  <TableRow key={test.id}>
-                    <TableCell>{test.test_name}</TableCell>
-                    <TableCell>
-                      <Input
-                        type="number"
-                        value={test.cost}
-                        onChange={(e) =>
-                          setLabTests((prev) =>
-                            prev.map((t) =>
-                              t.id === test.id
-                                ? { ...t, cost: parseFloat(e.target.value) }
-                                : t
-                            )
-                          )
-                        }
-                        placeholder="Enter cost"
-                      />
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+            {/* Lab Cost */}
+            <div className="mb-4">
+              <p className="font-medium">Lab Cost:</p>
+              <div className="flex gap-2">
+                <Input
+                  type="number"
+                  value={labCost}
+                  readOnly
+                  placeholder="Lab cost"
+                />
+                <Button onClick={fetchLabCost}>Generate Lab Cost</Button>
+              </div>
+            </div>
 
-          {/* Pharmacy */}
-          <div className="mb-4">
-            <p className="font-medium">Pharmacy:</p>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Medication</TableHead>
-                  <TableHead>Cost</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {pharmacy.map((med) => (
-                  <TableRow key={med.id}>
-                    <TableCell>{med.medication_name}</TableCell>
-                    <TableCell>
-                      <Input
-                        type="number"
-                        value={med.cost}
-                        onChange={(e) =>
-                          setPharmacy((prev) =>
-                            prev.map((m) =>
-                              m.id === med.id
-                                ? { ...m, cost: parseFloat(e.target.value) }
-                                : m
-                            )
-                          )
-                        }
-                        placeholder="Enter cost"
-                      />
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+            {/* Pharmacy Cost */}
+            <div className="mb-4">
+              <p className="font-medium">Pharmacy Cost:</p>
+              <div className="flex gap-2">
+                <Input
+                  type="number"
+                  value={pharmacyCost}
+                  readOnly
+                  placeholder="Pharmacy cost"
+                />
+                <Button onClick={fetchPharmacyCost}>
+                  Generate Pharmacy Cost
+                </Button>
+              </div>
+            </div>
 
-          {/* Total Cost */}
-          <div className="mt-4">
-            <p className="font-medium">Total Cost: ${calculateTotalCost().toFixed(2)}</p>
-          </div>
+            {/* Calculate Total Button */}
+            <Button className="mt-4" onClick={calculateTotalCost}>
+              Generate Total Cost
+            </Button>
 
-          {/* Save Billing Button */}
-          <Button className="mt-4" onClick={handleSaveBilling}>
-            Save Billing Details
-          </Button>
-        </CardContent>
-      </Card>
+            {/* Total Cost */}
+            <div className="mt-4">
+              <p className="font-medium">Total Cost: ${totalCost.toFixed(2)}</p>
+            </div>
 
-      {/* Success Alert Dialog */}
-      <AlertDialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Success</AlertDialogTitle>
-            <AlertDialogDescription>
-              Billing details saved successfully!
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogAction>OK</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            {/* Save Billing Button */}
+            <Button className="mt-4" onClick={handleSaveBilling}>
+              Save Billing Details
+            </Button>
 
-      {/* Error Alert Dialog */}
-      <AlertDialog open={showErrorDialog} onOpenChange={setShowErrorDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Error</AlertDialogTitle>
-            <AlertDialogDescription>
-              Failed to save billing details. Please try again.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogAction>OK</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </div>
+            {/* Print Receipt Button */}
+            <Button className="mt-4 ml-2" onClick={handlePrintReceipt}>
+              Print Receipt
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Success Alert Dialog */}
+        <AlertDialog
+          open={showSuccessDialog}
+          onOpenChange={setShowSuccessDialog}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Success</AlertDialogTitle>
+              <AlertDialogDescription>
+                Billing details saved successfully!
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogAction>OK</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Error Alert Dialog */}
+        <AlertDialog open={showErrorDialog} onOpenChange={setShowErrorDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Error</AlertDialogTitle>
+              <AlertDialogDescription>
+                Failed to save billing details. Please try again.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogAction>OK</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
+    </PageTransition>
   );
 };
 

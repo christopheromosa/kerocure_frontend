@@ -1,9 +1,8 @@
 import { columns } from "@/components/tables/consultation-data-table/columns";
 import { DataTable } from "@/components/tables/consultation-data-table/consultation-data-table";
 import React from "react";
-import {
-  PatientType,
-} from "@/components/tables/triage-data-table/columns";
+import { PatientType } from "@/components/tables/triage-data-table/columns";
+import PageTransition from "@/components/PageTransition";
 
 export async function getTriagedPatientsData(): Promise<PatientType[]> {
   // todo: implement fetch patients functionality
@@ -15,11 +14,12 @@ export async function getTriagedPatientsData(): Promise<PatientType[]> {
 
 export default async function ConsultationPage() {
   const data = await getTriagedPatientsData();
-  
 
   return (
     <div className="">
-      <DataTable columns={columns} data={data} />
+      <PageTransition>
+        <DataTable columns={columns} data={data} />
+      </PageTransition>
     </div>
   );
 }

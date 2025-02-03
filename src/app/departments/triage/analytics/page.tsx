@@ -24,6 +24,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 // import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/context/AuthContext";
+import LoadingPage from "@/components/loading_animation";
+import PageTransition from "@/components/PageTransition";
 
 // Define the schema for triage data
 const triageSchema = z.object({
@@ -45,6 +47,7 @@ export default function TriageTable() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedTriage, setSelectedTriage] = useState<TriageType | null>(null);
+   const [isLoading, setIsLoading] = useState(false);
   const { authState } = useAuth();
   // const { toast } = useToast();
 
@@ -60,6 +63,7 @@ export default function TriageTable() {
   // Fetch triage data
   useEffect(() => {
     const fetchTriageData = async () => {
+      setIsLoading(true);
       try {
         const res = await fetch("http://localhost:8000/triage/", {
           headers: {
@@ -71,6 +75,7 @@ export default function TriageTable() {
           const data = await res.json();
           setTriageData(data);
           console.log(data);
+           setIsLoading(false);
         } else {
           console.error("Failed to fetch triage data");
         }
@@ -161,6 +166,9 @@ export default function TriageTable() {
   };
 
   return (
+    <PageTransition>
+    {isLoading && <LoadingPage />}
+
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-6">Triage Data</h1>
 
@@ -289,5 +297,6 @@ export default function TriageTable() {
         </DialogContent>
       </Dialog>
     </div>
+    </PageTransition>
   );
 }
