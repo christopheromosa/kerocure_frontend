@@ -33,7 +33,7 @@ type PatientType = {
   first_name: string;
   last_name: string;
   dob: string;
-  phone: string;
+  contact_number: string;
 };
 interface triageType {
   weight: number;
@@ -57,12 +57,13 @@ const Patient = () => {
     formState: { errors },
   } = useForm<triageType>({ resolver: zodResolver(triageSchema) });
 
-  const [visitId, setVisitId] = useState<number | null>(null);
+  // const [visitId, setVisitId] = useState<number | null>(null);
   const router = useRouter();
 
   useEffect(() => {
     if (!patientId) return;
     console.log(patientId);
+ 
     
 
     const fetchPatientData = async () => {
@@ -79,64 +80,57 @@ const Patient = () => {
     };
        
 
-    const createVisit = async () => {
-      const visitData = {
-        patient: Number(patientId),
-        current_state: "triage",
-        next_state: "consultation",
-        total_cost: 0,
-      };
 
-      try {
-        const res = await fetch("http://localhost:8000/visits/", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Token ${authState?.token}`,
-          },
-          body: JSON.stringify(visitData),
-        });
-
-        if (res.ok) {
-          const visit = await res.json();
-                   
-          setVisitId(visit.visit_id);
-        } else {
-          console.error("Failed to create visit");
-        }
-      } catch (error) {
-        console.error("Error creating visit:", error);
-      }
-    };
 
     fetchPatientData();
-    createVisit();
   }, [patientId, authState?.token]);
 
-  if (!patientId || !visitId) return <Loading />;
+  if (!patientId ) return <Loading />;
 
-  const onSubmit = async (data: triageType) => {
-    if (!visitId) {
-      console.error("No visit ID found.");
-      return;
-    }
+const onSubmit = async (data: triageType) => {
+  if (!patientId) {
+    console.error("No patient ID found.");
+    return;
+  }
 
-    const triageData = {
-      visit: visitId,
-      vital_signs: {
-        weight: data.weight,
-        height: data.height,
-        systolic: data.systolic,
-        diastolic: data.diastolic,
-        pulse: data.pulse,
+  // Create visit instance before submitting triage data
+  const visitData = {
+    patient: Number(patientId),
+    current_state: "triage",
+    next_state: "consultation",
+    total_cost: 0,
+  };
+
+  try {
+    const res = await fetch("http://localhost:8000/visits/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Token ${authState?.token}`,
       },
-      recorded_by: authState?.user_id,
-    };
+      body: JSON.stringify(visitData),
+    });
 
-    console.log(triageData);
+    if (res.ok) {
+      const visit = await res.json();
+      // setVisitId(visit.visit_id); // Set the visit ID for later use
 
-    try {
-      const res = await fetch("http://localhost:8000/triage/", {
+      // After creating the visit, submit the triage data
+      const triageData = {
+        visit: visit.visit_id,
+        vital_signs: {
+          weight: data.weight,
+          height: data.height,
+          systolic: data.systolic,
+          diastolic: data.diastolic,
+          pulse: data.pulse,
+        },
+        recorded_by: authState?.user_id,
+      };
+      console.log(triageData);
+      
+
+      const triageRes = await fetch("http://localhost:8000/triage/", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -145,16 +139,20 @@ const Patient = () => {
         body: JSON.stringify(triageData),
       });
 
-      if (res.ok) {
+      if (triageRes.ok) {
         console.log("Triage data submitted successfully!");
         router.push("/departments/triage");
       } else {
         console.error("Failed to submit triage data");
       }
-    } catch (error) {
-      console.error("Error submitting triage data:", error);
+    } else {
+      console.error("Failed to create visit");
     }
-  };
+  } catch (error) {
+    console.error("Error:", error);
+  }
+};
+
 
   return (
     <div className="max-w-2xl mx-auto space-y-6 p-4">
@@ -165,22 +163,23 @@ const Patient = () => {
             <CardTitle>Patient Information</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
-              <p>
-                <strong>First Name:</strong> {patientData.first_name}
-                <strong>Last Name:</strong> {patientData.first_name}
-              </p>
-              <p>
-                <strong>ID:</strong> {patientData.id}
-              </p>
-              <p>
-                <strong>DOB:</strong> {patientData.dob}
-              </p>
-              <p>
-                <strong>Contact:</strong> {patientData.phone}
-              </p>
+            <div className="flex items-center gap-6">
+              {/* Patient Badge with Full Name */}
+              <Badge className="px-4 py-2 text-lg">{`${patientData.first_name} ${patientData.last_name}`}</Badge>
+
+              {/* Patient Details in a Row */}
+              <div className="flex flex-wrap gap-4 text-sm">
+                <p>
+                  <strong>ID:</strong> {patientData.id}
+                </p>
+                <p>
+                  <strong>DOB:</strong> {patientData.dob}
+                </p>
+                <p>
+                  <strong>Contact:</strong> {patientData.contact_number}
+                </p>
+              </div>
             </div>
-            <Badge className="mt-2">{patientData.first_name}</Badge>
           </CardContent>
         </Card>
       )}

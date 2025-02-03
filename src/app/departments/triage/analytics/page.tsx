@@ -1,6 +1,18 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -8,90 +20,151 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import {
-  Table,
-  TableHeader,
-  TableRow,
-  TableHead,
-  TableBody,
-  TableCell,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-// import { useRouter } from "next/navigation";
+import { Label } from "@/components/ui/label";
+// import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from "@/context/AuthContext";
 
-type TriageType = {
+// Define the schema for triage data
+const triageSchema = z.object({
+  weight: z.coerce.number().min(1, "Weight must be a valid number"),
+  height: z.coerce.number().min(1, "Height must be a valid number"),
+  systolic: z.coerce.number().min(1, "Systolic pressure is required"),
+  diastolic: z.coerce.number().min(1, "Diastolic pressure is required"),
+  pulse: z.coerce.number().min(1, "Pulse rate is required"),
+});
+
+type TriageType = z.infer<typeof triageSchema> & {
   id: number;
-  weight: number;
-  height: number;
-  systolic: number;
-  diastolic: number;
-  pulsets: number;
+  visit: number;
+  recorded_by: number;
 };
 
-export default function TriagePage() {
+export default function TriageTable() {
   const [triageData, setTriageData] = useState<TriageType[]>([]);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedTriage, setSelectedTriage] = useState<TriageType | null>(null);
-  const [openEdit, setOpenEdit] = useState(false);
-  const [openDelete, setOpenDelete] = useState(false);
-  // const router = useRouter();
+  const { authState } = useAuth();
+  // const { toast } = useToast();
 
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<TriageType>({
+    resolver: zodResolver(triageSchema),
+  });
+
+  // Fetch triage data
   useEffect(() => {
-    fetchTriageData();
-  }, []);
+    const fetchTriageData = async () => {
+      try {
+        const res = await fetch("http://localhost:8000/triage/", {
+          headers: {
+            Authorization: `Token ${authState?.token}`,
+          },
+        });
 
-  const fetchTriageData = async () => {
-    try {
-      const res = await fetch("http://localhost:8000/triage/");
-      if (!res.ok) throw new Error("Failed to fetch data");
-      const data = await res.json();
-      setTriageData(data);
-    } catch (error) {
-      console.error("Error fetching triage data:", error);
-    }
+        if (res.ok) {
+          const data = await res.json();
+          setTriageData(data);
+          console.log(data);
+        } else {
+          console.error("Failed to fetch triage data");
+        }
+      } catch (error) {
+        console.error("Error fetching triage data:", error);
+      }
+    };
+
+    fetchTriageData();
+  }, [authState?.token]);
+
+  // Handle edit dialog open
+  const handleEditClick = (triage: TriageType) => {
+    setSelectedTriage(triage);
+    reset(triage); // Pre-fill the form with the selected triage data
+    setIsEditDialogOpen(true);
   };
 
-  const handleEdit = async () => {
+  // Handle delete dialog open
+  const handleDeleteClick = (triage: TriageType) => {
+    setSelectedTriage(triage);
+    setIsDeleteDialogOpen(true);
+  };
+
+  // Handle edit form submission
+  const onSubmit = async (data: TriageType) => {
     if (!selectedTriage) return;
+
     try {
       const res = await fetch(
-        `http://localhost:8000/triage/${selectedTriage.id}`,
+        `http://localhost:8000/triage/${selectedTriage.id}/`,
         {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(selectedTriage),
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Token ${authState?.token}`,
+          },
+          body: JSON.stringify(data),
         }
       );
-      if (!res.ok) throw new Error("Failed to update triage");
-      setOpenEdit(false);
-      fetchTriageData(); // Refresh data
+
+      if (res.ok) {
+        const updatedTriage = await res.json();
+        setTriageData((prev) =>
+          prev.map((t) => (t.id === updatedTriage.id ? updatedTriage : t))
+        );
+        setIsEditDialogOpen(false);
+        // toast({
+        //   title: "Success",
+        //   description: "Triage data updated successfully!",
+        // });
+      } else {
+        console.error("Failed to update triage data");
+      }
     } catch (error) {
-      console.error("Error updating triage:", error);
+      console.error("Error updating triage data:", error);
     }
   };
 
-  const handleDelete = async () => {
+  // Handle delete confirmation
+  const handleDeleteConfirm = async () => {
     if (!selectedTriage) return;
+
     try {
       const res = await fetch(
-        `http://localhost:8000/triage/${selectedTriage.id}`,
+        `http://localhost:8000/triage/${selectedTriage.id}/`,
         {
           method: "DELETE",
+          headers: {
+            Authorization: `Token ${authState?.token}`,
+          },
         }
       );
-      if (!res.ok) throw new Error("Failed to delete triage");
-      setOpenDelete(false);
-      fetchTriageData(); // Refresh data
+
+      if (res.ok) {
+        setTriageData((prev) => prev.filter((t) => t.id !== selectedTriage.id));
+        setIsDeleteDialogOpen(false);
+        // toast({
+        //   title: "Success",
+        //   description: "Triage data deleted successfully!",
+        // });
+      } else {
+        console.error("Failed to delete triage data");
+      }
     } catch (error) {
-      console.error("Error deleting triage:", error);
+      console.error("Error deleting triage data:", error);
     }
   };
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Triage Records</h1>
+      <h1 className="text-2xl font-bold mb-6">Triage Data</h1>
 
-      {/* Triage Table */}
+      {/* Triage Data Table */}
       <Table>
         <TableHeader>
           <TableRow>
@@ -106,30 +179,24 @@ export default function TriagePage() {
         </TableHeader>
         <TableBody>
           {triageData.map((triage) => (
-            <TableRow key={triage.id}>
-              <TableCell>{triage.id}</TableCell>
-              <TableCell>{triage.weight} kg</TableCell>
-              <TableCell>{triage.height} cm</TableCell>
-              <TableCell>{triage.systolic} mmHg</TableCell>
-              <TableCell>{triage.diastolic} mmHg</TableCell>
-              <TableCell>{triage.pulsets} bpm</TableCell>
+            <TableRow key={triage.triage_id}>
+              <TableCell>{triage.triage_id}</TableCell>
+              <TableCell>{triage.vital_signs.weight}</TableCell>
+              <TableCell>{triage.vital_signs.height}</TableCell>
+              <TableCell>{triage.vital_signs.systolic}</TableCell>
+              <TableCell>{triage.vital_signs.diastolic}</TableCell>
+              <TableCell>{triage.vital_signs.pulse}</TableCell>
               <TableCell>
                 <Button
                   variant="outline"
-                  onClick={() => {
-                    setSelectedTriage(triage);
-                    setOpenEdit(true);
-                  }}
                   className="mr-2"
+                  onClick={() => handleEditClick(triage)}
                 >
                   Edit
                 </Button>
                 <Button
                   variant="destructive"
-                  onClick={() => {
-                    setSelectedTriage(triage);
-                    setOpenDelete(true);
-                  }}
+                  onClick={() => handleDeleteClick(triage)}
                 >
                   Delete
                 </Button>
@@ -140,89 +207,82 @@ export default function TriagePage() {
       </Table>
 
       {/* Edit Dialog */}
-      <Dialog open={openEdit} onOpenChange={setOpenEdit}>
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit Triage Record</DialogTitle>
+            <DialogTitle>Edit Triage Data</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <Input
-              type="number"
-              placeholder="Weight"
-              value={selectedTriage?.weight ?? ""}
-              onChange={(e) =>
-                setSelectedTriage({
-                  ...selectedTriage!,
-                  weight: +e.target.value,
-                })
-              }
-            />
-            <Input
-              type="number"
-              placeholder="Height"
-              value={selectedTriage?.height ?? ""}
-              onChange={(e) =>
-                setSelectedTriage({
-                  ...selectedTriage!,
-                  height: +e.target.value,
-                })
-              }
-            />
-            <Input
-              type="number"
-              placeholder="Systolic"
-              value={selectedTriage?.systolic ?? ""}
-              onChange={(e) =>
-                setSelectedTriage({
-                  ...selectedTriage!,
-                  systolic: +e.target.value,
-                })
-              }
-            />
-            <Input
-              type="number"
-              placeholder="Diastolic"
-              value={selectedTriage?.diastolic ?? ""}
-              onChange={(e) =>
-                setSelectedTriage({
-                  ...selectedTriage!,
-                  diastolic: +e.target.value,
-                })
-              }
-            />
-            <Input
-              type="number"
-              placeholder="Pulse"
-              value={selectedTriage?.pulsets ?? ""}
-              onChange={(e) =>
-                setSelectedTriage({
-                  ...selectedTriage!,
-                  pulsets: +e.target.value,
-                })
-              }
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setOpenEdit(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleEdit}>Save Changes</Button>
-          </DialogFooter>
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <div className="grid gap-4 py-4">
+              <div>
+                <Label htmlFor="weight">Weight</Label>
+                <Input id="weight" {...register("weight")} />
+                {errors.weight && (
+                  <p className="text-red-500 text-sm">
+                    {errors.weight.message}
+                  </p>
+                )}
+              </div>
+              <div>
+                <Label htmlFor="height">Height</Label>
+                <Input id="height" {...register("height")} />
+                {errors.height && (
+                  <p className="text-red-500 text-sm">
+                    {errors.height.message}
+                  </p>
+                )}
+              </div>
+              <div>
+                <Label htmlFor="systolic">Systolic</Label>
+                <Input id="systolic" {...register("systolic")} />
+                {errors.systolic && (
+                  <p className="text-red-500 text-sm">
+                    {errors.systolic.message}
+                  </p>
+                )}
+              </div>
+              <div>
+                <Label htmlFor="diastolic">Diastolic</Label>
+                <Input id="diastolic" {...register("diastolic")} />
+                {errors.diastolic && (
+                  <p className="text-red-500 text-sm">
+                    {errors.diastolic.message}
+                  </p>
+                )}
+              </div>
+              <div>
+                <Label htmlFor="pulse">Pulse</Label>
+                <Input id="pulse" {...register("pulse")} />
+                {errors.pulse && (
+                  <p className="text-red-500 text-sm">{errors.pulse.message}</p>
+                )}
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="submit">Save Changes</Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
 
       {/* Delete Confirmation Dialog */}
-      <Dialog open={openDelete} onOpenChange={setOpenDelete}>
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Confirm Deletion</DialogTitle>
+            <DialogTitle>Are you sure?</DialogTitle>
           </DialogHeader>
-          <p>Are you sure you want to delete this record?</p>
+          <p>
+            This action cannot be undone. This will permanently delete the
+            triage data.
+          </p>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOpenDelete(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(false)}
+            >
               Cancel
             </Button>
-            <Button variant="destructive" onClick={handleDelete}>
+            <Button variant="destructive" onClick={handleDeleteConfirm}>
               Delete
             </Button>
           </DialogFooter>

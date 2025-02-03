@@ -1,3 +1,4 @@
+import SuccessDialog from "@/components/SuccessDialog";
 import { columns, PatientType } from "@/components/tables/triage-data-table/columns";
 import { DataTable } from "@/components/tables/triage-data-table/triage-data-table";
 
@@ -17,6 +18,7 @@ export default async function TriagePage() {
 
   return (
     <div className="">
+      <SuccessDialog/>
       <DataTable columns={columns} data={data} />
     </div>
   );

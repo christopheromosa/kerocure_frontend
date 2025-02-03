@@ -12,16 +12,19 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown, MoreHorizontal } from "lucide-react";
+import Link from "next/link";
 
-export type consultationType = {
-  id:number,
-  consultationId:string,
-  diagnosis:string,
-  prescription:string,
-  lab_test_ordered:string,   
+
+export type PatientType = {
+  id: number;
+  patientId: string;
+  first_name: string;
+  last_name: string;
+  dob: Date;
+  contactNumber: string;
 };
 
-export const columns: ColumnDef<consultationType>[] = [
+export const columns: ColumnDef<PatientType>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -46,18 +49,45 @@ export const columns: ColumnDef<consultationType>[] = [
   },
   {
     accessorKey: "id",
-    header: "ID",
+    header: "PatientID",
   },
-
   {
-    accessorKey: "consultationId",
+    accessorKey: "first_name",
     header: ({ column }) => {
       return (
         <Button
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          consultation ID
+          First Name
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      );
+    },
+  },
+  {
+    accessorKey: "last_name",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Last Name
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      );
+    },
+  },
+  {
+    accessorKey: "dob",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          DOB
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       );
@@ -65,21 +95,14 @@ export const columns: ColumnDef<consultationType>[] = [
   },
 
   {
-    accessorKey: "diagnosis",
-    header: "Diagnosis",
-  },
-  {
-    accessorKey: "prescription",
-    header: "Prescription",
-  },
-  {
-    accessorKey: "lab_test_ordered",
-    header: "Lab tests",
+    accessorKey: "contact_number",
+    header: "Contact Number",
   },
   {
     id: "actions",
     cell: ({ row }) => {
-      const consultation = row.original;
+      const patient = row.original;
+
 
       return (
         <DropdownMenu>
@@ -92,12 +115,16 @@ export const columns: ColumnDef<consultationType>[] = [
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
             <DropdownMenuItem
-              onClick={() => navigator.clipboard.writeText(consultation.consultationId)}
+              onClick={() => navigator.clipboard.writeText(patient.patientId)}
             >
               Copy payment ID
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>View Staff</DropdownMenuItem>
+            <DropdownMenuItem onClick={async()=>{ await fetchVisitId(patientId, authState?.token);}}>
+              <Link href={`/departments/consultation/${patient.patientId}`}>
+                View patient
+              </Link>{" "}
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       );

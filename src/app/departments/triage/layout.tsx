@@ -22,7 +22,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const links = [
     { label: "Dashboard", href: "/departments/triage", icon: LayoutDashboard },
     { label: "patients", href: "/departments/triage", icon: Users },
-    { label: "reports", href: "/departments/triage/reports", icon: Users },
+    { label: "reports", href: "/departments/triage/analytics", icon: Users },
   ];
   const pathname = usePathname();
   return (

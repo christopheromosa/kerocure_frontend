@@ -46,21 +46,45 @@ export const columns: ColumnDef<LabType>[] = [
   },
   {
     accessorKey: "id",
-    header: "ID",
+    header: "PatientID",
   },
   {
-    accessorKey: "result_id",
-    header: "Result ID",
-  },
-  {
-    accessorKey: "test_name",
+    accessorKey: "first_name",
     header: ({ column }) => {
       return (
         <Button
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          Test Name
+          First Name
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      );
+    },
+  },
+  {
+    accessorKey: "last_name",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Last Name
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      );
+    },
+  },
+  {
+    accessorKey: "dob",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          DOB
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       );
@@ -68,8 +92,8 @@ export const columns: ColumnDef<LabType>[] = [
   },
 
   {
-    accessorKey: "result",
-    header: "Result",
+    accessorKey: "contact_number",
+    header: "Contact",
   },
   {
     id: "actions",

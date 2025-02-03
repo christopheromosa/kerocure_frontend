@@ -47,18 +47,45 @@ export const columns: ColumnDef<BillingType>[] = [
   },
   {
     accessorKey: "id",
-    header: "ID",
+    header: "PatientID",
   },
-
   {
-    accessorKey: "bill_id",
+    accessorKey: "first_name",
     header: ({ column }) => {
       return (
         <Button
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          Billing ID
+          First Name
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      );
+    },
+  },
+  {
+    accessorKey: "last_name",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Last Name
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      );
+    },
+  },
+  {
+    accessorKey: "dob",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          DOB
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       );
@@ -66,12 +93,8 @@ export const columns: ColumnDef<BillingType>[] = [
   },
 
   {
-    accessorKey: "service_name",
-    header: "Service Name",
-  },
-  {
-    accessorKey: "cost",
-    header: "Cost",
+    accessorKey: "contact_number",
+    header: "Contact Number",
   },
   {
     id: "actions",

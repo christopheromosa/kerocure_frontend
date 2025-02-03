@@ -1,5 +1,6 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -31,15 +32,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-
-// Mock data for demonstration
-const mockPatient = {
-  name: "John Doe",
-  vitals: "BP: 120/80, HR: 72",
-  historySummary: "Hypertension, Diabetes",
-};
- 
-
+import { useParams } from "next/navigation";
+import { useVisit } from "@/context/VisitContext";
+import { useAuth } from "@/context/AuthContext";
 
 const testRequestsSchema = z.object({
   testName: z.string().min(1, "Test name is required"),
@@ -54,30 +49,44 @@ type TestRequest = z.infer<typeof testRequestsSchema>;
 type Prescription = z.infer<typeof prescriptionSchema>;
 
 const PatientManagementPage = () => {
-  const [diagnosis, setDiagnosis] = useState<string>("");
-  const [testRequests, setTestRequests] = useState<TestRequest[]>([
+  const { patientId } = useParams();
+  const { visitId } = useVisit();
+  const { authState } = useAuth();
+  
 
-  ]);
-  // const [labResults, setLabResults] = useState<string[]>([]);
+  const [diagnosis, setDiagnosis] = useState<string>("");
+  const [testRequests, setTestRequests] = useState<TestRequest[]>([]);
   const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
   const [showTestRequestPreview, setShowTestRequestPreview] = useState(false);
   const [showPrescriptionPreview, setShowPrescriptionPreview] = useState(false);
-// Add a state to track if the diagnosis has been saved
-const [isDiagnosisSaved, setIsDiagnosisSaved] = useState<boolean>(false);
+  const [isDiagnosisSaved, setIsDiagnosisSaved] = useState<boolean>(false);
+  const [patient, setPatient] = useState(null);
 
-// Function to handle saving the diagnosis
-const handleSaveDiagnosis = async () => {
-  try {
-    // Simulate an API call to save the diagnosis
-    console.log("Saving diagnosis:", diagnosis);
-    // await axios.post("/api/diagnosis", { diagnosis });
-    setIsDiagnosisSaved(true);
-    alert("Diagnosis saved successfully!");
-  } catch (error) {
-    console.error("Failed to save diagnosis:", error);
-    alert("Failed to save diagnosis. Please try again.");
-  }
-};
+  useEffect(() => {
+
+    const fetchPatientData = async () => {
+      try {
+        const response = await axios.get(`/consultation/${patientId}`);
+        setPatient(response.data);
+      } catch (error) {
+        console.error("Failed to fetch patient data:", error);
+      }
+    };
+
+    fetchPatientData();
+  }, [patientId]);
+
+  const handleSaveDiagnosis = async () => {
+    try {
+      await axios.post(`/consultation/${patientId}`, { diagnosis });
+      setIsDiagnosisSaved(true);
+      alert("Diagnosis saved successfully!");
+    } catch (error) {
+      console.error("Failed to save diagnosis:", error);
+      alert("Failed to save diagnosis. Please try again.");
+    }
+  };
+
   const {
     control: testRequestControl,
     handleSubmit: handleTestRequestSubmit,
@@ -105,20 +114,18 @@ const handleSaveDiagnosis = async () => {
   };
 
   const handleDeleteTestRequest = (index: number) => {
-    console.log("Deleting test request at index:", index); // Debugging
     setTestRequests(testRequests.filter((_, i) => i !== index));
   };
 
   const handleDeletePrescription = (index: number) => {
-    console.log("Deleting prescription at index:", index); // Debugging
     setPrescriptions(prescriptions.filter((_, i) => i !== index));
   };
 
   const handleSaveTestRequests = async () => {
     try {
-      // Simulate API call to save test requests
-      console.log("Saving test requests:", testRequests);
-      // await axios.post("/api/test-requests", testRequests);
+      await axios.post(`/consultation/${patientId}`, {
+        lab_tests_ordered: testRequests,
+      });
       setShowTestRequestPreview(false);
       alert("Test requests saved successfully!");
     } catch (error) {
@@ -128,9 +135,7 @@ const handleSaveDiagnosis = async () => {
 
   const handleSavePrescriptions = async () => {
     try {
-      // Simulate API call to save prescriptions
-      console.log("Saving prescriptions:", prescriptions);
-      // await axios.post("/api/prescriptions", prescriptions);
+      await axios.post(`/consultation/${patientId}`, { prescriptions });
       setShowPrescriptionPreview(false);
       alert("Prescriptions saved successfully!");
     } catch (error) {
@@ -138,7 +143,6 @@ const handleSaveDiagnosis = async () => {
     }
   };
 
-  // Table columns for Test Requests
   const testRequestColumns: ColumnDef<TestRequest>[] = [
     {
       accessorKey: "testName",
@@ -147,21 +151,17 @@ const handleSaveDiagnosis = async () => {
     {
       id: "actions",
       header: "Actions",
-      cell: ({ row }) => {
-        console.log("Rendering delete button for row:", row.index); // Debugging
-        return (
-          <Button
-            variant="destructive"
-            onClick={() => handleDeleteTestRequest(row.index)}
-          >
-            Delete
-          </Button>
-        );
-      },
+      cell: ({ row }) => (
+        <Button
+          variant="destructive"
+          onClick={() => handleDeleteTestRequest(row.index)}
+        >
+          Delete
+        </Button>
+      ),
     },
   ];
 
-  // Table columns for Prescriptions
   const prescriptionColumns: ColumnDef<Prescription>[] = [
     {
       accessorKey: "medication",
@@ -174,28 +174,23 @@ const handleSaveDiagnosis = async () => {
     {
       id: "actions",
       header: "Actions",
-      cell: ({ row }) => {
-        console.log("Rendering delete button for row:", row.index); // Debugging
-        return (
-          <Button
-            variant="destructive"
-            onClick={() => handleDeletePrescription(row.index)}
-          >
-            Delete
-          </Button>
-        );
-      },
+      cell: ({ row }) => (
+        <Button
+          variant="destructive"
+          onClick={() => handleDeletePrescription(row.index)}
+        >
+          Delete
+        </Button>
+      ),
     },
   ];
 
-  // React Table for Test Requests
   const testRequestTable = useReactTable({
     data: testRequests,
     columns: testRequestColumns,
     getCoreRowModel: getCoreRowModel(),
   });
 
-  // React Table for Prescriptions
   const prescriptionTable = useReactTable({
     data: prescriptions,
     columns: prescriptionColumns,
@@ -207,12 +202,9 @@ const handleSaveDiagnosis = async () => {
       {/* Patient Header */}
       <Card className="mb-6">
         <CardHeader>
-          
-          <CardTitle>Name: {mockPatient.name}</CardTitle>
-          <span>Vitals: {mockPatient.vitals}</span>
-          <span>History: {mockPatient.historySummary}</span>
-
-         
+          <CardTitle>Name: {patient?.name}</CardTitle>
+          <span>Vitals: {patient?.vitals}</span>
+          <span>History: {patient?.historySummary}</span>
           <Button variant="outline" onClick={() => console.log("Go back")}>
             Back to Patient List
           </Button>
@@ -238,14 +230,16 @@ const handleSaveDiagnosis = async () => {
             <CardContent>
               <Textarea
                 value={diagnosis}
-                onChange={(e) => {setDiagnosis(e.target.value);setIsDiagnosisSaved(false)}}
+                onChange={(e) => {
+                  setDiagnosis(e.target.value);
+                  setIsDiagnosisSaved(false);
+                }}
                 placeholder="Enter diagnosis..."
-                
               />
               <Button
                 className="mt-4"
                 onClick={handleSaveDiagnosis}
-                disabled={isDiagnosisSaved} // Disable the button if diagnosis is already saved
+                disabled={isDiagnosisSaved}
               >
                 {isDiagnosisSaved ? "Diagnosis Saved" : "Save Diagnosis"}
               </Button>
@@ -346,14 +340,13 @@ const handleSaveDiagnosis = async () => {
                   )}
                 />
                 <div className="mt-4">
-                <Controller
-                
-                  name="dosage"
-                  control={prescriptionControl}
-                  render={({ field }) => (
-                    <Input {...field} placeholder="Enter dosage" />
-                  )}
-                />
+                  <Controller
+                    name="dosage"
+                    control={prescriptionControl}
+                    render={({ field }) => (
+                      <Input {...field} placeholder="Enter dosage" />
+                    )}
+                  />
                 </div>
                 <Button type="submit" className="mt-4">
                   Add Prescription

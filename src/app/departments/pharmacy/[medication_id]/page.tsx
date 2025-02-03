@@ -1,6 +1,5 @@
-// app/pharmacy/[patient_id]/page.tsx
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -23,128 +22,141 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { useAuth } from "@/context/AuthContext";
+import { PatientType } from "@/components/tables/triage-data-table/columns";
 
-// Mock data for demonstration
-const mockPatients = [
-  {
-    id: 1,
-    name: "John Doe",
-    prescriptions: [
-      {
-        id: 1,
-        medication: "Paracetamol",
-        dosage: "500mg",
-        available: false,
-        cost: 10,
-      },
-      {
-        id: 2,
-        medication: "Ibuprofen",
-        dosage: "400mg",
-        available: true,
-        cost: 15,
-      },
-    ],
-  },
-  {
-    id: 2,
-    name: "Jane Smith",
-    prescriptions: [
-      {
-        id: 3,
-        medication: "Amoxicillin",
-        dosage: "500mg",
-        available: true,
-        cost: 20,
-      },
-      {
-        id: 4,
-        medication: "Cetirizine",
-        dosage: "10mg",
-        available: false,
-        cost: 5,
-      },
-    ],
-  },
-];
+// Define the type for a prescription
+interface Prescription {
+  id: number;
+  medication_name: string;
+  quantity: number;
+  cost: number;
+  dispensed: boolean;
+}
 
 const PharmacyDetailsPage = () => {
   const params = useParams();
-  const patientId = params.medication_id as string;
-  console.log(patientId);
-  
-  
-  
-  
+  const patientId = params.patient_id as string;
+  const { authState } = useAuth();
+  const [patient, setPatient] = useState<PatientType>();
+  const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
   const [showSuccessDialog, setShowSuccessDialog] = useState<boolean>(false);
   const [showErrorDialog, setShowErrorDialog] = useState<boolean>(false);
 
-  // Find the selected patient
-  const selectedPatient = mockPatients.find(
-    (patient) => patient.id === parseInt(patientId)
-  );
+  // Fetch patient details and prescriptions on page load
+  useEffect(() => {
+    const fetchPatientAndPrescriptions = async () => {
+      try {
+        // Fetch patient details
+        const patientRes = await fetch(
+          `http://localhost:8000/patients/${patientId}/`,
+          {
+            headers: {
+              Authorization: `Token ${authState?.token}`,
+            },
+          }
+        );
 
-  // State for pharmacy details
-  const [prescriptions, setPrescriptions] = useState(
-    selectedPatient?.prescriptions || []
-  );
+        if (!patientRes.ok) {
+          throw new Error("Failed to fetch patient details");
+        }
+
+        const patientData = await patientRes.json();
+        setPatient(patientData);
+
+        // Fetch prescriptions for the patient's visit
+        const visitRes = await fetch(
+          `http://localhost:8000/consultation/${patientData.visit_id}/`,
+          {
+            headers: {
+              Authorization: `Token ${authState?.token}`,
+            },
+          }
+        );
+
+        if (!visitRes.ok) {
+          throw new Error("Failed to fetch prescriptions");
+        }
+
+        const visitData = await visitRes.json();
+        setPrescriptions(visitData.prescriptions || []);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        setShowErrorDialog(true);
+      }
+    };
+
+    fetchPatientAndPrescriptions();
+  }, [patientId, authState?.token]);
 
   // Function to calculate total cost
   const calculateTotalCost = () => {
     return prescriptions
-      .filter((prescription) => prescription.available)
+      .filter((prescription) => prescription.dispensed)
       .reduce((total, prescription) => total + prescription.cost, 0);
   };
 
   // Function to save prescription details
   const handleSavePrescription = async () => {
     try {
-      // Simulate API call to save prescription details
-      console.log("Saving prescription details for patient:", {
-        prescriptions,
-        totalCost: calculateTotalCost(),
+      const res = await fetch("http://localhost:8000/pharmacy/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Token ${authState?.token}`,
+        },
+        body: JSON.stringify({
+          prescriptions,
+          totalCost: calculateTotalCost(),
+        }),
       });
-      // await axios.post("/api/save-prescription", { ... });
-      setShowSuccessDialog(true); // Show success dialog
+
+      if (res.ok) {
+        setShowSuccessDialog(true);
+      } else {
+        throw new Error("Failed to save prescription details");
+      }
     } catch (error) {
-      console.error("Failed to save prescription details:", error);
-      setShowErrorDialog(true); // Show error dialog
+      console.error("Error saving prescription details:", error);
+      setShowErrorDialog(true);
     }
   };
 
-  if (!selectedPatient) {
-    return <div className="p-6">Patient not found.</div>;
+  if (!patient) {
+    return <div className="p-6">Loading patient details...</div>;
   }
 
   return (
-    <div className="p-6 ">
+    <div className="p-6">
       <Card>
         <CardHeader>
-          <CardTitle>Prescriptions for {selectedPatient.name}</CardTitle>
+          <CardTitle>
+            Prescriptions for {patient.first_name} {patient.last_name}
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Medication</TableHead>
-                <TableHead>Dosage</TableHead>
-                <TableHead>Available</TableHead>
+                <TableHead>Quantity</TableHead>
+                <TableHead>Dispensed</TableHead>
                 <TableHead>Cost</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {prescriptions.map((prescription) => (
                 <TableRow key={prescription.id}>
-                  <TableCell>{prescription.medication}</TableCell>
-                  <TableCell>{prescription.dosage}</TableCell>
+                  <TableCell>{prescription.medication_name}</TableCell>
+                  <TableCell>{prescription.quantity}</TableCell>
                   <TableCell>
                     <Checkbox
-                      checked={prescription.available}
+                      checked={prescription.dispensed}
                       onCheckedChange={(checked) =>
                         setPrescriptions((prev) =>
                           prev.map((p) =>
                             p.id === prescription.id
-                              ? { ...p, available: checked as boolean }
+                              ? { ...p, dispensed: checked as boolean }
                               : p
                           )
                         )

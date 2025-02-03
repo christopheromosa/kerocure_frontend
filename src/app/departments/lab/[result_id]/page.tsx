@@ -1,6 +1,5 @@
-// app/lab/[result_id]/page.tsx
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,43 +21,73 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { useAuth } from "@/context/AuthContext";
 
-// Mock data for demonstration
-const mockPatients = [
-  {
-    id: 1,
-    name: "John Doe",
-    tests: [{ id: 1, testName: "Blood Test", result: "" }],
-  },
-  {
-    id: 2,
-    name: "Jane Smith",
-    tests: [{ id: 2, testName: "X-Ray", result: "" }],
-  },
-  {
-    id: 3,
-    name: "Alice Johnson",
-    tests: [{ id: 3, testName: "Urine Test", result: "" }],
-  },
-];
+// Define the type for a test order
+interface TestOrder {
+  id: number;
+  test_name: string;
+  result: string;
+}
 
 const LabResultsPage = () => {
   const params = useParams();
   const resultId = params.result_id as string;
+  const { authState } = useAuth();
+  const [patient, setPatient] = useState<any>(null);
+  const [testOrders, setTestOrders] = useState<TestOrder[]>([]);
   const [showSuccessDialog, setShowSuccessDialog] = useState<boolean>(false);
   const [showErrorDialog, setShowErrorDialog] = useState<boolean>(false);
 
-  // Find the selected patient
-  const selectedPatient = mockPatients.find(
-    (patient) => patient.id === parseInt(resultId)
-  );
+  // Fetch patient details and test orders on page load
+  useEffect(() => {
+    const fetchPatientAndTestOrders = async () => {
+      try {
+        // Fetch patient details
+        const patientRes = await fetch(
+          `http://localhost:8000/patients/${resultId}/`,
+          {
+            headers: {
+              Authorization: `Token ${authState?.token}`,
+            },
+          }
+        );
 
-  // State for test results
-  const [tests, setTests] = useState(selectedPatient?.tests || []);
+        if (!patientRes.ok) {
+          throw new Error("Failed to fetch patient details");
+        }
+
+        const patientData = await patientRes.json();
+        setPatient(patientData);
+
+        // Fetch test orders for the patient's visit
+        const visitRes = await fetch(
+          `http://localhost:8000/consultation/${patientData.visit_id}/`,
+          {
+            headers: {
+              Authorization: `Token ${authState?.token}`,
+            },
+          }
+        );
+
+        if (!visitRes.ok) {
+          throw new Error("Failed to fetch test orders");
+        }
+
+        const visitData = await visitRes.json();
+        setTestOrders(visitData.test_orders || []);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        setShowErrorDialog(true);
+      }
+    };
+
+    fetchPatientAndTestOrders();
+  }, [resultId, authState?.token]);
 
   // Function to handle updating test results
   const handleResultChange = (testId: number, result: string) => {
-    setTests((prev) =>
+    setTestOrders((prev) =>
       prev.map((test) => (test.id === testId ? { ...test, result } : test))
     );
   };
@@ -66,27 +95,39 @@ const LabResultsPage = () => {
   // Function to submit test results
   const handleSubmitResults = async () => {
     try {
-      // Simulate API call to submit test results
-      console.log("Submitting test results for patient:", {
-        tests,
+      const res = await fetch("http://localhost:8000/lab/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Token ${authState?.token}`,
+        },
+        body: JSON.stringify({
+          test_orders: testOrders,
+        }),
       });
-      // await axios.post("/api/submit-test-results", { ... });
-      setShowSuccessDialog(true); // Show success dialog
+
+      if (res.ok) {
+        setShowSuccessDialog(true);
+      } else {
+        throw new Error("Failed to submit test results");
+      }
     } catch (error) {
-      console.error("Failed to submit test results:", error);
-      setShowErrorDialog(true); // Show error dialog
+      console.error("Error submitting test results:", error);
+      setShowErrorDialog(true);
     }
   };
 
-  if (!selectedPatient) {
-    return <div className="p-6">Patient not found.</div>;
+  if (!patient) {
+    return <div className="p-6">Loading patient details...</div>;
   }
 
   return (
     <div className="p-6">
       <Card>
         <CardHeader>
-          <CardTitle>Test Results for {selectedPatient.name}</CardTitle>
+          <CardTitle>
+            Test Results for {patient.first_name} {patient.last_name}
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
@@ -97,9 +138,9 @@ const LabResultsPage = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {tests.map((test) => (
+              {testOrders.map((test) => (
                 <TableRow key={test.id}>
-                  <TableCell>{test.testName}</TableCell>
+                  <TableCell>{test.test_name}</TableCell>
                   <TableCell>
                     <Input
                       value={test.result}

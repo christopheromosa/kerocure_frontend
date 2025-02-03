@@ -17,7 +17,8 @@ import Link from "next/link";
 export type PatientType = {
   id: number;
   patientId: string;
-  name: string;
+  first_name:string;
+  last_name:string;
   dob: Date;
   contactNumber: string;
 };

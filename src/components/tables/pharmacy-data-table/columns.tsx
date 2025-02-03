@@ -47,21 +47,45 @@ export const columns: ColumnDef<MedicationType>[] = [
   },
   {
     accessorKey: "id",
-    header: "ID",
+    header: "PatientID",
   },
   {
-    accessorKey: "medication_id",
-    header: "Medication ID",
-  },
-  {
-    accessorKey: "medication_name",
+    accessorKey: "first_name",
     header: ({ column }) => {
       return (
         <Button
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          Medication Name
+          First Name
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      );
+    },
+  },
+  {
+    accessorKey: "last_name",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Last Name
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      );
+    },
+  },
+  {
+    accessorKey: "dob",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          DOB
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       );
@@ -69,12 +93,8 @@ export const columns: ColumnDef<MedicationType>[] = [
   },
 
   {
-    accessorKey: "quantity",
-    header: "Quantity",
-  },
-  {
-    accessorKey: "cost",
-    header: "Cost",
+    accessorKey: "contact_number",
+    header: "Contact Number",
   },
 
   {
@@ -93,7 +113,9 @@ export const columns: ColumnDef<MedicationType>[] = [
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
             <DropdownMenuItem
-              onClick={() => navigator.clipboard.writeText(pharmacy.medication_id)}
+              onClick={() =>
+                navigator.clipboard.writeText(pharmacy.medication_id)
+              }
             >
               Copy Patient ID
             </DropdownMenuItem>

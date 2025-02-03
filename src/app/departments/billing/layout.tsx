@@ -26,7 +26,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       icon: LayoutDashboard,
     },
     { label: "patients", href: "/departments/billing", icon: Users },
-    { label: "reports", href: "/departments/reports", icon: Users },
+    { label: "reports", href: "/departments/analytics", icon: Users },
   ];
   const pathname = usePathname();
   return (

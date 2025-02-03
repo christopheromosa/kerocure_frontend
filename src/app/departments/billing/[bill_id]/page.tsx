@@ -1,6 +1,5 @@
-// app/billing/[bill_id]/page.tsx
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,54 +21,111 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { useAuth } from "@/context/AuthContext";
 
-// Mock data for demonstration
-const mockPatients = [
-  {
-    id: 1,
-    name: "John Doe",
-    consultationFee: 50,
-    labTests: [
-      { id: 1, testName: "Blood Test", cost: 25 },
-      { id: 2, testName: "X-Ray", cost: 50 },
-    ],
-    pharmacy: [
-      { id: 1, medication: "Paracetamol", cost: 10 },
-      { id: 2, medication: "Ibuprofen", cost: 15 },
-    ],
-  },
-  {
-    id: 2,
-    name: "Jane Smith",
-    consultationFee: 50,
-    labTests: [
-      { id: 3, testName: "Urine Test", cost: 15 },
-      { id: 4, testName: "MRI", cost: 100 },
-    ],
-    pharmacy: [
-      { id: 3, medication: "Amoxicillin", cost: 20 },
-      { id: 4, medication: "Cetirizine", cost: 5 },
-    ],
-  },
-];
+// Define the type for lab test and pharmacy data
+interface LabTest {
+  id: number;
+  test_name: string;
+  cost: number;
+}
+
+interface PharmacyMedication {
+  id: number;
+  medication_name: string;
+  cost: number;
+}
 
 const BillingDetailsPage = () => {
   const params = useParams();
   const billId = params.bill_id as string;
+  const { authState } = useAuth();
+  const [patient, setPatient] = useState<any>(null);
+  const [consultationFee, setConsultationFee] = useState<number>(0);
+  const [labTests, setLabTests] = useState<LabTest[]>([]);
+  const [pharmacy, setPharmacy] = useState<PharmacyMedication[]>([]);
   const [showSuccessDialog, setShowSuccessDialog] = useState<boolean>(false);
   const [showErrorDialog, setShowErrorDialog] = useState<boolean>(false);
 
-  // Find the selected patient
-  const selectedPatient = mockPatients.find(
-    (patient) => patient.id === parseInt(billId)
-  );
+  // Fetch patient details, consultation fees, lab tests, and pharmacy data on page load
+  useEffect(() => {
+    const fetchBillingData = async () => {
+      try {
+        // Fetch patient details
+        const patientRes = await fetch(
+          `http://localhost:8000/patients/${billId}/`,
+          {
+            headers: {
+              Authorization: `Token ${authState?.token}`,
+            },
+          }
+        );
 
-  // State for billing details
-  const [consultationFee, setConsultationFee] = useState<number>(
-    selectedPatient?.consultationFee || 0
-  );
-  const [labTests, setLabTests] = useState(selectedPatient?.labTests || []);
-  const [pharmacy, setPharmacy] = useState(selectedPatient?.pharmacy || []);
+        if (!patientRes.ok) {
+          throw new Error("Failed to fetch patient details");
+        }
+
+        const patientData = await patientRes.json();
+        setPatient(patientData);
+
+        // Fetch consultation fees
+        const consultationRes = await fetch(
+          `http://localhost:8000/consultation/${patientData.visit_id}/`,
+          {
+            headers: {
+              Authorization: `Token ${authState?.token}`,
+            },
+          }
+        );
+
+        if (!consultationRes.ok) {
+          throw new Error("Failed to fetch consultation fees");
+        }
+
+        const consultationData = await consultationRes.json();
+        setConsultationFee(consultationData.fee || 0);
+
+        // Fetch lab tests
+        const labRes = await fetch(
+          `http://localhost:8000/lab/${patientData.visit_id}/`,
+          {
+            headers: {
+              Authorization: `Token ${authState?.token}`,
+            },
+          }
+        );
+
+        if (!labRes.ok) {
+          throw new Error("Failed to fetch lab tests");
+        }
+
+        const labData = await labRes.json();
+        setLabTests(labData.tests || []);
+
+        // Fetch pharmacy data
+        const pharmacyRes = await fetch(
+          `http://localhost:8000/pharmacy/${patientData.visit_id}/`,
+          {
+            headers: {
+              Authorization: `Token ${authState?.token}`,
+            },
+          }
+        );
+
+        if (!pharmacyRes.ok) {
+          throw new Error("Failed to fetch pharmacy data");
+        }
+
+        const pharmacyData = await pharmacyRes.json();
+        setPharmacy(pharmacyData.medications || []);
+      } catch (error) {
+        console.error("Error fetching billing data:", error);
+        setShowErrorDialog(true);
+      }
+    };
+
+    fetchBillingData();
+  }, [billId, authState?.token]);
 
   // Function to calculate total cost
   const calculateTotalCost = () => {
@@ -81,30 +137,40 @@ const BillingDetailsPage = () => {
   // Function to save billing details
   const handleSaveBilling = async () => {
     try {
-      // Simulate API call to save billing details
-      console.log("Saving billing details for patient:", {
-        consultationFee,
-        labTests,
-        pharmacy,
-        totalCost: calculateTotalCost(),
+      const res = await fetch("http://localhost:8000/billing/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Token ${authState?.token}`,
+        },
+        body: JSON.stringify({
+          consultationFee,
+          labTests,
+          pharmacy,
+          totalCost: calculateTotalCost(),
+        }),
       });
-      // await axios.post("/api/save-billing", { ... });
-      setShowSuccessDialog(true); // Show success dialog
+
+      if (res.ok) {
+        setShowSuccessDialog(true);
+      } else {
+        throw new Error("Failed to save billing details");
+      }
     } catch (error) {
-      console.error("Failed to save billing details:", error);
-      setShowErrorDialog(true); // Show error dialog
+      console.error("Error saving billing details:", error);
+      setShowErrorDialog(true);
     }
   };
 
-  if (!selectedPatient) {
-    return <div className="p-6">Patient not found.</div>;
+  if (!patient) {
+    return <div className="p-6">Loading patient details...</div>;
   }
 
   return (
     <div className="p-6">
       <Card>
         <CardHeader>
-          <CardTitle>Billing Details for {selectedPatient.name}</CardTitle>
+          <CardTitle>Billing Details for {patient.first_name} {patient.last_name}</CardTitle>
         </CardHeader>
         <CardContent>
           {/* Consultation Fee */}
@@ -131,7 +197,7 @@ const BillingDetailsPage = () => {
               <TableBody>
                 {labTests.map((test) => (
                   <TableRow key={test.id}>
-                    <TableCell>{test.testName}</TableCell>
+                    <TableCell>{test.test_name}</TableCell>
                     <TableCell>
                       <Input
                         type="number"
@@ -167,7 +233,7 @@ const BillingDetailsPage = () => {
               <TableBody>
                 {pharmacy.map((med) => (
                   <TableRow key={med.id}>
-                    <TableCell>{med.medication}</TableCell>
+                    <TableCell>{med.medication_name}</TableCell>
                     <TableCell>
                       <Input
                         type="number"
@@ -192,7 +258,7 @@ const BillingDetailsPage = () => {
 
           {/* Total Cost */}
           <div className="mt-4">
-            <p className="font-medium">Total Cost: ${calculateTotalCost()}</p>
+            <p className="font-medium">Total Cost: ${calculateTotalCost().toFixed(2)}</p>
           </div>
 
           {/* Save Billing Button */}
