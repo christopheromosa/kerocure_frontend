@@ -36,6 +36,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <div className="flex min-h-screen">
+
             <AuthProvider>{children}</AuthProvider>
           </div>
         </ThemeProvider>

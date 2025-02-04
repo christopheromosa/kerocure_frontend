@@ -100,8 +100,8 @@ const onSubmit = async (data: triageType) => {
   // Create visit instance before submitting triage data
   const visitData = {
     patient: Number(patientId),
-    current_state: "triage",
-    next_state: "consultation",
+    current_state: "TRIAGE",
+    next_state: "CONSULTATION",
     total_cost: 0,
   };
 

@@ -1,25 +1,36 @@
+"use client"
+import LoadingPage from "@/components/loading_animation";
 import PageTransition from "@/components/PageTransition";
-import { PatientType } from "@/components/tables/consultation-data-table/columns";
 import { columns } from "@/components/tables/pharmacy-data-table/columns";
 import { DataTable } from "@/components/tables/pharmacy-data-table/pharmacy-data-table";
-import React from "react";
+import React, { useEffect, useState } from "react";
 
-export async function getPharmacyPatientsData(): Promise<PatientType[]> {
-  // todo: implement fetch patients functionality
-  const response = await fetch("http://localhost:8000/api/pharmacy-patients/", {
-    cache: "no-store",
-  });
-  return await response.json();
-}
+export default function PharmacyPage() {
 
-export default async function PharmacyPage() {
-  const data = await getPharmacyPatientsData();
+
+  const [data, setData] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    async function getPharmacyPatientsData() {
+      setIsLoading(true);
+      // todo: implement fetch patients functionality
+      const response = await fetch("http://localhost:8000/patients", {
+        cache: "no-store",
+      });
+      if (response.ok) {
+        const newData = await response.json();
+        setData(newData);
+        setIsLoading(false);
+      }
+    }
+    getPharmacyPatientsData();
+  }, []);
 
   return (
     <PageTransition>
-      <div className="">
-        <DataTable columns={columns} data={data} />
-      </div>
+      {isLoading && <LoadingPage />}
+      <DataTable columns={columns} data={data} />
     </PageTransition>
   );
 }

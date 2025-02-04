@@ -14,7 +14,6 @@ import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown, MoreHorizontal } from "lucide-react";
 import Link from "next/link";
 
-
 export type PatientType = {
   id: number;
   patientId: string;
@@ -102,8 +101,6 @@ export const columns: ColumnDef<PatientType>[] = [
     id: "actions",
     cell: ({ row }) => {
       const patient = row.original;
-
-
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -116,7 +113,7 @@ export const columns: ColumnDef<PatientType>[] = [
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
             <DropdownMenuItem
               onClick={() =>
-                navigator.clipboard.writeText(patient.id.toString())
+                navigator.clipboard.writeText(patient.patientId.toString())
               }
             >
               Copy payment ID

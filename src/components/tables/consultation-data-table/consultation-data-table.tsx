@@ -101,15 +101,16 @@ export function DataTable<TData, TValue>({
     <div className="space-y-1 px-4 py-2">
       <div className="flex justify-between pb-4">
         <Input
-          placeholder="Filter name..."
-          value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
+          placeholder="Filter by first name..."
+          value={
+            (table.getColumn("first_name")?.getFilterValue() as string) ?? ""
+          }
           onChange={(event) =>
-            table.getColumn("name")?.setFilterValue(event.target.value)
+            table.getColumn("first_name")?.setFilterValue(event.target.value)
           }
           className="w-3/4 mr-4"
         />
         <div className="flex justify-around gap-1">
-         
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" className="ml-auto">

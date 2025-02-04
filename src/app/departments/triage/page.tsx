@@ -1,5 +1,5 @@
 // import SuccessDialog from "@/components/SuccessDialog";
-
+"use client"
 import LoadingPage from "@/components/loading_animation";
 import PageTransition from "@/components/PageTransition";
 import { columns } from "@/components/tables/triage-data-table/columns";

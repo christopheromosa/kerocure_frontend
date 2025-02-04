@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+
 import {
   Table,
   TableHeader,
@@ -36,6 +36,8 @@ import { useParams, useRouter } from "next/navigation";
 import { useVisit } from "@/context/VisitContext";
 import { useAuth } from "@/context/AuthContext";
 import PageTransition from "@/components/PageTransition";
+import MDEditor from "@uiw/react-md-editor";
+import LoadingPage from "@/components/loading_animation";
 
 const testRequestsSchema = z.object({
   test_name: z.string().min(1, "Test name is required"),
@@ -51,47 +53,77 @@ type Prescription = z.infer<typeof prescriptionSchema>;
 
 const PatientManagementPage = () => {
   const { patientId } = useParams();
+
   const router = useRouter();
   const { visitData, fetchVisitData } = useVisit();
-  const [diagnosis, setDiagnosis] = useState<string>("");
+  const [diagnosis, setDiagnosis] = useState<string>(
+    visitData?.consultation_data?.diagnosis ?? ""
+  );
   const [testRequests, setTestRequests] = useState<TestRequest[]>([]);
   const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
   const [showTestRequestPreview, setShowTestRequestPreview] = useState(false);
   const [showPrescriptionPreview, setShowPrescriptionPreview] = useState(false);
   const [isDiagnosisSaved, setIsDiagnosisSaved] = useState<boolean>(false);
   const [consultationId, setConsultationId] = useState<number>();
+ const [isLoading, setIsLoading] = useState(false);
   // const [labResults, setLabResults] = useState([]);
   const { authState } = useAuth();
+  console.log(visitData?.consultation_data);
 
   useEffect(() => {
     if (patientId) {
-      fetchVisitData(patientId.toString());
+      fetchVisitData(patientId as string);
     }
   }, [fetchVisitData, patientId]);
 
+if(!visitData){
+setIsLoading(true);
+}else{
+  setIsLoading(false);
+}
+
   const handleSaveDiagnosis = async () => {
     try {
-      const res = await fetch(`/consultation/`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Token ${authState?.token}`,
-        },
-        body: JSON.stringify({
-          diagnosis,
-          prescription: null,
-          lab_tests_ordered: null,
-          physician: authState.user_id,
-          visit: visitData?.visit_id,
-          triage: visitData?.triage_data?.triage_id,
-        }),
-      });
-      if (res.ok) {
-        const consultation = await res.json();
-        setConsultationId(consultation.note);
+      if (visitData?.consultation_data?.note_id) {
+        const res = await fetch(`http://localhost:8000/consultation/`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Token ${authState?.token}`,
+          },
+          body: JSON.stringify({
+            diagnosis,
+            prescription: null,
+            lab_tests_ordered: null,
+            physician: authState.user_id,
+            visit: visitData?.visit_id,
+            triage: visitData?.triage_data?.triage_id,
+          }),
+        });
+        if (res.ok) {
+          const consultation = await res.json();
+          console.log(consultation);
+          setConsultationId(consultation.note);
+        }
+        console.log(consultationId);
+        setIsDiagnosisSaved(true);
+        alert("Diagnosis saved successfully!");
+      } else {
+        await axios.patch(
+          `http://localhost:8000/consultation/${consultationId}`,
+          {
+            diagnosis: diagnosis,
+          },
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Token ${authState?.token}`,
+            },
+          }
+        );
+        setIsDiagnosisSaved(true);
+        alert("Diagnosis updated successfully!");
       }
-      setIsDiagnosisSaved(true);
-      alert("Diagnosis saved successfully!");
     } catch (error) {
       console.error("Failed to save diagnosis:", error);
       alert("Failed to save diagnosis. Please try again.");
@@ -134,9 +166,18 @@ const PatientManagementPage = () => {
 
   const handleSaveTestRequests = async () => {
     try {
-      await axios.patch(`/consultation/${consultationId}`, {
-        lab_tests_ordered: testRequests,
-      });
+      await axios.patch(
+        `http://localhost:8000/consultation/${consultationId}`,
+        {
+          lab_tests_ordered: testRequests,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Token ${authState?.token}`,
+          },
+        }
+      );
       setShowTestRequestPreview(false);
       alert("Test requests saved successfully!");
     } catch (error) {
@@ -146,7 +187,18 @@ const PatientManagementPage = () => {
 
   const handleSavePrescriptions = async () => {
     try {
-      await axios.post(`/consultation/${consultationId}`, { prescriptions });
+      await axios.post(
+        `http://localhost:8000/consultation/${consultationId}`,
+        {
+          prescriptions,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Token ${authState?.token}`,
+          },
+        }
+      );
       setShowPrescriptionPreview(false);
       alert("Prescriptions saved successfully!");
     } catch (error) {
@@ -164,6 +216,7 @@ const PatientManagementPage = () => {
       header: "Actions",
       cell: ({ row }) => (
         <Button
+          className=""
           variant="destructive"
           onClick={() => handleDeleteTestRequest(row.index)}
         >
@@ -210,18 +263,43 @@ const PatientManagementPage = () => {
 
   return (
     <PageTransition>
+      {isLoading && <LoadingPage />}
       <div className="px-6">
         {/* Patient Header */}
         <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Name: {visitData?.visit_id}</CardTitle>
-            <span>Vitals: {visitData?.triage_data?.triage_id}</span>
-            <Button
-              variant="outline"
-              onClick={() => router.push("/departments/consultation")}
-            >
-              Back to Patient List
-            </Button>
+          <CardHeader className="flex justify-between items-center">
+            <div className="flex items-center gap-x-6 flex-wrap">
+              {/* Patient Name */}
+              <div>
+                <CardTitle>
+                  <span className="text-sm text-gray-700">Name: </span>
+                  <strong className="text-sm text-gray-700 ml-2 capitalize">
+                    {visitData?.patient_data?.first_name}{" "}
+                    {visitData?.patient_data?.last_name}
+                  </strong>
+                </CardTitle>
+              </div>
+
+              {/* Vital Signs (Inline) */}
+              {visitData?.triage_data?.vital_signs && (
+                <div className="flex gap-x-4 text-sm text-gray-700">
+                  {Object.entries(visitData.triage_data.vital_signs).map(
+                    ([key, value]) => (
+                      <span key={key} className="capitalize">
+                        {key.replace("_", " ")}: <strong>{value}</strong>
+                      </span>
+                    )
+                  )}
+                </div>
+              )}
+              <Button
+                variant="outline"
+                onClick={() => router.push("/departments/consultation")}
+                size="sm"
+              >
+                Back to patients
+              </Button>
+            </div>
           </CardHeader>
         </Card>
 
@@ -242,14 +320,14 @@ const PatientManagementPage = () => {
                 <CardTitle>Diagnosis</CardTitle>
               </CardHeader>
               <CardContent>
-                <Textarea
+                <MDEditor
                   value={diagnosis}
-                  onChange={(e) => {
-                    setDiagnosis(e.target.value);
+                  onChange={(value) => {
+                    setDiagnosis(value ?? "");
                     setIsDiagnosisSaved(false);
                   }}
-                  placeholder="Enter diagnosis..."
                 />
+
                 <Button
                   className="mt-4"
                   onClick={handleSaveDiagnosis}

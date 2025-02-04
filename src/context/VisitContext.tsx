@@ -1,6 +1,12 @@
 "use client";
 
-import { createContext, useContext, useState, ReactNode,useCallback } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  ReactNode,
+  useCallback,
+} from "react";
 import { useAuth } from "./AuthContext";
 interface TriageData {
   triage_id: number;
@@ -8,38 +14,36 @@ interface TriageData {
   recorded_by: number | null;
   recorded_at: string;
 }
-interface ConsultationData{
-  note_id:number;
-  diagnosis:string;
-  prescription:Record<string,never>[];
-  lab_test_ordered:Record<string,never>[],
-  physician:number|null
-  recorded_at:string
+interface ConsultationData {
+  note_id: number;
+  diagnosis: string;
+  prescription: Record<string, never>[];
+  lab_test_ordered: Record<string, never>[];
+  physician: number | null;
+  recorded_at: string;
 }
-interface PatientData{
-  id:number;
-  first_name:string;
-  last_name:string;
-  dob:Date;
-  contact_number:string;
-
+interface PatientData {
+  id: number;
+  first_name: string;
+  last_name: string;
+  dob: Date;
+  contact_number: string;
 }
-interface LabData{
-test_name:string[];
-result_id:number;
-result:string[];
+interface LabData {
+  test_name: string[];
+  result_id: number;
+  result: string[];
 }
 
 interface VisitData {
   visit_id: number;
   triage_data: TriageData | null;
-  consultation_data:ConsultationData | null;
-  patient_data:PatientData | null;
-  lab_data:LabData[] | null;
+  consultation_data: ConsultationData | null;
+  patient_data: PatientData | null;
+  lab_data: LabData[] | null;
 }
 interface VisitContextType {
   visitData: VisitData | null;
-  loading: boolean;
   fetchVisitData: (patientId: string) => Promise<void>;
 }
 
@@ -55,13 +59,12 @@ export const useVisit = () => {
 
 export const VisitProvider = ({ children }: { children: ReactNode }) => {
   const [visitData, setVisitData] = useState<VisitData | null>(null);
-  const [loading, setLoading] = useState(false);
   const { authState } = useAuth();
+  console.log(authState.token);
 
   // Function to fetch visit ID based on patient ID
   const fetchVisitData = useCallback(
     async (patientId: string) => {
-      setLoading(true);
       try {
         const response = await fetch(
           `http://localhost:8000/api/visit/today/${Number(patientId)}/`,
@@ -75,18 +78,20 @@ export const VisitProvider = ({ children }: { children: ReactNode }) => {
         if (!response.ok) throw new Error("Failed to fetch visit data");
 
         const data: VisitData = await response.json();
+
+        console.log("patientId: " + patientId + "data: ", data);
         setVisitData(data);
       } catch (error) {
         console.error("Error fetching visit data:", error);
         setVisitData(null);
-      } finally {
-        setLoading(false);
       }
     },
     [authState?.token]
   ); // Dependencies for `useCallback`
+
+  console.log(visitData);
   return (
-    <VisitContext.Provider value={{ visitData, fetchVisitData, loading }}>
+    <VisitContext.Provider value={{ visitData, fetchVisitData }}>
       {children}
     </VisitContext.Provider>
   );
