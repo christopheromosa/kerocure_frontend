@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/context/AuthContext";
 import { useVisit } from "@/context/VisitContext";
+import axios from "axios";
 
 // Define the type for a prescription
 interface Prescription {
@@ -60,6 +61,7 @@ const PharmacyDetailsPage = () => {
   // Function to save prescription details
   const handleSavePrescription = async () => {
     try {
+
       const res = await fetch("http://localhost:8000/pharmacy/", {
         method: "POST",
         headers: {
@@ -73,6 +75,22 @@ const PharmacyDetailsPage = () => {
       });
 
       if (res.ok) {
+      await axios.put(
+        `http://localhost:8000/visits/${visitData?.visit_id}/`,
+        {
+          patient: patientId,
+          current_state: "PHARMACY",
+          next_state: "BILLING",
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Token ${authState?.token}`,
+          },
+        }
+      );
+
+
         setShowSuccessDialog(true);
       } else {
         throw new Error("Failed to save prescription details");

@@ -15,7 +15,7 @@ export default function PharmacyPage() {
     async function getPharmacyPatientsData() {
       setIsLoading(true);
       // todo: implement fetch patients functionality
-      const response = await fetch("http://localhost:8000/patients", {
+      const response = await fetch("http://localhost:8000/api/pharmacy-patients", {
         cache: "no-store",
       });
       if (response.ok) {

@@ -17,8 +17,8 @@ interface TriageData {
 interface ConsultationData {
   note_id: number;
   diagnosis: string;
-  prescription: Record<string, never>[];
-  lab_test_ordered: Record<string, never>[];
+  prescription: string[];
+  lab_test_ordered: string[];
   physician: number | null;
   recorded_at: string;
 }
@@ -35,16 +35,23 @@ interface LabData {
   result: string[];
 }
 
+interface PharmacyData {
+  medication_id: number;
+  cost: number;
+}
+
 interface VisitData {
   visit_id: number;
   triage_data: TriageData | null;
   consultation_data: ConsultationData | null;
   patient_data: PatientData | null;
   lab_data: LabData[] | null;
+  pharmacy_data: PharmacyData[] | null;
 }
 interface VisitContextType {
   visitData: VisitData | null;
   fetchVisitData: (patientId: string) => Promise<void>;
+  loading: boolean;
 }
 
 const VisitContext = createContext<VisitContextType | undefined>(undefined);
@@ -59,6 +66,7 @@ export const useVisit = () => {
 
 export const VisitProvider = ({ children }: { children: ReactNode }) => {
   const [visitData, setVisitData] = useState<VisitData | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
   const { authState } = useAuth();
   console.log(authState.token);
 
@@ -66,6 +74,7 @@ export const VisitProvider = ({ children }: { children: ReactNode }) => {
   const fetchVisitData = useCallback(
     async (patientId: string) => {
       try {
+        setLoading(true);
         const response = await fetch(
           `http://localhost:8000/api/visit/today/${Number(patientId)}/`,
           {
@@ -84,6 +93,8 @@ export const VisitProvider = ({ children }: { children: ReactNode }) => {
       } catch (error) {
         console.error("Error fetching visit data:", error);
         setVisitData(null);
+      } finally {
+        setLoading(false); // Set loading to false when fetching is done (success or error)
       }
     },
     [authState?.token]
@@ -91,7 +102,7 @@ export const VisitProvider = ({ children }: { children: ReactNode }) => {
 
   console.log(visitData);
   return (
-    <VisitContext.Provider value={{ visitData, fetchVisitData }}>
+    <VisitContext.Provider value={{ visitData, fetchVisitData, loading }}>
       {children}
     </VisitContext.Provider>
   );

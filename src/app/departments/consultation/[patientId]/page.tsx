@@ -55,17 +55,16 @@ const PatientManagementPage = () => {
   const { patientId } = useParams();
 
   const router = useRouter();
-  const { visitData, fetchVisitData } = useVisit();
-  const [diagnosis, setDiagnosis] = useState<string>(
-    visitData?.consultation_data?.diagnosis ?? ""
-  );
+  const { visitData, fetchVisitData, loading } = useVisit();
+  const [diagnosis, setDiagnosis] = useState<string>("");
   const [testRequests, setTestRequests] = useState<TestRequest[]>([]);
   const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
   const [showTestRequestPreview, setShowTestRequestPreview] = useState(false);
   const [showPrescriptionPreview, setShowPrescriptionPreview] = useState(false);
   const [isDiagnosisSaved, setIsDiagnosisSaved] = useState<boolean>(false);
   const [consultationId, setConsultationId] = useState<number>();
- const [isLoading, setIsLoading] = useState(false);
+   const [refresh, setRefresh] = useState(false);
+
   // const [labResults, setLabResults] = useState([]);
   const { authState } = useAuth();
   console.log(visitData?.consultation_data);
@@ -74,17 +73,21 @@ const PatientManagementPage = () => {
     if (patientId) {
       fetchVisitData(patientId as string);
     }
-  }, [fetchVisitData, patientId]);
+  }, [fetchVisitData, patientId,refresh]);
 
-if(!visitData){
-setIsLoading(true);
-}else{
-  setIsLoading(false);
-}
+  useEffect(() => {
+    if (visitData?.consultation_data?.diagnosis) {
+      setDiagnosis(visitData.consultation_data.diagnosis);
+    }
+  }, [visitData]);
+  console.log(
+    "before updating diagnosis: ",
+    visitData?.consultation_data?.note_id
+  );
 
   const handleSaveDiagnosis = async () => {
     try {
-      if (visitData?.consultation_data?.note_id) {
+      if (!visitData?.consultation_data?.note_id) {
         const res = await fetch(`http://localhost:8000/consultation/`, {
           method: "POST",
           headers: {
@@ -93,8 +96,8 @@ setIsLoading(true);
           },
           body: JSON.stringify({
             diagnosis,
-            prescription: null,
-            lab_tests_ordered: null,
+            prescription: [],
+            lab_tests_ordered: [],
             physician: authState.user_id,
             visit: visitData?.visit_id,
             triage: visitData?.triage_data?.triage_id,
@@ -108,21 +111,37 @@ setIsLoading(true);
         console.log(consultationId);
         setIsDiagnosisSaved(true);
         alert("Diagnosis saved successfully!");
+        // router.push(`/departments/consultation/${patientId}`);
+        router.refresh();
+        setRefresh(!refresh);
       } else {
-        await axios.patch(
-          `http://localhost:8000/consultation/${consultationId}`,
+        const res = await fetch(
+          `http://localhost:8000/consultation/${visitData?.consultation_data?.note_id}/`,
           {
-            diagnosis: diagnosis,
-          },
-          {
+            method: "PUT",
             headers: {
               "Content-Type": "application/json",
               Authorization: `Token ${authState?.token}`,
             },
+            body: JSON.stringify({
+              diagnosis: diagnosis,
+              visit: visitData?.visit_id,
+            }),
           }
         );
-        setIsDiagnosisSaved(true);
-        alert("Diagnosis updated successfully!");
+        if (res.ok) {
+          const consultation = await res.json();
+          console.log(consultation); // Log the response to see the updated consultation data
+          setConsultationId(consultation.note); // Update the state if needed
+          setIsDiagnosisSaved(true); // Update the state to reflect that the diagnosis is saved
+          alert("Diagnosis updated successfully!");
+          // router.push(`/departments/consultation/${patientId}`);
+          router.refresh();
+          setRefresh(!refresh);
+        } else {
+          console.error("Failed to update diagnosis");
+          alert("Failed to update diagnosis. Please try again.");
+        }
       }
     } catch (error) {
       console.error("Failed to save diagnosis:", error);
@@ -166,10 +185,27 @@ setIsLoading(true);
 
   const handleSaveTestRequests = async () => {
     try {
-      await axios.patch(
-        `http://localhost:8000/consultation/${consultationId}`,
+      await axios.put(
+        `http://localhost:8000/visits/${visitData?.visit_id}/`,
+        {
+          patient: patientId,
+          current_state: "CONSULTATION",
+          next_state: "LABORATORY",
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Token ${authState?.token}`,
+          },
+        }
+      );
+
+      await axios.put(
+        `http://localhost:8000/consultation/${visitData?.consultation_data?.note_id}/`,
         {
           lab_tests_ordered: testRequests,
+          visit: visitData?.visit_id,
+          diagnosis: diagnosis,
         },
         {
           headers: {
@@ -180,17 +216,21 @@ setIsLoading(true);
       );
       setShowTestRequestPreview(false);
       alert("Test requests saved successfully!");
+      router.refresh();
     } catch (error) {
       console.error("Failed to save test requests:", error);
     }
   };
 
   const handleSavePrescriptions = async () => {
+    console.log("prescriptions: ", prescriptions);
     try {
-      await axios.post(
-        `http://localhost:8000/consultation/${consultationId}`,
+      await axios.put(
+        `http://localhost:8000/visits/${visitData?.visit_id}/`,
         {
-          prescriptions,
+          patient: patientId,
+          current_state: "CONSULTATION",
+          next_state: "PHARMACY",
         },
         {
           headers: {
@@ -199,8 +239,25 @@ setIsLoading(true);
           },
         }
       );
+
+      await axios.put(
+        `http://localhost:8000/consultation/${visitData?.consultation_data?.note_id}/`,
+        {
+          prescription: prescriptions,
+          visit: visitData?.visit_id,
+          diagnosis: diagnosis,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Token ${authState?.token}`,
+          },
+        }
+      );
+
       setShowPrescriptionPreview(false);
       alert("Prescriptions saved successfully!");
+      router.refresh();
     } catch (error) {
       console.error("Failed to save prescriptions:", error);
     }
@@ -263,7 +320,7 @@ setIsLoading(true);
 
   return (
     <PageTransition>
-      {isLoading && <LoadingPage />}
+      {loading && <LoadingPage />}
       <div className="px-6">
         {/* Patient Header */}
         <Card className="mb-6">
@@ -317,7 +374,7 @@ setIsLoading(true);
           <TabsContent value="diagnosis">
             <Card>
               <CardHeader>
-                <CardTitle>Diagnosis</CardTitle>
+                <CardTitle>Diagnosis </CardTitle>
               </CardHeader>
               <CardContent>
                 <MDEditor

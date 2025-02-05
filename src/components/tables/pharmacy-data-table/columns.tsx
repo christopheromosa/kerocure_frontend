@@ -123,7 +123,7 @@ export const columns: ColumnDef<PatientType>[] = [
             <DropdownMenuSeparator />
             <DropdownMenuItem>
               {" "}
-              <Link href={`/departments/pharmacy/${patient.patientId}`}>
+              <Link href={`/departments/pharmacy/${patient.id}`}>
                 View patient
               </Link>{" "}
             </DropdownMenuItem>

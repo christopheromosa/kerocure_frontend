@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import PageTransition from "@/components/PageTransition";
 import LoadingPage from "@/components/loading_animation";
+import axios from "axios";
 
 const BillingDetailsPage = () => {
   const params = useParams();
@@ -121,6 +122,21 @@ const BillingDetailsPage = () => {
       });
 
       if (res.ok) {
+        await axios.put(
+          `http://localhost:8000/visits/${visitData?.visit_id}/`,
+          {
+            patient: patientId,
+            current_state: "BILLING",
+            next_state: "COMPLETED",
+          },
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Token ${authState?.token}`,
+            },
+          }
+        );
+
         setShowSuccessDialog(true);
       } else {
         throw new Error("Failed to save billing details");

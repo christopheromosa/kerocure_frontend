@@ -24,22 +24,19 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import { useVisit } from "@/context/VisitContext";
 import PageTransition from "@/components/PageTransition";
+import axios from "axios";
 
 // Define the type for a test order
-interface TestOrder {
-  id: number;
-  test_name: string;
-  result: string;
-}
 
 const LabResultsPage = () => {
   const params = useParams();
   const patientId = params.patientId as string;
   const { authState } = useAuth();
   const { visitData, fetchVisitData } = useVisit();
-  const [testOrders, setTestOrders] = useState<TestOrder[]>([]);
+  const [testOrders, setTestOrders] = useState<Record<string, string>>({});
   const [showSuccessDialog, setShowSuccessDialog] = useState<boolean>(false);
   const [showErrorDialog, setShowErrorDialog] = useState<boolean>(false);
+  const orders: string[] = visitData?.consultation_data?.lab_test_ordered ?? [];
 
   // Fetch patient details and test orders on page load
   useEffect(() => {
@@ -49,15 +46,21 @@ const LabResultsPage = () => {
   }, [patientId, fetchVisitData]);
 
   // Function to handle updating test results
-  const handleResultChange = (testId: number, result: string) => {
-    setTestOrders((prev) =>
-      prev.map((test) => (test.id === testId ? { ...test, result } : test))
-    );
+  const handleResultChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    testOrder: string
+  ) => {
+    setTestOrders((prev) => ({
+      ...prev,
+      [testOrder]: e.target.value,
+    }));
   };
 
   // Function to submit test results
   const handleSubmitResults = async () => {
-    console.log(testOrders);
+    const formattedResults = Object.entries(testOrders).map(([key, value]) => ({
+      [key]: value,
+    }));
 
     try {
       const res = await fetch("http://localhost:8000/lab/", {
@@ -67,7 +70,7 @@ const LabResultsPage = () => {
           Authorization: `Token ${authState?.token}`,
         },
         body: JSON.stringify({
-          result: testOrders,
+          result: formattedResults,
           visit: visitData?.visit_id,
           note: visitData?.consultation_data?.note_id,
           recorded_by: authState?.user_id,
@@ -75,6 +78,20 @@ const LabResultsPage = () => {
       });
 
       if (res.ok) {
+        await axios.put(
+          `http://localhost:8000/visits/${visitData?.visit_id}/`,
+          {
+            patient: patientId,
+            current_state: "LABORATORY",
+            next_state: "CONSULTATION",
+          },
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Token ${authState?.token}`,
+            },
+          }
+        );
         setShowSuccessDialog(true);
       } else {
         throw new Error("Failed to submit test results");
@@ -108,15 +125,13 @@ const LabResultsPage = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {visitData?.lab_data?.map((test, index) => (
+                {orders.map((testOrder, index) => (
                   <TableRow key={index}>
-                    <TableCell>{test.test_name}</TableCell>
+                    <TableCell>{testOrder}</TableCell>
                     <TableCell>
                       <Input
-                        value={test.result}
-                        onChange={(e) =>
-                          handleResultChange(index, e.target.value)
-                        }
+                        value={testOrders[testOrder] || ""}
+                        onChange={(e) => handleResultChange(e, testOrder)}
                         placeholder="Enter result"
                       />
                     </TableCell>
