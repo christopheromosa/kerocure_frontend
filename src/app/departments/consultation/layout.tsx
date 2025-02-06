@@ -5,7 +5,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
-import { Users, LayoutDashboard } from "lucide-react";
+import { Users, LayoutDashboard,ClipboardCheck,Server,Microscope } from "lucide-react";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -23,12 +23,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const links = [
     {
       label: "Dashboard",
-      href: "/departments/consultation",
+      href: "",
       icon: LayoutDashboard,
     },
-    { label: "patients", href: "/departments/consultation", icon: Users },
-    { label: "Lab", href: "/departments/consultation/lab", icon: Users },
-    { label: "reports", href: "/departments/consultation/analytics", icon: Users },
+    { label: "patients", href: "/departments/consultation", icon: Server },
+    { label: "Lab", href: "/departments/consultation/lab", icon: Microscope },
+    { label: "task completed", href: "/departments/consultation/analytics", icon: ClipboardCheck },
   ];
   const pathname = usePathname();
   return (

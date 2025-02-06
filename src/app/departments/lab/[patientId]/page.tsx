@@ -25,18 +25,23 @@ import { useAuth } from "@/context/AuthContext";
 import { useVisit } from "@/context/VisitContext";
 import PageTransition from "@/components/PageTransition";
 import axios from "axios";
-
-// Define the type for a test order
+import { useRouter } from "next/navigation";
 
 const LabResultsPage = () => {
   const params = useParams();
+  const router = useRouter();
   const patientId = params.patientId as string;
   const { authState } = useAuth();
   const { visitData, fetchVisitData } = useVisit();
   const [testOrders, setTestOrders] = useState<Record<string, string>>({});
   const [showSuccessDialog, setShowSuccessDialog] = useState<boolean>(false);
   const [showErrorDialog, setShowErrorDialog] = useState<boolean>(false);
-  const orders: string[] = visitData?.consultation_data?.lab_test_ordered ?? [];
+
+  // Extract test names from lab_test_ordered
+  const orders: string[] =
+    visitData?.consultation_data?.lab_test_ordered?.map(
+      (test) => test.test_name
+    ) ?? [];
 
   // Fetch patient details and test orders on page load
   useEffect(() => {
@@ -93,6 +98,7 @@ const LabResultsPage = () => {
           }
         );
         setShowSuccessDialog(true);
+        router.push("/departments/lab");
       } else {
         throw new Error("Failed to submit test results");
       }
@@ -127,7 +133,8 @@ const LabResultsPage = () => {
               <TableBody>
                 {orders.map((testOrder, index) => (
                   <TableRow key={index}>
-                    <TableCell>{testOrder}</TableCell>
+                    <TableCell>{testOrder}</TableCell>{" "}
+                    {/* Render the test name */}
                     <TableCell>
                       <Input
                         value={testOrders[testOrder] || ""}

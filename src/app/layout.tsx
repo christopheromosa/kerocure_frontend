@@ -24,7 +24,8 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return (
+
+ return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
@@ -35,11 +36,18 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <div className="flex min-h-screen">
+            <AuthProvider>
 
-            <AuthProvider>{children}</AuthProvider>
+          <div className="flex min-h-screen">
+{children}
           </div>
+            </AuthProvider>
+                    {/* ✅ Footer with Copyright */}
+          <footer className="text-center py-4 border-t bg-gray-900 text-white">
+            © {new Date().getFullYear()} Chrispers Youngkim. All rights reserved.
+          </footer>
         </ThemeProvider>
+        
       </body>
     </html>
   );

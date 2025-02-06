@@ -5,7 +5,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
-import { Users, LayoutDashboard } from "lucide-react";
+import { Users, LayoutDashboard,Server,ClipboardCheck } from "lucide-react";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -17,19 +17,21 @@ import {
 import { usePathname } from "next/navigation";
 import { Separator } from "@/components/ui/separator";
 import { AuthProvider } from "@/context/AuthContext";
+import { VisitProvider } from "@/context/VisitContext";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const links = [
     {
       label: "Dashboard",
-      href: "/departments/billing",
+      href: "",
       icon: LayoutDashboard,
     },
-    { label: "patients", href: "/departments/billing", icon: Users },
-    { label: "reports", href: "/departments/analytics", icon: Users },
+    { label: "patients", href: "/departments/billing", icon: Server },
+    { label: "reports", href: "/departments/billing/analytics", icon: ClipboardCheck },
   ];
   const pathname = usePathname();
   return (
+    <VisitProvider>
     <AuthProvider>
     <SidebarProvider>
       <AppSidebar links={links} />
@@ -59,5 +61,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       </SidebarInset>
     </SidebarProvider>
    </AuthProvider>
+  </VisitProvider>
   );
 }

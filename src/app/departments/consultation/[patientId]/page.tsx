@@ -63,7 +63,7 @@ const PatientManagementPage = () => {
   const [showPrescriptionPreview, setShowPrescriptionPreview] = useState(false);
   const [isDiagnosisSaved, setIsDiagnosisSaved] = useState<boolean>(false);
   const [consultationId, setConsultationId] = useState<number>();
-   const [refresh, setRefresh] = useState(false);
+  const [refresh, setRefresh] = useState(false);
 
   // const [labResults, setLabResults] = useState([]);
   const { authState } = useAuth();
@@ -73,7 +73,7 @@ const PatientManagementPage = () => {
     if (patientId) {
       fetchVisitData(patientId as string);
     }
-  }, [fetchVisitData, patientId,refresh]);
+  }, [fetchVisitData, patientId, refresh]);
 
   useEffect(() => {
     if (visitData?.consultation_data?.diagnosis) {
@@ -257,7 +257,7 @@ const PatientManagementPage = () => {
 
       setShowPrescriptionPreview(false);
       alert("Prescriptions saved successfully!");
-      router.refresh();
+      router.push("/departments/consultation");
     } catch (error) {
       console.error("Failed to save prescriptions:", error);
     }
@@ -468,12 +468,20 @@ const PatientManagementPage = () => {
                 <CardTitle>Lab Results</CardTitle>
               </CardHeader>
               <CardContent>
-                {visitData?.lab_data?.length === 0 ? (
-                  <p>Display lab results here once updated by the lab.</p>
+                {visitData?.lab_data?.result ? (
+                  <ul>
+                    {visitData?.lab_data?.result.map((test, index) => (
+                      <li key={index}>
+                        {Object.entries(test).map(([testName, testResult]) => (
+                          <p key={testName}>
+                            <strong>{testName}:</strong> {testResult}
+                          </p>
+                        ))}
+                      </li>
+                    ))}
+                  </ul>
                 ) : (
-                  visitData?.lab_data?.map((result, index) => (
-                    <span key={index}>{result.result}</span>
-                  ))
+                  <p>No lab results available.</p>
                 )}
               </CardContent>
             </Card>

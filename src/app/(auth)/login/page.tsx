@@ -3,10 +3,9 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { Button } from "@/components/ui/button";
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
-
-import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -18,6 +17,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const formSchema = z.object({
   username: z.string().min(2, {
@@ -29,7 +30,7 @@ const formSchema = z.object({
 });
 
 export default function LoginForm() {
-  const { setTheme, theme } = useTheme();
+ const { setTheme, theme } = useTheme();
   const router = useRouter();
   const { login } = useAuth();
 
@@ -41,12 +42,9 @@ export default function LoginForm() {
       password: "",
     },
   });
+
   // 2. Define a submit handler.
   async function onSubmit(credentials: z.infer<typeof formSchema>) {
-    // Do something with the form values.
-    // ✅ This will be type-safe and validated.
-    console.log(credentials);
-
     try {
       const response = await fetch("http://localhost:8000/api/login/", {
         method: "POST",
@@ -55,13 +53,22 @@ export default function LoginForm() {
         },
         body: JSON.stringify(credentials),
       });
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.non_field_errors[0] || "Login failed");
       }
+
       const data = await response.json();
       login(data.token, data.role, data.username, data.user_id);
-      //Redirect based on role
+
+      // Show success toast
+       setTimeout(() => {
+      toast.success("Login successful!");
+      }, 500);
+
+      // Redirect based on role
+      setTimeout(() => {
       if (data.role === "Triage") {
         router.push("/departments/triage");
       } else if (data.role === "Doctor") {
@@ -72,17 +79,24 @@ export default function LoginForm() {
         router.push("/departments/pharmacy");
       } else if (data.role === "Billing") {
         router.push("/departments/billing");
-      } else if (data.role === "administrator") {
+      } else if (data.role === "Administrator") {
         router.push("/departments/admin");
       }
+       }, 2000);
     } catch (error) {
-      console.error(error);
-      alert(error);
+
+      // Show error toast
+      toast.error(error instanceof Error ? error.message : "Login failed",{ delay: 2000 });
     }
   }
 
   return (
-    <div className="mb-6 w-full flex flex-col justify-center items-center border m-6 rounded-md">
+    <div className="mb-6 w-full flex flex-col justify-center items-center border m-6 rounded-md mt-4">
+
+<div className="flex justify-between gap-4 p-2">
+      <h1 className="text-xl">KEROCURE MEDICAL CENTER LOGIN</h1>
+                            {/* Theme Toggle Button */}
+
       {theme === "light" ? (
         <Button variant="outline" size="icon" onClick={() => setTheme("dark")}>
           <Sun
@@ -98,8 +112,9 @@ export default function LoginForm() {
           />
         </Button>
       )}
-      <h1 className="text-xl">KEROCURE MEDICAL CENTER</h1>
-      <h2>LOGIN</h2>
+    </div>
+
+      {/* Login Form */}
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
@@ -112,7 +127,7 @@ export default function LoginForm() {
               <FormItem>
                 <FormLabel>Username</FormLabel>
                 <FormControl>
-                  <Input placeholder="enter username" {...field} />
+                  <Input placeholder="Enter username" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -125,15 +140,33 @@ export default function LoginForm() {
               <FormItem>
                 <FormLabel>Password</FormLabel>
                 <FormControl>
-                  <Input placeholder="Enter password" {...field} />
+                  <Input type="password" placeholder="Enter password" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
+          
           <Button type="submit">Submit</Button>
+
+          
         </form>
       </Form>
+
+      {/* Toast Container */}
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
+
+
     </div>
   );
 }

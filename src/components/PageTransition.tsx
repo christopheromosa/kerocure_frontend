@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { ReactNode } from "react";
 
-const PageTransition = ({ children }: { children: ReactNode }) => {
+ const PageTransition = ({ children }: { children: ReactNode }) => {
   return (
     <motion.div
       className=""

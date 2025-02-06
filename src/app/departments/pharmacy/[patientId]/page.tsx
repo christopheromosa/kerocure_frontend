@@ -25,6 +25,7 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import { useVisit } from "@/context/VisitContext";
 import axios from "axios";
+import { useRouter } from "next/navigation";
 
 // Define the type for a prescription
 interface Prescription {
@@ -38,11 +39,13 @@ interface Prescription {
 const PharmacyDetailsPage = () => {
   const params = useParams();
   const { visitData, fetchVisitData } = useVisit();
-  const patientId = params.patient_id as string;
+  const patientId = params.patientId as string;
   const { authState } = useAuth();
+  const router = useRouter();
   const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
   const [showSuccessDialog, setShowSuccessDialog] = useState<boolean>(false);
   const [showErrorDialog, setShowErrorDialog] = useState<boolean>(false);
+
 
   // Fetch patient details and prescriptions on page load
   useEffect(() => {
@@ -50,6 +53,21 @@ const PharmacyDetailsPage = () => {
       fetchVisitData(patientId.toString());
     }
   }, [patientId, fetchVisitData]);
+  // Initialize prescriptions state
+  useEffect(() => {
+    if (visitData?.consultation_data?.prescription) {
+      const initialPrescriptions = visitData.consultation_data.prescription.map(
+        (prescription, index) => ({
+          id: index,
+          medication_name: prescription.medication,
+          quantity: prescription.dosage,
+          cost: 0,
+          dispensed: false,
+        })
+      );
+      setPrescriptions(initialPrescriptions);
+    }
+  }, [visitData]);
 
   // Function to calculate total cost
   const calculateTotalCost = () => {
@@ -60,8 +78,10 @@ const PharmacyDetailsPage = () => {
 
   // Function to save prescription details
   const handleSavePrescription = async () => {
-    try {
+    console.log("prescriptions:", prescriptions); // Debug log
+    console.log("Total Cost:", calculateTotalCost()); // Debug log
 
+    try {
       const res = await fetch("http://localhost:8000/pharmacy/", {
         method: "POST",
         headers: {
@@ -69,28 +89,30 @@ const PharmacyDetailsPage = () => {
           Authorization: `Token ${authState?.token}`,
         },
         body: JSON.stringify({
+          visit: visitData?.visit_id,
+          note: visitData?.consultation_data?.note_id,
           prescriptions,
           cost: calculateTotalCost(),
+          dispensed_by: authState?.user_id,
         }),
       });
 
       if (res.ok) {
-      await axios.put(
-        `http://localhost:8000/visits/${visitData?.visit_id}/`,
-        {
-          patient: patientId,
-          current_state: "PHARMACY",
-          next_state: "BILLING",
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Token ${authState?.token}`,
+        await axios.put(
+          `http://localhost:8000/visits/${visitData?.visit_id}/`,
+          {
+            patient: patientId,
+            current_state: "PHARMACY",
+            next_state: "BILLING",
           },
-        }
-      );
-
-
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Token ${authState?.token}`,
+            },
+          }
+        );
+        router.push("/departments/pharmacy");
         setShowSuccessDialog(true);
       } else {
         throw new Error("Failed to save prescription details");
@@ -125,44 +147,42 @@ const PharmacyDetailsPage = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {visitData?.consultation_data?.prescription.map(
-                (prescription) => (
-                  <TableRow key={prescription.id}>
-                    <TableCell>{prescription.medication_name}</TableCell>
-                    <TableCell>{prescription.quantity}</TableCell>
-                    <TableCell>
-                      <Checkbox
-                        checked={prescription.dispensed}
-                        onCheckedChange={(checked) =>
-                          setPrescriptions((prev) =>
-                            prev.map((p) =>
-                              p.id === prescription.id
-                                ? { ...p, dispensed: checked as boolean }
-                                : p
-                            )
+              {prescriptions.map((prescription) => (
+                <TableRow key={prescription.id}>
+                  <TableCell>{prescription.medication_name}</TableCell>
+                  <TableCell>{prescription.quantity}</TableCell>
+                  <TableCell>
+                    <Checkbox
+                      checked={prescription.dispensed}
+                      onCheckedChange={(checked) =>
+                        setPrescriptions((prev) =>
+                          prev.map((p) =>
+                            p.id === prescription.id
+                              ? { ...p, dispensed: checked as boolean }
+                              : p
                           )
-                        }
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Input
-                        type="number"
-                        value={prescription.cost}
-                        onChange={(e) =>
-                          setPrescriptions((prev) =>
-                            prev.map((p) =>
-                              p.id === prescription.id
-                                ? { ...p, cost: parseFloat(e.target.value) }
-                                : p
-                            )
+                        )
+                      }
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Input
+                      type="number"
+                      value={prescription.cost}
+                      onChange={(e) =>
+                        setPrescriptions((prev) =>
+                          prev.map((p) =>
+                            p.id === prescription.id
+                              ? { ...p, cost: parseFloat(e.target.value) }
+                              : p
                           )
-                        }
-                        placeholder="Enter cost"
-                      />
-                    </TableCell>
-                  </TableRow>
-                )
-              )}
+                        )
+                      }
+                      placeholder="Enter cost"
+                    />
+                  </TableCell>
+                </TableRow>
+              ))}
             </TableBody>
           </Table>
           <div className="mt-4">

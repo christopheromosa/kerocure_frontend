@@ -1,3 +1,4 @@
+
 "use client";
 import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
@@ -6,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/context/AuthContext";
 import { useVisit } from "@/context/VisitContext";
+import { useRouter} from 'next/navigation';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,8 +25,9 @@ const BillingDetailsPage = () => {
   const params = useParams();
   const patientId = params.patientId as string;
   const { authState } = useAuth();
+  const router = useRouter();
   const { fetchVisitData, visitData } = useVisit();
-  const [consultationFee, setConsultationFee] = useState<number>(0);
+  const [consultationFee, setConsultationFee] = useState<string>("");
   const [labCost, setLabCost] = useState<number>(0);
   const [pharmacyCost, setPharmacyCost] = useState<number>(0);
   const [totalCost, setTotalCost] = useState<number>(0);
@@ -39,71 +42,15 @@ const BillingDetailsPage = () => {
   }, [patientId, fetchVisitData]);
 
   // Fetch consultation fee from the server
-  const fetchConsultationFee = async () => {
-    setIsLoading(true);
-    try {
-      const res = await fetch(
-        `http://localhost:8000/consultation-fee/${visitData?.visit_id}`,
-        {
-          headers: {
-            Authorization: `Token ${authState?.token}`,
-          },
-        }
-      );
-      const data = await res.json();
-      setConsultationFee(data.fee);
-      setIsLoading(false);
-    } catch (error) {
-      console.error("Error fetching consultation fee:", error);
-    }
-  };
-
-  // Fetch lab cost from the server
-  const fetchLabCost = async () => {
-    setIsLoading(true);
-    try {
-      const res = await fetch(
-        `http://localhost:8000/lab-cost/${visitData?.visit_id}`,
-        {
-          headers: {
-            Authorization: `Token ${authState?.token}`,
-          },
-        }
-      );
-      const data = await res.json();
-      setLabCost(data.cost);
-      setIsLoading(false);
-    } catch (error) {
-      console.error("Error fetching lab cost:", error);
-    }
-  };
-
-  // Fetch pharmacy cost from the server
-  const fetchPharmacyCost = async () => {
-    setIsLoading(true);
-    try {
-      const res = await fetch(
-        `http://localhost:8000/pharmacy-cost/${visitData?.visit_id}`,
-        {
-          headers: {
-            Authorization: `Token ${authState?.token}`,
-          },
-        }
-      );
-      const data = await res.json();
-      setPharmacyCost(data.cost);
-      setIsLoading(false);
-    } catch (error) {
-      console.error("Error fetching pharmacy cost:", error);
-    }
-  };
+ 
 
   // Calculate total cost
   const calculateTotalCost = () => {
-    const total = consultationFee + labCost + pharmacyCost;
+    const labCost = visitData?.lab_data?.total_cost || 0;
+    const pharmacyCost = visitData?.pharmacy_data?.cost || 0;
+    const total = Number(consultationFee) + labCost + pharmacyCost;
     setTotalCost(total);
   };
-
   // Save billing details
   const handleSaveBilling = async () => {
     try {
@@ -114,11 +61,14 @@ const BillingDetailsPage = () => {
           Authorization: `Token ${authState?.token}`,
         },
         body: JSON.stringify({
-          consultationFee,
-          labCost,
-          pharmacyCost,
-          totalCost,
-        }),
+          consultation_cost:consultationFee,
+          laboratory_cost: visitData?.lab_data?.total_cost,
+          pharmacy_cost: visitData?.pharmacy_data?.cost,
+          total_cost:totalCost,
+          visit: visitData?.visit_id,
+          billed_by:authState?.user_id
+
+                  }),
       });
 
       if (res.ok) {
@@ -138,6 +88,7 @@ const BillingDetailsPage = () => {
         );
 
         setShowSuccessDialog(true);
+        
       } else {
         throw new Error("Failed to save billing details");
       }
@@ -150,19 +101,22 @@ const BillingDetailsPage = () => {
   // Print receipt
   const handlePrintReceipt = () => {
     const receiptContent = `
+      <h1>KEROCURE MEDICAL CENTER</h1>
       <h1>Receipt</h1>
-      <p>Patient Name: ${visitData?.patient_data?.first_name} ${
+      <p>Patient Name: Ksh{visitData?.patient_data?.first_name} ${
       visitData?.patient_data?.last_name
     }</p>
-      <p>Consultation Fee: $${consultationFee.toFixed(2)}</p>
-      <p>Lab Cost: $${labCost.toFixed(2)}</p>
-      <p>Pharmacy Cost: $${pharmacyCost.toFixed(2)}</p>
-      <p>Total Cost: $${totalCost.toFixed(2)}</p>
+      <p>Consultation Fee: Ksh ${Number(consultationFee).toFixed(2)}</p>
+      <p>Lab Cost: ksh ${visitData?.lab_data?.total_cost.toFixed(2)}</p>
+      <p>Pharmacy Cost: Ksh ${visitData?.pharmacy_data?.cost.toFixed(2)}</p>
+      <p>Total Cost: Ksh ${totalCost.toFixed(2)}</p>
     `;
     const printWindow = window.open("", "_blank");
     printWindow?.document.write(receiptContent);
     printWindow?.document.close();
     printWindow?.print();
+
+    router.push("/departments/billing")
   };
 
   return (
@@ -179,61 +133,54 @@ const BillingDetailsPage = () => {
           <CardContent>
             {/* Consultation Fee */}
             <div className="mb-4">
-              <p className="font-medium">Consultation Fee:</p>
-              <div className="flex gap-2">
-                <Input
-                  type="number"
-                  value={consultationFee}
-                  readOnly
-                  placeholder="Consultation fee"
-                />
-                <Button onClick={fetchConsultationFee}>
-                  Generate Consultation Fee
-                </Button>
-              </div>
+              <label className="font-medium">Consultation Fee (Ksh):</label>
+              <Input
+                type="text"
+                value={consultationFee}
+                onChange={(e) => setConsultationFee(e.target.value)}
+                placeholder="Enter consultation fee"
+                className="border border-gray-300 p-2 rounded w-full"
+              />
             </div>
 
             {/* Lab Cost */}
+  
             <div className="mb-4">
-              <p className="font-medium">Lab Cost:</p>
-              <div className="flex gap-2">
-                <Input
-                  type="number"
-                  value={labCost}
-                  readOnly
-                  placeholder="Lab cost"
-                />
-                <Button onClick={fetchLabCost}>Generate Lab Cost</Button>
-              </div>
+              <label className="font-medium">Lab Cost (Ksh):</label>
+              <Input
+                type="number"
+                value={visitData?.lab_data?.total_cost || 0}
+                readOnly
+                className="border border-gray-300 p-2 rounded w-full"
+              />
             </div>
+
 
             {/* Pharmacy Cost */}
             <div className="mb-4">
-              <p className="font-medium">Pharmacy Cost:</p>
-              <div className="flex gap-2">
-                <Input
-                  type="number"
-                  value={pharmacyCost}
-                  readOnly
-                  placeholder="Pharmacy cost"
-                />
-                <Button onClick={fetchPharmacyCost}>
-                  Generate Pharmacy Cost
-                </Button>
-              </div>
+              <label className="font-medium">Pharmacy Cost (Ksh):</label>
+              <Input
+                type="number"
+                value={visitData?.pharmacy_data?.cost || 0}
+                readOnly
+                className="border border-gray-300 p-2 rounded w-full"
+              />
             </div>
 
             {/* Calculate Total Button */}
+
+            
             <Button className="mt-4" onClick={calculateTotalCost}>
               Generate Total Cost
             </Button>
 
             {/* Total Cost */}
             <div className="mt-4">
-              <p className="font-medium">Total Cost: ${totalCost.toFixed(2)}</p>
+              <p className="font-medium">Total Cost: Ksh{totalCost.toFixed(2)}</p>
             </div>
 
             {/* Save Billing Button */}
+         
             <Button className="mt-4" onClick={handleSaveBilling}>
               Save Billing Details
             </Button>

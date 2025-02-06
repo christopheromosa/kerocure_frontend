@@ -30,9 +30,8 @@ interface PatientData {
   contact_number: string;
 }
 interface LabData {
-  test_name: string[];
-  result_id: number;
   result: string[];
+  total_cost:number;
 }
 
 interface PharmacyData {
@@ -45,7 +44,7 @@ interface VisitData {
   triage_data: TriageData | null;
   consultation_data: ConsultationData | null;
   patient_data: PatientData | null;
-  lab_data: LabData[] | null;
+  lab_data: LabData | null;
   pharmacy_data: PharmacyData[] | null;
 }
 interface VisitContextType {
