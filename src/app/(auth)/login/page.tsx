@@ -19,6 +19,8 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import Image from "next/image";
+
 
 const formSchema = z.object({
   username: z.string().min(2, {
@@ -46,7 +48,7 @@ export default function LoginForm() {
   // 2. Define a submit handler.
   async function onSubmit(credentials: z.infer<typeof formSchema>) {
     try {
-      const response = await fetch("http://localhost:8000/api/login/", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/login/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -91,10 +93,18 @@ export default function LoginForm() {
   }
 
   return (
-    <div className="mb-6 w-full flex flex-col justify-center items-center border m-6 rounded-md mt-4">
+    <div className="mb-6 w-full flex flex-col justify-center items-center  m-6 rounded-md mt-4">
+
+<Image
+        src="/kerocureLogo-removebg-preview.png" // Ensure the image is inside the public folder
+        alt="Company Logo"
+        width={200} // Set width
+        height={100} // Set height
+        priority // Load it as a high priority
+      />
 
 <div className="flex justify-between gap-4 p-2">
-      <h1 className="text-xl">KEROCURE MEDICAL CENTER LOGIN</h1>
+      <h1 className="text-xl">KEROCURE MEDICAL CENTER </h1>
                             {/* Theme Toggle Button */}
 
       {theme === "light" ? (

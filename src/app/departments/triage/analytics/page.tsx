@@ -1,5 +1,5 @@
 "use client";
-import React from 'react';
+import React from "react";
 import { useEffect, useState } from "react";
 import {
   Table,
@@ -34,7 +34,9 @@ const TriageTable = () => {
     async function fetchTriageData() {
       setIsLoading(true);
       try {
-        const response = await fetch("http://localhost:8000/triage/");
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/triage/`
+        );
         if (!response.ok) throw new Error("Failed to fetch data");
 
         const data = await response.json();
@@ -63,7 +65,9 @@ const TriageTable = () => {
   // Toggle expand/collapse for vital signs
   const toggleExpandRow = (triageId: number) => {
     setExpandedRows((prev) =>
-      prev.includes(triageId) ? prev.filter((id) => id !== triageId) : [...prev, triageId]
+      prev.includes(triageId)
+        ? prev.filter((id) => id !== triageId)
+        : [...prev, triageId]
     );
   };
 
@@ -124,7 +128,8 @@ const TriageTable = () => {
                           {Object.entries(triage.vital_signs).map(
                             ([key, value]) => (
                               <li key={key}>
-                                <span className="font-medium">{key}:</span> {value}
+                                <span className="font-medium">{key}:</span>{" "}
+                                {value}
                               </li>
                             )
                           )}

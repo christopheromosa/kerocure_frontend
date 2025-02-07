@@ -72,7 +72,7 @@ const formattedData = data.revenues.map((item) => ({
                               <CardTitle className="text-lg">Total Amount</CardTitle>
                             </CardHeader>
                             <CardContent>
-                              <p className="text-2xl font-bold">Ksh {data.billingTotalCost??0.00 }</p>
+                              <p className="text-2xl font-bold">Ksh {data.revenues?.at(-1)?.total_cost??0.00 }</p>
                             </CardContent>
                           </Card>
           </div>

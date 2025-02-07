@@ -1,11 +1,9 @@
-"use client"
+"use client";
 import { columns } from "@/components/tables/consultation-data-table/columns";
 import { DataTable } from "@/components/tables/consultation-data-table/consultation-data-table";
 import React, { useEffect, useState } from "react";
 import PageTransition from "@/components/PageTransition";
 import LoadingPage from "@/components/loading_animation";
-
-
 
 export default function ConsultationPage() {
   const [data, setData] = useState([]);
@@ -16,7 +14,7 @@ export default function ConsultationPage() {
       setIsLoading(true);
       // todo: implement fetch patients functionality
       const response = await fetch(
-        "http://localhost:8000/api/triage-patients/",
+        `${process.env.NEXT_PUBLIC_API_URL}/api/triage-patients/`,
         {
           cache: "no-store",
         }

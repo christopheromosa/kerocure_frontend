@@ -33,7 +33,7 @@ export default function LabResultsTable() {
     async function fetchPatientsData() {
       setIsLoading(true);
       try {
-        const response = await fetch("http://localhost:8000/lab/");
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/lab/`);
         if (!response.ok) throw new Error("Failed to fetch data");
 
         const data = await response.json();
@@ -47,7 +47,7 @@ export default function LabResultsTable() {
     fetchPatientsData();
   }, []);
 
-console.log(labResultsData);
+  console.log(labResultsData);
   // Pagination logic
   const totalPages = Math.ceil(labResultsData.length / resultsPerPage);
   const displayedResults = labResultsData.slice(
@@ -77,28 +77,32 @@ console.log(labResultsData);
               <TableCell>{result.note}</TableCell>
               <TableCell>
                 <pre className="text-xs  p-2 rounded flex flex-wrap gap-2 ">
- {Array.isArray(result.result)
-      ? result.result.map((item, index) =>
-          Object.entries(item).map(([key, value]) => (
-            <div
-              key={`${key}-${index}`}
-              className="px-3 py-1 rounded text-xs font-medium bg-blue-100 text-blue-600"
-            >
-              <span className="font-semibold">{key}:</span> {value.toString()}
-            </div>
-          ))
-        )
-      : Object.entries(result.result).map(([key, value]) => (
-          <div
-            key={key}
-            className="px-3 py-1 rounded text-xs font-medium bg-blue-100 text-blue-600"
-          >
-            <span className="font-semibold">{key}:</span> {value.toString()}
-          </div>
-        ))}
+                  {Array.isArray(result.result)
+                    ? result.result.map((item, index) =>
+                        Object.entries(item).map(([key, value]) => (
+                          <div
+                            key={`${key}-${index}`}
+                            className="px-3 py-1 rounded text-xs font-medium bg-blue-100 text-blue-600"
+                          >
+                            <span className="font-semibold">{key}:</span>{" "}
+                            {value.toString()}
+                          </div>
+                        ))
+                      )
+                    : Object.entries(result.result).map(([key, value]) => (
+                        <div
+                          key={key}
+                          className="px-3 py-1 rounded text-xs font-medium bg-blue-100 text-blue-600"
+                        >
+                          <span className="font-semibold">{key}:</span>{" "}
+                          {value.toString()}
+                        </div>
+                      ))}
                 </pre>
               </TableCell>
-              <TableCell>Ksh {parseFloat(result.total_cost).toFixed(2)}</TableCell>
+              <TableCell>
+                Ksh {parseFloat(result.total_cost).toFixed(2)}
+              </TableCell>
               <TableCell>{result.recorded_by ?? "N/A"}</TableCell>
               <TableCell>
                 {new Date(result.recorded_at).toLocaleString()}

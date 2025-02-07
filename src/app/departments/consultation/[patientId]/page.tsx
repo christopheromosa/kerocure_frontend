@@ -5,6 +5,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 import {
   Table,
@@ -88,7 +90,7 @@ const PatientManagementPage = () => {
   const handleSaveDiagnosis = async () => {
     try {
       if (!visitData?.consultation_data?.note_id) {
-        const res = await fetch(`http://localhost:8000/consultation/`, {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/consultation/`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -116,7 +118,7 @@ const PatientManagementPage = () => {
         setRefresh(!refresh);
       } else {
         const res = await fetch(
-          `http://localhost:8000/consultation/${visitData?.consultation_data?.note_id}/`,
+          `${process.env.NEXT_PUBLIC_API_URL}/consultation/${visitData?.consultation_data?.note_id}/`,
           {
             method: "PUT",
             headers: {
@@ -186,7 +188,7 @@ const PatientManagementPage = () => {
   const handleSaveTestRequests = async () => {
     try {
       await axios.put(
-        `http://localhost:8000/visits/${visitData?.visit_id}/`,
+        `${process.env.NEXT_PUBLIC_API_URL}/visits/${visitData?.visit_id}/`,
         {
           patient: patientId,
           current_state: "CONSULTATION",
@@ -201,7 +203,7 @@ const PatientManagementPage = () => {
       );
 
       await axios.put(
-        `http://localhost:8000/consultation/${visitData?.consultation_data?.note_id}/`,
+        `${process.env.NEXT_PUBLIC_API_URL}/consultation/${visitData?.consultation_data?.note_id}/`,
         {
           lab_tests_ordered: testRequests,
           visit: visitData?.visit_id,
@@ -216,6 +218,12 @@ const PatientManagementPage = () => {
       );
       setShowTestRequestPreview(false);
       alert("Test requests saved successfully!");
+       toast.success("Test requests saved successfully!", {
+           autoClose: 5000, // Show toast for 2 seconds
+           onClose: () => {
+             window.location.reload(); // Refresh after the toast disappears
+           },
+         });
       router.refresh();
     } catch (error) {
       console.error("Failed to save test requests:", error);
@@ -226,7 +234,7 @@ const PatientManagementPage = () => {
     console.log("prescriptions: ", prescriptions);
     try {
       await axios.put(
-        `http://localhost:8000/visits/${visitData?.visit_id}/`,
+        `${process.env.NEXT_PUBLIC_API_URL}/visits/${visitData?.visit_id}/`,
         {
           patient: patientId,
           current_state: "CONSULTATION",
@@ -241,7 +249,7 @@ const PatientManagementPage = () => {
       );
 
       await axios.put(
-        `http://localhost:8000/consultation/${visitData?.consultation_data?.note_id}/`,
+        `${process.env.NEXT_PUBLIC_API_URL}/consultation/${visitData?.consultation_data?.note_id}/`,
         {
           prescription: prescriptions,
           visit: visitData?.visit_id,
@@ -257,7 +265,15 @@ const PatientManagementPage = () => {
 
       setShowPrescriptionPreview(false);
       alert("Prescriptions saved successfully!");
+             toast.success("Prescriptions saved successfully", {
+           autoClose: 5000, // Show toast for 2 seconds
+           onClose: () => {
+             window.location.reload();
+              // Refresh after the toast disappears
+              
       router.push("/departments/consultation");
+           },
+         });
     } catch (error) {
       console.error("Failed to save prescriptions:", error);
     }
@@ -642,6 +658,7 @@ const PatientManagementPage = () => {
           </AlertDialogContent>
         </AlertDialog>
       </div>
+       <ToastContainer />
     </PageTransition>
   );
 };

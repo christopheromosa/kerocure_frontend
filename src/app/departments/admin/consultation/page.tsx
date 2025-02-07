@@ -2,7 +2,14 @@
 
 import React from "react";
 import { useState, useEffect } from "react";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronUp } from "lucide-react";
@@ -24,7 +31,9 @@ const PhysicianNotesTable = () => {
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [expandedRows, setExpandedRows] = useState<number[]>([]);
-  const [physicianNoteData, setPhysicianNoteData] = useState<PhysicianNote[]>([]);
+  const [physicianNoteData, setPhysicianNoteData] = useState<PhysicianNote[]>(
+    []
+  );
   const [isLoading, setIsLoading] = useState(false);
   const itemsPerPage = 3;
 
@@ -34,7 +43,9 @@ const PhysicianNotesTable = () => {
     async function fetchPatientsData() {
       setIsLoading(true);
       try {
-        const response = await fetch("http://localhost:8000/consultation/");
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/consultation/`
+        );
         if (!response.ok) throw new Error("Failed to fetch data");
 
         const data = await response.json();
@@ -63,7 +74,9 @@ const PhysicianNotesTable = () => {
   // Toggle expand/collapse for rows
   const toggleExpandRow = (noteId: number) => {
     setExpandedRows((prev) =>
-      prev.includes(noteId) ? prev.filter((id) => id !== noteId) : [...prev, noteId]
+      prev.includes(noteId)
+        ? prev.filter((id) => id !== noteId)
+        : [...prev, noteId]
     );
   };
 
@@ -102,7 +115,9 @@ const PhysicianNotesTable = () => {
                     <TableCell>{note.note_id}</TableCell>
                     <TableCell>{note.visit}</TableCell>
                     <TableCell>{note.physician || "Unknown"}</TableCell>
-                    <TableCell>Ksh {parseFloat(note.total_cost).toFixed(2)}</TableCell>
+                    <TableCell>
+                      Ksh {parseFloat(note.total_cost).toFixed(2)}
+                    </TableCell>
                     <TableCell>{note.recorded_at}</TableCell>
                     <TableCell className="text-center">
                       <Button
@@ -127,31 +142,38 @@ const PhysicianNotesTable = () => {
                             <span className="font-medium">Diagnosis:</span>{" "}
                             {note.diagnosis}
                           </div>
-                          {note.prescription && note.prescription.length > 0 && (
-                            <div>
-                              <span className="font-medium">Prescription:</span>
-                              <ul className="list-disc list-inside ml-4">
-                                {note.prescription.map((item, index) => (
-                                  <li key={index}>
-                                    {item.medication}: {item.dosage}
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
- 
-                         {note.lab_tests_ordered && note.lab_tests_ordered.length > 0 && (
-                           <div>
-                             <span className="font-medium">Lab Tests Ordered:</span>
-                             <ul className="list-disc list-inside ml-4">
-                               {note.lab_tests_ordered.map((test, index) => (
-                                 <li key={index}>
-                                   {test.test_name} {/* Accessing the test_name property */}
-                                 </li>
-                               ))}
-                             </ul>
-                           </div>
-                         )}
+                          {note.prescription &&
+                            note.prescription.length > 0 && (
+                              <div>
+                                <span className="font-medium">
+                                  Prescription:
+                                </span>
+                                <ul className="list-disc list-inside ml-4">
+                                  {note.prescription.map((item, index) => (
+                                    <li key={index}>
+                                      {item.medication}: {item.dosage}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+
+                          {note.lab_tests_ordered &&
+                            note.lab_tests_ordered.length > 0 && (
+                              <div>
+                                <span className="font-medium">
+                                  Lab Tests Ordered:
+                                </span>
+                                <ul className="list-disc list-inside ml-4">
+                                  {note.lab_tests_ordered.map((test, index) => (
+                                    <li key={index}>
+                                      {test.test_name}{" "}
+                                      {/* Accessing the test_name property */}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
                         </div>
                       </TableCell>
                     </TableRow>

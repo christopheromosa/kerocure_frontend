@@ -21,13 +21,15 @@ import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import PageTransition from "@/components/PageTransition";
 import LoadingPage from "@/components/loading_animation";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const triageSchema = z.object({
-  weight: z.coerce.number().min(1, "Weight must be a valid number"),
-  height: z.coerce.number().min(1, "Height must be a valid number"),
-  systolic: z.coerce.number().min(1, "Systolic pressure is required"),
-  diastolic: z.coerce.number().min(1, "Diastolic pressure is required"),
-  pulse: z.coerce.number().min(1, "Pulse rate is required"),
+  weight: z.coerce.string().min(1, "Weight is required"),
+  height: z.coerce.string().min(1, "Height is required"),
+  systolic: z.coerce.string().min(1, "Systolic pressure is required"),
+  diastolic: z.coerce.string().min(1, "Diastolic pressure is required"),
+  pulse: z.coerce.string().min(1, "Pulse rate is required"),
 });
 
 type PatientType = {
@@ -38,11 +40,11 @@ type PatientType = {
   contact_number: string;
 };
 interface triageType {
-  weight: number;
-  height: number;
-  systolic: number;
-  diastolic: number;
-  pulse: number;
+  weight: string;
+  height: string;
+  systolic: string;
+  diastolic: string;
+  pulse: string;
 }
 
 const Patient = () => {
@@ -106,7 +108,7 @@ const onSubmit = async (data: triageType) => {
   };
 
   try {
-    const res = await fetch("http://localhost:8000/visits/", {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/visits/`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -134,7 +136,7 @@ const onSubmit = async (data: triageType) => {
       console.log(triageData);
       
 
-      const triageRes = await fetch("http://localhost:8000/triage/", {
+      const triageRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/triage/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -145,7 +147,14 @@ const onSubmit = async (data: triageType) => {
 
       if (triageRes.ok) {
         console.log("Triage data submitted successfully!");
+ toast.success("Patient proceed to consultation successfully!", {
+           autoClose: 5000, // Show toast for 2 seconds
+           onClose: () => {
+             window.location.reload(); // Refresh after the toast disappears
+           },
+         });
         router.push("/departments/triage");
+      
       } else {
         console.error("Failed to submit triage data");
       }
@@ -202,7 +211,7 @@ const onSubmit = async (data: triageType) => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="weight">Weight</Label>
-                  <Input id="weight" type="number" {...register("weight")} />
+                  <Input id="weight" type="text" {...register("weight")} />
                   {errors.weight && (
                     <p className="text-red-500 text-sm">
                       {errors.weight?.message as string}
@@ -211,7 +220,7 @@ const onSubmit = async (data: triageType) => {
                 </div>
                 <div>
                   <Label htmlFor="height">Height</Label>
-                  <Input id="height" type="number" {...register("height")} />
+                  <Input id="height" type="text" {...register("height")} />
                   {errors.height && (
                     <p className="text-red-500 text-sm">
                       {errors.height?.message as string}
@@ -224,7 +233,7 @@ const onSubmit = async (data: triageType) => {
                   <Label htmlFor="systolic">Systolic</Label>
                   <Input
                     id="systolic"
-                    type="number"
+                    type="text"
                     {...register("systolic")}
                   />
                   {errors.systolic && (
@@ -235,7 +244,7 @@ const onSubmit = async (data: triageType) => {
                 </div>
                 <div>
                   <Label htmlFor="pulse">Pulse / Min</Label>
-                  <Input id="pulse" type="number" {...register("pulse")} />
+                  <Input id="pulse" type="text" {...register("pulse")} />
                   {errors.pulse && (
                     <p className="text-red-500 text-sm">
                       {errors.pulse.message as string}
@@ -247,7 +256,7 @@ const onSubmit = async (data: triageType) => {
                 <Label htmlFor="diastolic">Diastolic</Label>
                 <Input
                   id="diastolic"
-                  type="number"
+                  type="text"
                   {...register("diastolic")}
                 />
                 {errors.diastolic && (
@@ -268,6 +277,7 @@ const onSubmit = async (data: triageType) => {
           </form>
         </Card>
       </div>
+       <ToastContainer />
     </PageTransition>
   );
 };

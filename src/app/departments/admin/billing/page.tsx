@@ -1,6 +1,13 @@
 "use client";
 
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import LoadingPage from "@/components/loading_animation";
@@ -17,33 +24,31 @@ interface Billing {
   recorded_at: string;
 }
 
-
-
 export default function BillingTable() {
   const [currentPage, setCurrentPage] = useState(1);
-     const [billingData, setBillingData] = useState<Billing[]>([]);
-     const [isLoading, setIsLoading] = useState(false);
+  const [billingData, setBillingData] = useState<Billing[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   const resultsPerPage = 5;
 
+  useEffect(() => {
+    async function fetchBillingData() {
+      setIsLoading(true);
+      try {
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/billing/`
+        );
+        if (!response.ok) throw new Error("Failed to fetch data");
 
-
-    useEffect(() => {
-      async function fetchBillingData() {
-        setIsLoading(true);
-        try {
-          const response = await fetch("http://localhost:8000/billing/");
-          if (!response.ok) throw new Error("Failed to fetch data");
-
-          const data = await response.json();
-          setBillingData(data);
-        } catch (err) {
-          alert("Failed to load billing records");
-        } finally {
-          setIsLoading(false);
-        }
+        const data = await response.json();
+        setBillingData(data);
+      } catch (err) {
+        alert("Failed to load billing records");
+      } finally {
+        setIsLoading(false);
       }
-      fetchBillingData();
-    }, []);
+    }
+    fetchBillingData();
+  }, []);
 
   // Pagination logic
   const totalPages = Math.ceil(billingData.length / resultsPerPage);
@@ -71,12 +76,22 @@ export default function BillingTable() {
           {displayedBills.map((bill) => (
             <TableRow key={bill.bill_id}>
               <TableCell>{bill.visit}</TableCell>
-              <TableCell>Ksh {parseFloat(bill.consultation_cost).toFixed(2)}</TableCell>
-              <TableCell>Ksh {parseFloat(bill.laboratory_cost).toFixed(2)}</TableCell>
-              <TableCell>Ksh {parseFloat(bill.pharmacy_cost).toFixed(2)}</TableCell>
-              <TableCell className="font-bold text-green-600">Ksh {parseFloat(bill.total_cost).toFixed(2)}</TableCell>
+              <TableCell>
+                Ksh {parseFloat(bill.consultation_cost).toFixed(2)}
+              </TableCell>
+              <TableCell>
+                Ksh {parseFloat(bill.laboratory_cost).toFixed(2)}
+              </TableCell>
+              <TableCell>
+                Ksh {parseFloat(bill.pharmacy_cost).toFixed(2)}
+              </TableCell>
+              <TableCell className="font-bold text-green-600">
+                Ksh {parseFloat(bill.total_cost).toFixed(2)}
+              </TableCell>
               <TableCell>{bill.billed_by ?? "N/A"}</TableCell>
-              <TableCell>{new Date(bill.recorded_at).toLocaleString()}</TableCell>
+              <TableCell>
+                {new Date(bill.recorded_at).toLocaleString()}
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>
@@ -97,7 +112,9 @@ export default function BillingTable() {
         <Button
           variant="outline"
           disabled={currentPage === totalPages}
-          onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+          onClick={() =>
+            setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+          }
         >
           Next
         </Button>

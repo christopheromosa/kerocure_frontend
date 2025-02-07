@@ -33,7 +33,7 @@ export default function LabResultsTable() {
     async function fetchPatientsData() {
       setIsLoading(true);
       try {
-        const response = await fetch("http://localhost:8000/lab/");
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/lab/`);
         if (!response.ok) throw new Error("Failed to fetch data");
 
         const data = await response.json();

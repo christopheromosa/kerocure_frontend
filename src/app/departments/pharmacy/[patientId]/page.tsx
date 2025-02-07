@@ -5,6 +5,8 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import {
   Table,
   TableHeader,
@@ -46,7 +48,6 @@ const PharmacyDetailsPage = () => {
   const [showSuccessDialog, setShowSuccessDialog] = useState<boolean>(false);
   const [showErrorDialog, setShowErrorDialog] = useState<boolean>(false);
 
-
   // Fetch patient details and prescriptions on page load
   useEffect(() => {
     if (patientId) {
@@ -82,7 +83,7 @@ const PharmacyDetailsPage = () => {
     console.log("Total Cost:", calculateTotalCost()); // Debug log
 
     try {
-      const res = await fetch("http://localhost:8000/pharmacy/", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/pharmacy/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -99,7 +100,7 @@ const PharmacyDetailsPage = () => {
 
       if (res.ok) {
         await axios.put(
-          `http://localhost:8000/visits/${visitData?.visit_id}/`,
+          `${process.env.NEXT_PUBLIC_API_URL}/visits/${visitData?.visit_id}/`,
           {
             patient: patientId,
             current_state: "PHARMACY",
@@ -112,7 +113,15 @@ const PharmacyDetailsPage = () => {
             },
           }
         );
+        toast.success("Prescriptions saved successfully", {
+          autoClose: 5000, // Show toast for 2 seconds
+          onClose: () => {
+            window.location.reload();
+            // Refresh after the toast disappears
+          },
+        });
         router.push("/departments/pharmacy");
+
         setShowSuccessDialog(true);
       } else {
         throw new Error("Failed to save prescription details");
@@ -187,7 +196,7 @@ const PharmacyDetailsPage = () => {
           </Table>
           <div className="mt-4">
             <p className="font-medium">
-              Total Cost: ${calculateTotalCost().toFixed(2)}
+              Total Cost: Ksh {calculateTotalCost().toFixed(2)}
             </p>
           </div>
           <Button className="mt-4" onClick={handleSavePrescription}>
@@ -225,6 +234,7 @@ const PharmacyDetailsPage = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <ToastContainer />
     </div>
   );
 };

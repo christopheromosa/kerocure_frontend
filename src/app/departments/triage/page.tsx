@@ -1,5 +1,5 @@
 // import SuccessDialog from "@/components/SuccessDialog";
-"use client"
+"use client";
 import LoadingPage from "@/components/loading_animation";
 import PageTransition from "@/components/PageTransition";
 import { columns } from "@/components/tables/triage-data-table/columns";
@@ -14,9 +14,12 @@ export default function TriagePage() {
     async function getPatientsData() {
       setIsLoading(true);
       // todo: implement fetch patients functionality
-      const response = await fetch("http://localhost:8000/patients", {
-        cache: "no-store",
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/patients`,
+        {
+          cache: "no-store",
+        }
+      );
       if (response.ok) {
         const newData = await response.json();
         setData(newData);

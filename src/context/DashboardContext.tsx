@@ -40,23 +40,37 @@ const fetchDashboardData = async () => {
     billingTotalCost,
     patientsAll,
   ] = await Promise.all([
-    fetch("http://localhost:8000/api/consultation-patients/").then((res) => res.json()),
-    fetch("http://localhost:8000/api/lab-patients/").then((res) => res.json()),
-    fetch("http://localhost:8000/api/pharmacy-patients/").then((res) => res.json()),
-    fetch("http://localhost:8000/api/billing-patients/").then((res) => res.json()),
-    fetch("http://localhost:8000/billing/").then((res) => res.json()),
-    fetch("http://localhost:8000/api/total-revenue-per-day/").then((res) => res.json()),
-    fetch("http://localhost:8000/patients/").then((res) => res.json()),
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/triage-patients/`).then(
+      (res) => res.json()
+    ),
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/consultation-patients/`).then(
+      (res) => res.json()
+    ),
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/pharmacy-patients/`).then(
+      (res) => res.json()
+    ),
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/billing-patients/`).then(
+      (res) => res.json()
+    ),
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/billing/`).then((res) =>
+      res.json()
+    ),
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/total-revenue-per-day/`).then(
+      (res) => res.json()
+    ),
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/patients/`).then((res) =>
+      res.json()
+    ),
   ]);
 
   return {
- consultationPatients: consultationQueueRes?.length ?? 0,
-      labPatients: labQueueRes?.length ?? 0,
-      pharmacyPatients: pharmacyQueueRes?.length ?? 0,
-      billingPatients: billingQueueRes?.length ?? 0,
-      billingRecords: billingRecords?.slice(-5) ?? [],
-      revenues: billingTotalCost ?? 0,
-      totalPatients: patientsAll ?? 0,
+    consultationPatients: consultationQueueRes?.length ?? 0,
+    labPatients: labQueueRes?.length ?? 0,
+    pharmacyPatients: pharmacyQueueRes?.length ?? 0,
+    billingPatients: billingQueueRes?.length ?? 0,
+    billingRecords: billingRecords?.slice(-5) ?? [],
+    revenues: billingTotalCost ?? 0,
+    totalPatients: patientsAll ?? 0,
   };
 };
 
@@ -89,7 +103,7 @@ export const DashboardProvider = ({ children }: { children: ReactNode }) => {
   return (
     <DashboardContext.Provider
       value={{
-        data:data ?? null,
+        data: data ?? null,
         refetch,
         isLoading,
       }}
@@ -98,4 +112,3 @@ export const DashboardProvider = ({ children }: { children: ReactNode }) => {
     </DashboardContext.Provider>
   );
 };
-

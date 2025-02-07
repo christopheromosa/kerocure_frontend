@@ -34,7 +34,7 @@ const TriageTable = () => {
     async function fetchTriageData() {
       setIsLoading(true);
       try {
-        const response = await fetch("http://localhost:8000/triage/");
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/triage/`);
         if (!response.ok) throw new Error("Failed to fetch data");
 
         const data = await response.json();

@@ -1,7 +1,14 @@
 "use client";
 
-import React from 'react';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import React from "react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import LoadingPage from "@/components/loading_animation";
@@ -28,7 +35,9 @@ export default function MedicationsTable() {
     async function fetchMedicationData() {
       setIsLoading(true);
       try {
-        const response = await fetch("http://localhost:8000/pharmacy/");
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/pharmacy/`
+        );
         if (!response.ok) throw new Error("Failed to fetch data");
 
         const data = await response.json();
@@ -52,7 +61,9 @@ export default function MedicationsTable() {
   // Toggle expand/collapse for prescriptions
   const toggleExpandRow = (medicationId: number) => {
     setExpandedRows((prev) =>
-      prev.includes(medicationId) ? prev.filter((id) => id !== medicationId) : [...prev, medicationId]
+      prev.includes(medicationId)
+        ? prev.filter((id) => id !== medicationId)
+        : [...prev, medicationId]
     );
   };
 
@@ -78,36 +89,61 @@ export default function MedicationsTable() {
                 <TableCell>{medication.visit}</TableCell>
                 <TableCell>{medication.note}</TableCell>
                 <TableCell>
-                  <Button variant="ghost" onClick={() => toggleExpandRow(medication.medication_id)}>
-                    {expandedRows.includes(medication.medication_id) ? "Close" : "View"}
+                  <Button
+                    variant="ghost"
+                    onClick={() => toggleExpandRow(medication.medication_id)}
+                  >
+                    {expandedRows.includes(medication.medication_id)
+                      ? "Close"
+                      : "View"}
                   </Button>
                 </TableCell>
-                <TableCell>Ksh {parseFloat(medication.cost).toFixed(2)}</TableCell>
+                <TableCell>
+                  Ksh {parseFloat(medication.cost).toFixed(2)}
+                </TableCell>
                 <TableCell>{medication.dispensed_by ?? "N/A"}</TableCell>
-                <TableCell>{new Date(medication.dispensed_at).toLocaleString()}</TableCell>
+                <TableCell>
+                  {new Date(medication.dispensed_at).toLocaleString()}
+                </TableCell>
               </TableRow>
 
               {/* Expandable Row for Prescriptions */}
-              {expandedRows.includes(medication.medication_id) && medication.prescriptions && (
-                <TableRow>
-                <TableCell colSpan={6} className="p-4">
-                                    <div className="space-y-3">
-                                      <span className="font-medium">Prescriptions:</span>
-                                      <div className="space-y-2 flex gap-2">
-                                        {medication.prescriptions.map((prescription: any, index: number) => (
-                                          <div key={index} className="border rounded-md p-3">
-                                            <p><strong>Medication Name:</strong> {prescription.medication_name}</p>
-                                            <p><strong>Cost:</strong> Ksh {prescription.cost}</p>
-                                            <p><strong>Quantity:</strong> {prescription.quantity}</p>
-                                            <p><strong>Dispensed:</strong> {prescription.dispensed ? "Yes" : "No"}</p>
-                                          </div>
-                                        ))}
-                                      </div>
-                                    </div>
-                                  </TableCell>
-
-                </TableRow>
-              )}
+              {expandedRows.includes(medication.medication_id) &&
+                medication.prescriptions && (
+                  <TableRow>
+                    <TableCell colSpan={6} className="p-4">
+                      <div className="space-y-3">
+                        <span className="font-medium">Prescriptions:</span>
+                        <div className="space-y-2 flex gap-2">
+                          {medication.prescriptions.map(
+                            (prescription: any, index: number) => (
+                              <div
+                                key={index}
+                                className="border rounded-md p-3"
+                              >
+                                <p>
+                                  <strong>Medication Name:</strong>{" "}
+                                  {prescription.medication_name}
+                                </p>
+                                <p>
+                                  <strong>Cost:</strong> Ksh {prescription.cost}
+                                </p>
+                                <p>
+                                  <strong>Quantity:</strong>{" "}
+                                  {prescription.quantity}
+                                </p>
+                                <p>
+                                  <strong>Dispensed:</strong>{" "}
+                                  {prescription.dispensed ? "Yes" : "No"}
+                                </p>
+                              </div>
+                            )
+                          )}
+                        </div>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )}
             </React.Fragment>
           ))}
         </TableBody>

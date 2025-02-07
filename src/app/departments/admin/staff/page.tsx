@@ -5,11 +5,25 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "@/components/ui/select";
 
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
+import {
+  Table,
+  TableHeader,
+  TableRow,
+  TableHead,
+  TableBody,
+  TableCell,
+} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import LoadingPage from "@/components/loading_animation";
 import { useState, useEffect } from "react";
@@ -32,14 +46,19 @@ const StaffPage = () => {
     role: "",
     phone_number: "",
   });
-  const [responseData, setResponseData] = useState<{ username: string; password: string } | null>(null);
+  const [responseData, setResponseData] = useState<{
+    username: string;
+    password: string;
+  } | null>(null);
 
   // Fetch staff data
   useEffect(() => {
     async function fetchStaffData() {
       setIsLoading(true);
       try {
-        const response = await fetch("http://localhost:8000/accounts/");
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/accounts/`
+        );
         if (!response.ok) throw new Error("Failed to fetch data");
 
         const data = await response.json();
@@ -68,23 +87,31 @@ const StaffPage = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch("http://localhost:8000/accounts/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/accounts/`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(formData),
+        }
+      );
 
       if (!response.ok) throw new Error("Failed to create staff account");
 
       const data = await response.json();
       setResponseData(data); // Store the response (username and password)
       setIsDialogOpen(false); // Close the form dialog
-      setFormData({ first_name: "", last_name: "", role: "", phone_number: "" }); // Reset form
+      setFormData({
+        first_name: "",
+        last_name: "",
+        role: "",
+        phone_number: "",
+      }); // Reset form
 
       // Refresh the staff list
-      const updatedResponse = await fetch("http://localhost:8000/accounts/");
+      const updatedResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/accounts/`);
       const updatedData = await updatedResponse.json();
       setStaffData(updatedData);
     } catch (error) {
@@ -108,9 +135,11 @@ const StaffPage = () => {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {staffData.map((staffMember) => (
-            <TableRow key={staffMember.id}>
-              <TableCell>{staffMember.first_name} {staffMember.last_name}</TableCell>
+          {staffData.map((staffMember, index) => (
+            <TableRow key={index}>
+              <TableCell>
+                {staffMember.first_name} {staffMember.last_name}
+              </TableCell>
               <TableCell>{staffMember.role}</TableCell>
               <TableCell>{staffMember.phone_number}</TableCell>
             </TableRow>
@@ -148,26 +177,27 @@ const StaffPage = () => {
               required
             />
 
+            <Select
+              name="role"
+              value={formData.role}
+              onValueChange={(value) =>
+                handleInputChange({ target: { name: "role", value } })
+              }
+              required
+            >
+              <SelectTrigger className="mt-1  w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                <SelectValue placeholder="Select a Role" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Triage">Triage</SelectItem>
+                <SelectItem value="Doctor">Doctor</SelectItem>
+                <SelectItem value="Lab Technician">Lab Technician</SelectItem>
+                <SelectItem value="Pharmacist">Pharmacist</SelectItem>
+                <SelectItem value="Administrator">Administrator</SelectItem>
+                <SelectItem value="Billing">Billing</SelectItem>
+              </SelectContent>
+            </Select>
 
-    <Select
-      name="role"
-      value={formData.role}
-      onValueChange={(value) => handleInputChange({ target: { name: 'role', value } })}
-      required
-    >
-      <SelectTrigger className="mt-1  w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-        <SelectValue placeholder="Select a Role" />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectItem value="Triage">Triage</SelectItem>
-        <SelectItem value="Doctor">Doctor</SelectItem>
-        <SelectItem value="Lab Technician">Lab Technician</SelectItem>
-        <SelectItem value="Pharmacist">Pharmacist</SelectItem>
-        <SelectItem value="Administrator">Administrator</SelectItem>
-        <SelectItem value="Billing">Billing</SelectItem>
-      </SelectContent>
-    </Select>
-  
             <Input
               name="phone_number"
               placeholder="Phone Number"
@@ -182,7 +212,10 @@ const StaffPage = () => {
 
       {/* Response Popup */}
       {responseData && (
-        <Dialog open={!!responseData} onOpenChange={() => setResponseData(null)}>
+        <Dialog
+          open={!!responseData}
+          onOpenChange={() => setResponseData(null)}
+        >
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Account Created Successfully</DialogTitle>
@@ -191,8 +224,12 @@ const StaffPage = () => {
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-2">
-              <p><strong>Username:</strong> {responseData.username}</p>
-              <p><strong>Password:</strong> {responseData.password}</p>
+              <p>
+                <strong>Username:</strong> {responseData.username}
+              </p>
+              <p>
+                <strong>Password:</strong> {responseData.password}
+              </p>
             </div>
           </DialogContent>
         </Dialog>

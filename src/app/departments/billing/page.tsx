@@ -18,7 +18,7 @@ export default function LabPage() {
       setIsLoading(true);
       // todo: implement fetch patients functionality
       const response = await fetch(
-        "http://localhost:8000/api/billing-patients/",
+        `${process.env.NEXT_PUBLIC_API_URL}/api/billing-patients/`,
         {
           cache: "no-store",
         }

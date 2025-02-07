@@ -1,4 +1,4 @@
-"use client"
+"use client";
 import LoadingPage from "@/components/loading_animation";
 import PageTransition from "@/components/PageTransition";
 import { columns } from "@/components/tables/pharmacy-data-table/columns";
@@ -6,8 +6,6 @@ import { DataTable } from "@/components/tables/pharmacy-data-table/pharmacy-data
 import React, { useEffect, useState } from "react";
 
 export default function PharmacyPage() {
-
-
   const [data, setData] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -15,9 +13,12 @@ export default function PharmacyPage() {
     async function getPharmacyPatientsData() {
       setIsLoading(true);
       // todo: implement fetch patients functionality
-      const response = await fetch("http://localhost:8000/api/pharmacy-patients", {
-        cache: "no-store",
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/pharmacy-patients`,
+        {
+          cache: "no-store",
+        }
+      );
       if (response.ok) {
         const newData = await response.json();
         setData(newData);

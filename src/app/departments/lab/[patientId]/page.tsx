@@ -36,6 +36,7 @@ const LabResultsPage = () => {
   const [testOrders, setTestOrders] = useState<Record<string, string>>({});
   const [showSuccessDialog, setShowSuccessDialog] = useState<boolean>(false);
   const [showErrorDialog, setShowErrorDialog] = useState<boolean>(false);
+  const [totalCost, setTotalCost] = useState<string>("");
 
   // Extract test names from lab_test_ordered
   const orders: string[] =
@@ -68,7 +69,7 @@ const LabResultsPage = () => {
     }));
 
     try {
-      const res = await fetch("http://localhost:8000/lab/", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/lab/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -79,6 +80,7 @@ const LabResultsPage = () => {
           visit: visitData?.visit_id,
           note: visitData?.consultation_data?.note_id,
           recorded_by: authState?.user_id,
+          total_cost: parseFloat(totalCost),
         }),
       });
 
@@ -146,6 +148,15 @@ const LabResultsPage = () => {
                 ))}
               </TableBody>
             </Table>
+            <div className="mt-4">
+              <label className="block font-semibold mb-1">Total  Cost</label>
+              <Input
+                type="number"
+                value={totalCost}
+                onChange={(e) => setTotalCost(e.target.value)}
+                placeholder="Enter total cost"
+              />
+            </div>
             <Button className="mt-4" onClick={handleSubmitResults}>
               Submit Results
             </Button>

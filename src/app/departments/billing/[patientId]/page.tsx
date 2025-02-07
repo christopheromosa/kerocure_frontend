@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/context/AuthContext";
 import { useVisit } from "@/context/VisitContext";
 import { useRouter} from 'next/navigation';
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -73,7 +75,7 @@ const BillingDetailsPage = () => {
 
       if (res.ok) {
         await axios.put(
-          `http://localhost:8000/visits/${visitData?.visit_id}/`,
+          `${process.env.NEXT_PUBLIC_API_URL}/visits/${visitData?.visit_id}/`,
           {
             patient: patientId,
             current_state: "BILLING",
@@ -103,9 +105,8 @@ const BillingDetailsPage = () => {
     const receiptContent = `
       <h1>KEROCURE MEDICAL CENTER</h1>
       <h1>Receipt</h1>
-      <p>Patient Name: Ksh{visitData?.patient_data?.first_name} ${
-      visitData?.patient_data?.last_name
-    }</p>
+      <p>Patient Name: Ksh ${visitData?.patient_data?.first_name} ${visitData?.patient_data?.last_name} </p>
+
       <p>Consultation Fee: Ksh ${Number(consultationFee).toFixed(2)}</p>
       <p>Lab Cost: ksh ${visitData?.lab_data?.total_cost.toFixed(2)}</p>
       <p>Pharmacy Cost: Ksh ${visitData?.pharmacy_data?.cost.toFixed(2)}</p>

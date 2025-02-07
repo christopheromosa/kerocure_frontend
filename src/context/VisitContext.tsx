@@ -75,7 +75,7 @@ export const VisitProvider = ({ children }: { children: ReactNode }) => {
       try {
         setLoading(true);
         const response = await fetch(
-          `http://localhost:8000/api/visit/today/${Number(patientId)}/`,
+          `${process.env.NEXT_PUBLIC_API_URL}/api/visit/today/${Number(patientId)}/`,
           {
             headers: {
               Authorization: `Token ${authState?.token}`,
