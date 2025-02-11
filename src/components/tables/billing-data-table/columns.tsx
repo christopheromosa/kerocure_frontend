@@ -20,7 +20,6 @@ export type BillingType = {
   bill_id: string;
   service_name: string;
   cost: string;
-  
 };
 
 export const columns: ColumnDef<PatientType>[] = [
@@ -47,10 +46,14 @@ export const columns: ColumnDef<PatientType>[] = [
     enableHiding: false,
   },
   {
+    id: "id",
+
     accessorKey: "id",
     header: "PatientID",
   },
   {
+    id: "first_name",
+
     accessorKey: "first_name",
     header: ({ column }) => {
       return (
@@ -65,6 +68,8 @@ export const columns: ColumnDef<PatientType>[] = [
     },
   },
   {
+    id: "last_name",
+
     accessorKey: "last_name",
     header: ({ column }) => {
       return (
@@ -79,6 +84,8 @@ export const columns: ColumnDef<PatientType>[] = [
     },
   },
   {
+    id: "dob",
+
     accessorKey: "dob",
     header: ({ column }) => {
       return (
@@ -94,6 +101,7 @@ export const columns: ColumnDef<PatientType>[] = [
   },
 
   {
+    id: "contact_number",
     accessorKey: "contact_number",
     header: "Contact Number",
   },

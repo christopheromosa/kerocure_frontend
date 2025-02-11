@@ -21,7 +21,6 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Image from "next/image";
 
-
 const formSchema = z.object({
   username: z.string().min(2, {
     message: "Username must be at least 2 characters.",
@@ -32,7 +31,7 @@ const formSchema = z.object({
 });
 
 export default function LoginForm() {
- const { setTheme, theme } = useTheme();
+  const { setTheme, theme } = useTheme();
   const router = useRouter();
   const { login } = useAuth();
 
@@ -48,13 +47,16 @@ export default function LoginForm() {
   // 2. Define a submit handler.
   async function onSubmit(credentials: z.infer<typeof formSchema>) {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/login/`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(credentials),
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/login/`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(credentials),
+        }
+      );
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -65,37 +67,37 @@ export default function LoginForm() {
       login(data.token, data.role, data.username, data.user_id);
 
       // Show success toast
-       setTimeout(() => {
-      toast.success("Login successful!");
+      setTimeout(() => {
+        toast.success("Login successful!");
       }, 500);
 
       // Redirect based on role
       setTimeout(() => {
-      if (data.role === "Triage") {
-        router.push("/departments/triage");
-      } else if (data.role === "Doctor") {
-        router.push("/departments/consultation");
-      } else if (data.role === "Lab Technician") {
-        router.push("/departments/lab");
-      } else if (data.role === "Pharmacist") {
-        router.push("/departments/pharmacy");
-      } else if (data.role === "Billing") {
-        router.push("/departments/billing");
-      } else if (data.role === "Administrator") {
-        router.push("/departments/admin");
-      }
-       }, 2000);
+        if (data.role === "Triage") {
+          router.push("/departments/triage");
+        } else if (data.role === "Doctor") {
+          router.push("/departments/consultation");
+        } else if (data.role === "Lab Technician") {
+          router.push("/departments/lab");
+        } else if (data.role === "Pharmacist") {
+          router.push("/departments/pharmacy");
+        } else if (data.role === "Billing") {
+          router.push("/departments/billing");
+        } else if (data.role === "Administrator") {
+          router.push("/departments/admin");
+        }
+      }, 2000);
     } catch (error) {
-
       // Show error toast
-      toast.error(error instanceof Error ? error.message : "Login failed",{ delay: 2000 });
+      toast.error(error instanceof Error ? error.message : "Login failed", {
+        delay: 2000,
+      });
     }
   }
 
   return (
     <div className="mb-6 w-full flex flex-col justify-center items-center  m-6 rounded-md mt-4">
-
-<Image
+      <Image
         src="/kerocureLogo-removebg-preview.png" // Ensure the image is inside the public folder
         alt="Company Logo"
         width={200} // Set width
@@ -103,39 +105,47 @@ export default function LoginForm() {
         priority // Load it as a high priority
       />
 
-<div className="flex justify-between gap-4 p-2">
-      <h1 className="text-xl">KEROCURE MEDICAL CENTER </h1>
-                            {/* Theme Toggle Button */}
+      <div className="flex justify-between gap-4 p-2">
+        <h1 className="text-xl">KEROCURE MEDICAL CENTER </h1>
+        {/* Theme Toggle Button */}
 
-      {theme === "light" ? (
-        <Button variant="outline" size="icon" onClick={() => setTheme("dark")}>
-          <Sun
-            className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0"
-            onClick={() => setTheme("light")}
-          />
-        </Button>
-      ) : (
-        <Button variant="outline" size="icon" onClick={() => setTheme("light")}>
-          <Moon
-            className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100"
+        {theme === "light" ? (
+          <Button
+            variant="outline"
+            size="icon"
             onClick={() => setTheme("dark")}
-          />
-        </Button>
-      )}
-    </div>
+          >
+            <Sun
+              className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0"
+              onClick={() => setTheme("light")}
+            />
+          </Button>
+        ) : (
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setTheme("light")}
+          >
+            <Moon
+              className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100"
+              onClick={() => setTheme("dark")}
+            />
+          </Button>
+        )}
+      </div>
 
       {/* Login Form */}
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
-          className="space-y-8 border rounded-md p-8 w-1/3"
+          className="space-y-8 border rounded-md p-8 w-full max-w-md"
         >
           <FormField
             control={form.control}
             name="username"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Username</FormLabel>
+                <FormLabel className="text-red-400">Username</FormLabel>
                 <FormControl>
                   <Input placeholder="Enter username" {...field} />
                 </FormControl>
@@ -148,18 +158,20 @@ export default function LoginForm() {
             name="password"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Password</FormLabel>
+                <FormLabel className="text-red-400">Password</FormLabel>
                 <FormControl>
-                  <Input type="password" placeholder="Enter password" {...field} />
+                  <Input
+                    type="password"
+                    placeholder="Enter password"
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
-          
-          <Button type="submit">Submit</Button>
 
-          
+          <Button type="submit">Submit</Button>
         </form>
       </Form>
 
@@ -175,8 +187,6 @@ export default function LoginForm() {
         draggable
         pauseOnHover
       />
-
-
     </div>
   );
 }

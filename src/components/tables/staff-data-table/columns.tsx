@@ -47,14 +47,17 @@ export const columns: ColumnDef<staffType>[] = [
     enableHiding: false,
   },
   {
+    id: "id",
     accessorKey: "id",
     header: "ID",
   },
   {
+    id:"staffId",
     accessorKey: "staffId",
     header: "Staff ID",
   },
   {
+    id:"firstName",
     accessorKey: "firstName",
     header: ({ column }) => {
       return (
@@ -70,6 +73,7 @@ export const columns: ColumnDef<staffType>[] = [
   },
 
   {
+    id:"lastName",
     accessorKey: "lastName",
     header: ({ column }) => {
       return (
@@ -84,6 +88,7 @@ export const columns: ColumnDef<staffType>[] = [
     },
   },
   {
+    id:"username",
     accessorKey: "username",
     header: ({ column }) => {
       return (
@@ -99,10 +104,12 @@ export const columns: ColumnDef<staffType>[] = [
   },
 
   {
+    id:"contactNumber",
     accessorKey: "contactNumber",
     header: "Contact Number",
   },
   {
+    id:"role",
     accessorKey: "role",
     header: "role",
   },

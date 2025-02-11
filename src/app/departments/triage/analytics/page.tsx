@@ -17,7 +17,9 @@ import LoadingPage from "@/components/loading_animation";
 type Triage = {
   triage_id: number;
   visit: number;
+  patient_name: string;
   vital_signs: { [key: string]: string | number };
+  staff_name: string;
   recorded_by: string | null;
   recorded_at: string;
 };
@@ -52,7 +54,7 @@ const TriageTable = () => {
 
   // Filter triage records by Visit ID
   const filteredTriage = triageData?.filter((triage) =>
-    triage.visit.toString().includes(search)
+    triage.patient_name.toString().includes(search)
   );
 
   // Pagination logic
@@ -88,7 +90,7 @@ const TriageTable = () => {
       {/* Table */}
       <div className="overflow-x-auto">
         <Table>
-          <TableHeader>
+          <TableHeader className="bg-green-400">
             <TableRow>
               <TableHead className="w-1/6">Triage ID</TableHead>
               <TableHead>Visit ID</TableHead>
@@ -103,7 +105,7 @@ const TriageTable = () => {
                 <React.Fragment key={triage.triage_id}>
                   <TableRow>
                     <TableCell>{triage.triage_id}</TableCell>
-                    <TableCell>{triage.visit}</TableCell>
+                    <TableCell>{triage.patient_name}</TableCell>
                     <TableCell>
                       <Button
                         variant="ghost"
@@ -116,7 +118,7 @@ const TriageTable = () => {
                         )}
                       </Button>
                     </TableCell>
-                    <TableCell>{triage.recorded_by || "Unknown"}</TableCell>
+                    <TableCell>{triage.staff_name || "Unknown"}</TableCell>
                     <TableCell>{triage.recorded_at}</TableCell>
                   </TableRow>
 
@@ -128,7 +130,9 @@ const TriageTable = () => {
                           {Object.entries(triage.vital_signs).map(
                             ([key, value]) => (
                               <li key={key}>
-                                <span className="font-medium">{key}:</span>{" "}
+                                <span className="font-medium bg-green capitalize">
+                                  {key}:
+                                </span>{" "}
                                 {value}
                               </li>
                             )

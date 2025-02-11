@@ -28,28 +28,26 @@ const DashboardPage = () => {
   console.log(data);
 
   const patientsInQueue = [
-    { department: "Consultation", count: data.consultationPatients },
-    { department: "Laboratory", count: data.labPatients },
-    { department: "Pharmacy", count: data.pharmacyPatients },
-    { department: "Billing", count: data.billingPatients },
+    { department: "Consultation", count: data?.consultationPatients },
+    { department: "Laboratory", count: data?.labPatients },
+    { department: "Pharmacy", count: data?.pharmacyPatients },
+    { department: "Billing", count: data?.billingPatients },
   ];
 
-
-
-const formattedData = data.revenues.map((item) => ({
-  ...item,
-  formattedDate: new Date(item.date).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-  }), // Converts "2025-02-05" to "Feb 5"
-}));
+  const formattedData = data?.revenues.map((item) => ({
+    ...item,
+    formattedDate: new Date(item.date).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+    }), // Converts "2025-02-05" to "Feb 5"
+  }));
   return (
     <div className="p-6 space-y-6">
       {isLoading && <LoadingPage />}
       <div className="flex justify-between">
-      <h1 className="text-2xl font-bold">Dashboard</h1>
-      <Button onClick={refetch}>Refresh data</Button>
-</div>
+        <h1 className="text-2xl font-bold">Dashboard</h1>
+        <Button onClick={refetch}>Refresh data</Button>
+      </div>
       {/* Patients in Queue */}
       <Card>
         <CardHeader>
@@ -68,35 +66,36 @@ const formattedData = data.revenues.map((item) => ({
               </Card>
             ))}
             <Card>
-                            <CardHeader>
-                              <CardTitle className="text-lg">Total Amount</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                              <p className="text-2xl font-bold">Ksh {data.revenues?.at(-1)?.total_cost??0.00 }</p>
-                            </CardContent>
-                          </Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Total Amount</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-bold">
+                  Ksh {data?.revenues.at(-1)?.total_cost ?? 0.0}
+                </p>
+              </CardContent>
+            </Card>
           </div>
         </CardContent>
       </Card>
 
       {/* Revenue Chart */}
-<Card>
-  <CardHeader>
-    <CardTitle>Revenue per Day</CardTitle>
-  </CardHeader>
-  <CardContent>
-    <ResponsiveContainer width="100%" height={300}>
-      <BarChart data={formattedData}>
-        <XAxis dataKey="formattedDate" />
-        <YAxis />
-        <Tooltip />
-        <Legend />
-        <Bar dataKey="total_cost" fill="#8884d8" />
-      </BarChart>
-    </ResponsiveContainer>
-  </CardContent>
-</Card>
-
+      <Card>
+        <CardHeader>
+          <CardTitle>Revenue per Day</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={formattedData}>
+              <XAxis dataKey="formattedDate" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="total_cost" fill="#8884d8" />
+            </BarChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
 
       {/* Latest Transactions */}
       <Card>
@@ -117,7 +116,7 @@ const formattedData = data.revenues.map((item) => ({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {data.billingRecords.map((transaction,index) => (
+              {data?.billingRecords.map((transaction, index) => (
                 <TableRow key={index}>
                   <TableCell>{transaction.visit}</TableCell>
                   <TableCell>{transaction.consultation_cost}</TableCell>
@@ -125,7 +124,7 @@ const formattedData = data.revenues.map((item) => ({
                   <TableCell>{transaction.pharmacy_cost}</TableCell>
                   <TableCell>{transaction.total_cost}</TableCell>
                   <TableCell>{transaction.billed_by}</TableCell>
-                   <TableCell>{transaction.recorded_at}</TableCell>
+                  <TableCell>{transaction.recorded_at}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

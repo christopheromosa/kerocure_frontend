@@ -11,6 +11,7 @@ import {
   ColumnFiltersState,
   getFilteredRowModel,
   VisibilityState,
+  FilterFn,
 } from "@tanstack/react-table";
 
 import {
@@ -40,6 +41,16 @@ interface DataTableProps<TData, TValue> {
   data: TData[];
 }
 
+// Define a custom filter function
+const nameFilterFn: FilterFn<any> = (row, columnId, filterValue) => {
+  const firstName = row.getValue("first_name") as string;
+  const lastName = row.getValue("last_name") as string;
+  return (
+    firstName.toLowerCase().includes(filterValue.toLowerCase()) ||
+    lastName.toLowerCase().includes(filterValue.toLowerCase())
+  );
+};
+
 export function DataTable<TData, TValue>({
   columns,
   data,
@@ -57,7 +68,15 @@ export function DataTable<TData, TValue>({
 
   const table = useReactTable({
     data,
-    columns,
+    columns: columns.map((col) => {
+      if (col.id === "first_name" || col.id === "last_name") {
+        return {
+          ...col,
+          filterFn: nameFilterFn,
+        };
+      }
+      return col;
+    }),
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     onSortingChange: setSorting,
@@ -80,10 +99,13 @@ export function DataTable<TData, TValue>({
       <div className="flex justify-between pb-4">
         <Input
           placeholder="Filter name..."
-          value={(table.getColumn("first_name")?.getFilterValue() as string) ?? ""}
-          onChange={(event) =>
-            table.getColumn("first_name")?.setFilterValue(event.target.value)
+          value={
+            (table.getColumn("first_name")?.getFilterValue() as string) ?? ""
           }
+          onChange={(event) => {
+            table.getColumn("first_name")?.setFilterValue(event.target.value);
+            table.getColumn("last_name")?.setFilterValue(event.target.value);
+          }}
           className="w-3/4 mr-4"
         />
         <div className="flex justify-around gap-1">
@@ -158,7 +180,7 @@ export function DataTable<TData, TValue>({
                   colSpan={columns.length}
                   className="h-24 text-center"
                 >
-                  No results.
+                  <p>No patient available right now</p>
                 </TableCell>
               </TableRow>
             )}

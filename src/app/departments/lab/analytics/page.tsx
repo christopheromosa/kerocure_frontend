@@ -16,10 +16,12 @@ import LoadingPage from "@/components/loading_animation";
 interface LabResult {
   result_id: number;
   visit_id: number;
+  patient_name: string;
   note_id: number;
   result: Record<string, any>; // JSON data
   total_cost: number;
   recorded_by: string | null;
+  staff_name: string;
   recorded_at: string;
 }
 
@@ -47,7 +49,7 @@ export default function LabResultsTable() {
     fetchPatientsData();
   }, []);
 
-console.log(labResultsData);
+  console.log(labResultsData);
   // Pagination logic
   const totalPages = Math.ceil(labResultsData.length / resultsPerPage);
   const displayedResults = labResultsData.slice(
@@ -62,7 +64,7 @@ console.log(labResultsData);
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-1/6">Visit ID</TableHead>
+            <TableHead className="w-1/6">Patient name</TableHead>
             <TableHead className="w-1/6">Physician Note</TableHead>
             <TableHead className="w-1/3">Results</TableHead>
             <TableHead className="w-1/6">Total Cost</TableHead>
@@ -73,33 +75,37 @@ console.log(labResultsData);
         <TableBody>
           {displayedResults.map((result) => (
             <TableRow key={result.result_id}>
-              <TableCell>{result.visit}</TableCell>
-              <TableCell>{result.note}</TableCell>
+              <TableCell>{result.patient_name}</TableCell>
+              <TableCell>{result.note_id}</TableCell>
               <TableCell>
                 <pre className="text-xs  p-2 rounded flex flex-wrap gap-2 ">
- {Array.isArray(result.result)
-      ? result.result.map((item, index) =>
-          Object.entries(item).map(([key, value]) => (
-            <div
-              key={`${key}-${index}`}
-              className="px-3 py-1 rounded text-xs font-medium bg-blue-100 text-blue-600"
-            >
-              <span className="font-semibold">{key}:</span> {value.toString()}
-            </div>
-          ))
-        )
-      : Object.entries(result.result).map(([key, value]) => (
-          <div
-            key={key}
-            className="px-3 py-1 rounded text-xs font-medium bg-blue-100 text-blue-600"
-          >
-            <span className="font-semibold">{key}:</span> {value.toString()}
-          </div>
-        ))}
+                  {Array.isArray(result.result)
+                    ? result.result.map((item, index) =>
+                        Object.entries(item).map(([key, value]) => (
+                          <div
+                            key={`${key}-${index}`}
+                            className="px-3 py-1 rounded text-xs font-medium bg-blue-100 text-blue-600"
+                          >
+                            <span className="font-semibold">{key}:</span>{" "}
+                            {String(value).toString()}
+                          </div>
+                        ))
+                      )
+                    : Object.entries(result.result).map(([key, value]) => (
+                        <div
+                          key={key}
+                          className="px-3 py-1 rounded text-xs font-medium bg-blue-100 text-blue-600"
+                        >
+                          <span className="font-semibold">{key}:</span>{" "}
+                          {value.toString()}
+                        </div>
+                      ))}
                 </pre>
               </TableCell>
-              <TableCell>Ksh {parseFloat(result.total_cost).toFixed(2)}</TableCell>
-              <TableCell>{result.recorded_by ?? "N/A"}</TableCell>
+              <TableCell>
+                Ksh {parseFloat(result.total_cost.toString()).toFixed(2)}
+              </TableCell>
+              <TableCell>{result.staff_name ?? "N/A"}</TableCell>
               <TableCell>
                 {new Date(result.recorded_at).toLocaleString()}
               </TableCell>

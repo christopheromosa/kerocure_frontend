@@ -73,8 +73,17 @@ const StaffPage = () => {
   }, []);
 
   // Handle form input changes
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
+  // const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   const { name, value } = e.target;
+  //   setFormData((prev) => ({
+  //     ...prev,
+  //     [name]: value,
+  //   }));
+  // };
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement> | { name: string; value: string }
+  ) => {
+    const { name, value } = "target" in e ? e.target : e;
     setFormData((prev) => ({
       ...prev,
       [name]: value,
@@ -111,7 +120,9 @@ const StaffPage = () => {
       }); // Reset form
 
       // Refresh the staff list
-      const updatedResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/accounts/`);
+      const updatedResponse = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/accounts/`
+      );
       const updatedData = await updatedResponse.json();
       setStaffData(updatedData);
     } catch (error) {
@@ -181,7 +192,7 @@ const StaffPage = () => {
               name="role"
               value={formData.role}
               onValueChange={(value) =>
-                handleInputChange({ target: { name: "role", value } })
+                handleInputChange({ name: "role", value })
               }
               required
             >

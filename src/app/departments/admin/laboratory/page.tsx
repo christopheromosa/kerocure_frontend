@@ -16,10 +16,12 @@ import LoadingPage from "@/components/loading_animation";
 interface LabResult {
   result_id: number;
   visit_id: number;
+  patient_name: string;
   note_id: number;
   result: Record<string, any>; // JSON data
   total_cost: number;
   recorded_by: string | null;
+  staff_name:string;
   recorded_at: string;
 }
 
@@ -62,7 +64,7 @@ export default function LabResultsTable() {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-1/6">Visit ID</TableHead>
+            <TableHead className="w-1/6">Patient Name</TableHead>
             <TableHead className="w-1/6">Physician Note</TableHead>
             <TableHead className="w-1/3">Results</TableHead>
             <TableHead className="w-1/6">Total Cost</TableHead>
@@ -73,8 +75,8 @@ export default function LabResultsTable() {
         <TableBody>
           {displayedResults.map((result) => (
             <TableRow key={result.result_id}>
-              <TableCell>{result.visit}</TableCell>
-              <TableCell>{result.note}</TableCell>
+              <TableCell>{result.patient_name}</TableCell>
+              <TableCell>{result.note_id}</TableCell>
               <TableCell>
                 <pre className="text-xs  p-2 rounded flex flex-wrap gap-2 ">
                   {Array.isArray(result.result)
@@ -85,7 +87,7 @@ export default function LabResultsTable() {
                             className="px-3 py-1 rounded text-xs font-medium bg-blue-100 text-blue-600"
                           >
                             <span className="font-semibold">{key}:</span>{" "}
-                            {value.toString()}
+                            {String(value)}
                           </div>
                         ))
                       )
@@ -101,9 +103,9 @@ export default function LabResultsTable() {
                 </pre>
               </TableCell>
               <TableCell>
-                Ksh {parseFloat(result.total_cost).toFixed(2)}
+                Ksh {parseFloat(result.total_cost.toString()).toFixed(2)}
               </TableCell>
-              <TableCell>{result.recorded_by ?? "N/A"}</TableCell>
+              <TableCell>{result.staff_name ?? "N/A"}</TableCell>
               <TableCell>
                 {new Date(result.recorded_at).toLocaleString()}
               </TableCell>

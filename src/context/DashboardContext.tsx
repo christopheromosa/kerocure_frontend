@@ -9,7 +9,12 @@ type Billing = {
   id: number;
   totalCost: number;
   visit: number;
-  recorded_by: number;
+  billed_by: number;
+  consultation_cost:number;
+  laboratory_cost:number;
+  pharmacy_cost:number;
+  total_cost:number;
+  recorded_at:string;
 };
 
 interface dashboard {
@@ -18,7 +23,7 @@ interface dashboard {
   pharmacyPatients: number;
   billingPatients: number;
   billingRecords: Billing[];
-  revenues: number;
+  revenues: { date: string; total_cost: number }[];
   totalPatients: number;
 }
 

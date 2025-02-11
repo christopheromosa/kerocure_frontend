@@ -17,8 +17,8 @@ interface TriageData {
 interface ConsultationData {
   note_id: number;
   diagnosis: string;
-  prescription: string[];
-  lab_test_ordered: string[];
+  prescription: { medication: string; dosage: string }[];
+  lab_test_ordered: { test_name: string }[];
   physician: number | null;
   recorded_at: string;
 }
@@ -31,7 +31,7 @@ interface PatientData {
 }
 interface LabData {
   result: string[];
-  total_cost:number;
+  total_cost: number;
 }
 
 interface PharmacyData {
@@ -45,7 +45,7 @@ interface VisitData {
   consultation_data: ConsultationData | null;
   patient_data: PatientData | null;
   lab_data: LabData | null;
-  pharmacy_data: PharmacyData[] | null;
+  pharmacy_data: PharmacyData | null;
 }
 interface VisitContextType {
   visitData: VisitData | null;
@@ -75,7 +75,9 @@ export const VisitProvider = ({ children }: { children: ReactNode }) => {
       try {
         setLoading(true);
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/visit/today/${Number(patientId)}/`,
+          `${process.env.NEXT_PUBLIC_API_URL}/api/visit/today/${Number(
+            patientId
+          )}/`,
           {
             headers: {
               Authorization: `Token ${authState?.token}`,

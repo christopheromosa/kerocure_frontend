@@ -33,7 +33,7 @@ import { useRouter } from "next/navigation";
 interface Prescription {
   id: number;
   medication_name: string;
-  quantity: number;
+  quantity: string;
   cost: number;
   dispensed: boolean;
 }

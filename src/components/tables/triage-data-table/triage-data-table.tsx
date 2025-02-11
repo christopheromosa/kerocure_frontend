@@ -11,6 +11,7 @@ import {
   ColumnFiltersState,
   getFilteredRowModel,
   VisibilityState,
+  FilterFn,
 } from "@tanstack/react-table";
 
 import {
@@ -31,18 +32,24 @@ import {
 import { Input } from "@/components/ui/input";
 import React from "react";
 
-
 import { Button } from "@/components/ui/button";
 import { DataTablePagination } from "./triage-data-table-pagination";
 import { AddPatientDialog } from "@/components/forms/add-patient";
-
-
-
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
 }
+
+// Define a custom filter function
+const nameFilterFn: FilterFn<any> = (row, columnId, filterValue) => {
+  const firstName = row.getValue("first_name") as string;
+  const lastName = row.getValue("last_name") as string;
+  return (
+    firstName.toLowerCase().includes(filterValue.toLowerCase()) ||
+    lastName.toLowerCase().includes(filterValue.toLowerCase())
+  );
+};
 
 export function DataTable<TData, TValue>({
   columns,
@@ -61,7 +68,15 @@ export function DataTable<TData, TValue>({
 
   const table = useReactTable({
     data,
-    columns,
+    columns: columns.map((col) => {
+      if (col.id === "first_name" || col.id === "last_name") {
+        return {
+          ...col,
+          filterFn: nameFilterFn,
+        };
+      }
+      return col;
+    }),
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     onSortingChange: setSorting,
@@ -79,8 +94,6 @@ export function DataTable<TData, TValue>({
     },
   });
 
-
-
   return (
     <div className="space-y-1 px-4 py-2">
       <div className="flex justify-between pb-4">
@@ -89,9 +102,10 @@ export function DataTable<TData, TValue>({
           value={
             (table.getColumn("first_name")?.getFilterValue() as string) ?? ""
           }
-          onChange={(event) =>
-            table.getColumn("first_name")?.setFilterValue(event.target.value)
-          }
+          onChange={(event) => {
+            table.getColumn("first_name")?.setFilterValue(event.target.value);
+            table.getColumn("last_name")?.setFilterValue(event.target.value);
+          }}
           className="w-3/4 mr-4"
         />
         <div className="flex justify-around gap-1">

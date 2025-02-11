@@ -18,12 +18,14 @@ import LoadingPage from "@/components/loading_animation";
 type PhysicianNote = {
   note_id: number;
   visit: number;
+  patient_name:string;
   triage_id?: number | null;
   diagnosis: string;
-  prescription: { [key: string]: string } | null;
-  lab_tests_ordered: string[] | null;
+  prescription: { [key: string]: string }[] | null;
+  lab_tests_ordered: { [key: string]: string }[] | null;
   total_cost: number;
   physician: string | null;
+  staff_name:string;
   recorded_at: string;
 };
 
@@ -100,7 +102,7 @@ const PhysicianNotesTable = () => {
           <TableHeader>
             <TableRow>
               <TableHead className="w-1/6">Note ID</TableHead>
-              <TableHead>Visit ID</TableHead>
+              <TableHead>Patient Name</TableHead>
               <TableHead>Physician</TableHead>
               <TableHead>Total Cost</TableHead>
               <TableHead>Recorded At</TableHead>
@@ -113,10 +115,10 @@ const PhysicianNotesTable = () => {
                 <React.Fragment key={note.note_id}>
                   <TableRow>
                     <TableCell>{note.note_id}</TableCell>
-                    <TableCell>{note.visit}</TableCell>
-                    <TableCell>{note.physician || "Unknown"}</TableCell>
+                    <TableCell>{note.patient_name}</TableCell>
+                    <TableCell>{note.staff_name || "Unknown"}</TableCell>
                     <TableCell>
-                      Ksh {parseFloat(note.total_cost).toFixed(2)}
+                      Ksh {parseFloat(note.total_cost.toString()).toFixed(2)}
                     </TableCell>
                     <TableCell>{note.recorded_at}</TableCell>
                     <TableCell className="text-center">

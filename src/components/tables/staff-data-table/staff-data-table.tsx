@@ -11,6 +11,7 @@ import {
   ColumnFiltersState,
   getFilteredRowModel,
   VisibilityState,
+  FilterFn,
 } from "@tanstack/react-table";
 
 import {
@@ -31,15 +32,24 @@ import {
 import { Input } from "@/components/ui/input";
 import React from "react";
 
-import { onGetExportDataToExcel } from "@/lib/excel";
 import { Button } from "@/components/ui/button";
-import { AddStaffDialog } from "@/components/forms/add-staff";
 import { DataTablePagination } from "./staff-data-table-pagination";
+import { AddStaffDialog } from "@/components/forms/add-staff";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
 }
+
+// Define a custom filter function
+const nameFilterFn: FilterFn<any> = (row, columnId, filterValue) => {
+  const firstName = row.getValue("first_name") as string;
+  const lastName = row.getValue("last_name") as string;
+  return (
+    firstName.toLowerCase().includes(filterValue.toLowerCase()) ||
+    lastName.toLowerCase().includes(filterValue.toLowerCase())
+  );
+};
 
 export function DataTable<TData, TValue>({
   columns,
@@ -58,7 +68,15 @@ export function DataTable<TData, TValue>({
 
   const table = useReactTable({
     data,
-    columns,
+    columns: columns.map((col) => {
+      if (col.id === "first_name" || col.id === "last_name") {
+        return {
+          ...col,
+          filterFn: nameFilterFn,
+        };
+      }
+      return col;
+    }),
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     onSortingChange: setSorting,
@@ -76,40 +94,22 @@ export function DataTable<TData, TValue>({
     },
   });
 
-    const visibleColumns = table
-      .getAllColumns()
-      .filter((column) => column.getIsVisible())
-      .map((column) => column.id);
-
-//   Get selected rows' data
-    const selectedRows = Object.keys(rowSelection).filter(
-      (rowId) => rowSelection[rowId]
-    );
-//   Filter data for export based on visible columns
-    const dataToCsv = selectedRows.map((index) => {
-      const rowData = data[parseInt(index, 10)];
-      // Include only fields that match visible columns
-      return Object.fromEntries(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        Object.entries(rowData as Record<string, any>).filter(([key]) =>
-          visibleColumns.includes(key)
-        )
-      );
-    });
-
   return (
     <div className="space-y-1 px-4 py-2">
       <div className="flex justify-between pb-4">
         <Input
           placeholder="Filter name..."
-          value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
-          onChange={(event) =>
-            table.getColumn("name")?.setFilterValue(event.target.value)
+          value={
+            (table.getColumn("first_name")?.getFilterValue() as string) ?? ""
           }
+          onChange={(event) => {
+            table.getColumn("first_name")?.setFilterValue(event.target.value);
+            table.getColumn("last_name")?.setFilterValue(event.target.value);
+          }}
           className="w-3/4 mr-4"
         />
         <div className="flex justify-around gap-1">
-          <AddStaffDialog />
+        <AddStaffDialog />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" className="ml-auto">
@@ -136,20 +136,6 @@ export function DataTable<TData, TValue>({
                 })}
             </DropdownMenuContent>
           </DropdownMenu>
-          {dataToCsv.length > 0 && (
-            <Button
-              className="bg-green-400"
-              onClick={() =>
-                onGetExportDataToExcel(
-                  "Staff",
-                  "Staff",
-                  dataToCsv
-                )
-              }
-            >
-              ExportToCsv
-            </Button>
-          )}
         </div>
       </div>
       <div className="rounded-md border">
@@ -195,7 +181,7 @@ export function DataTable<TData, TValue>({
                   colSpan={columns.length}
                   className="h-24 text-center"
                 >
-                  No results.
+                  No records
                 </TableCell>
               </TableRow>
             )}

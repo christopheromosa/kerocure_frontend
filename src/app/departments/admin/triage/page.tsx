@@ -17,8 +17,10 @@ import LoadingPage from "@/components/loading_animation";
 type Triage = {
   triage_id: number;
   visit: number;
+  patient_name:string;
   vital_signs: { [key: string]: string | number };
   recorded_by: string | null;
+  staff_name:string;
   recorded_at: string;
 };
 
@@ -36,8 +38,9 @@ const TriageTable = () => {
       try {
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/triage/`);
         if (!response.ok) throw new Error("Failed to fetch data");
-
+    
         const data = await response.json();
+        console.log(data)
         setTriageData(data);
       } catch (err) {
         alert("Failed to load triage records");
@@ -87,7 +90,7 @@ const TriageTable = () => {
           <TableHeader>
             <TableRow>
               <TableHead className="w-1/6">Triage ID</TableHead>
-              <TableHead>Visit ID</TableHead>
+              <TableHead>Patient Name</TableHead>
               <TableHead>Vital Signs</TableHead>
               <TableHead>Recorded By</TableHead>
               <TableHead>Recorded At</TableHead>
@@ -99,7 +102,7 @@ const TriageTable = () => {
                 <React.Fragment key={triage.triage_id}>
                   <TableRow>
                     <TableCell>{triage.triage_id}</TableCell>
-                    <TableCell>{triage.visit}</TableCell>
+                    <TableCell>{triage.patient_name}</TableCell>
                     <TableCell>
                       <Button
                         variant="ghost"
@@ -112,7 +115,7 @@ const TriageTable = () => {
                         )}
                       </Button>
                     </TableCell>
-                    <TableCell>{triage.recorded_by || "Unknown"}</TableCell>
+                    <TableCell>{triage.staff_name || "Unknown"}</TableCell>
                     <TableCell>{triage.recorded_at}</TableCell>
                   </TableRow>
 
@@ -124,7 +127,7 @@ const TriageTable = () => {
                           {Object.entries(triage.vital_signs).map(
                             ([key, value]) => (
                               <li key={key}>
-                                <span className="font-medium">{key}:</span> {value}
+                                <span className="font-medium capitalize bg-green">{key}:</span> {value}
                               </li>
                             )
                           )}

@@ -17,10 +17,12 @@ import LoadingPage from "@/components/loading_animation";
 interface Medication {
   medication_id: number;
   visit_id: number;
+  patient_name: string;
   note_id: number;
   prescriptions: Record<string, any> | null;
   cost: number;
   dispensed_by: string | null;
+  staff_name:string;
   dispensed_at: string;
 }
 
@@ -74,7 +76,7 @@ export default function MedicationsTable() {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-1/6">Visit ID</TableHead>
+            <TableHead className="w-1/6">Patient Name</TableHead>
             <TableHead className="w-1/6">Physician Note</TableHead>
             <TableHead className="w-1/3">Prescriptions</TableHead>
             <TableHead className="w-1/6">Cost</TableHead>
@@ -86,8 +88,8 @@ export default function MedicationsTable() {
           {displayedMedications.map((medication) => (
             <React.Fragment key={medication.medication_id}>
               <TableRow>
-                <TableCell>{medication.visit}</TableCell>
-                <TableCell>{medication.note}</TableCell>
+                <TableCell>{medication.patient_name}</TableCell>
+                <TableCell>{medication.note_id}</TableCell>
                 <TableCell>
                   <Button
                     variant="ghost"
@@ -99,9 +101,9 @@ export default function MedicationsTable() {
                   </Button>
                 </TableCell>
                 <TableCell>
-                  Ksh {parseFloat(medication.cost).toFixed(2)}
+                  Ksh {parseFloat(medication.cost.toString()).toFixed(2)}
                 </TableCell>
-                <TableCell>{medication.dispensed_by ?? "N/A"}</TableCell>
+                <TableCell>{medication.staff_name ?? "N/A"}</TableCell>
                 <TableCell>
                   {new Date(medication.dispensed_at).toLocaleString()}
                 </TableCell>

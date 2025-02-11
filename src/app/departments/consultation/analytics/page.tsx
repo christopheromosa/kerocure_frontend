@@ -2,7 +2,14 @@
 
 import React from "react";
 import { useState, useEffect } from "react";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronUp } from "lucide-react";
@@ -11,11 +18,13 @@ import LoadingPage from "@/components/loading_animation";
 type PhysicianNote = {
   note_id: number;
   visit: number;
+  patient_name:string;
   triage_id?: number | null;
   diagnosis: string;
-  prescription: { [key: string]: string } | null;
-  lab_tests_ordered: string[] | null;
+  prescription: { [key: string]: string }[] | null;
+  lab_tests_ordered: { test_name: string }[] | null;
   total_cost: number;
+  staff_name:string;
   physician: string | null;
   recorded_at: string;
 };
@@ -24,7 +33,9 @@ const PhysicianNotesTable = () => {
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [expandedRows, setExpandedRows] = useState<number[]>([]);
-  const [physicianNoteData, setPhysicianNoteData] = useState<PhysicianNote[]>([]);
+  const [physicianNoteData, setPhysicianNoteData] = useState<PhysicianNote[]>(
+    []
+  );
   const [isLoading, setIsLoading] = useState(false);
   const itemsPerPage = 3;
 
@@ -34,7 +45,9 @@ const PhysicianNotesTable = () => {
     async function fetchPatientsData() {
       setIsLoading(true);
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/consultation/`);
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/consultation/`
+        );
         if (!response.ok) throw new Error("Failed to fetch data");
 
         const data = await response.json();
@@ -50,7 +63,7 @@ const PhysicianNotesTable = () => {
 
   // Filter records by Visit ID
   const filteredNotes = physicianNoteData.filter((note) =>
-    note.visit.toString().includes(search)
+    note.patient_name.toString().includes(search)
   );
 
   // Pagination logic
@@ -63,7 +76,9 @@ const PhysicianNotesTable = () => {
   // Toggle expand/collapse for rows
   const toggleExpandRow = (noteId: number) => {
     setExpandedRows((prev) =>
-      prev.includes(noteId) ? prev.filter((id) => id !== noteId) : [...prev, noteId]
+      prev.includes(noteId)
+        ? prev.filter((id) => id !== noteId)
+        : [...prev, noteId]
     );
   };
 
@@ -87,7 +102,7 @@ const PhysicianNotesTable = () => {
           <TableHeader>
             <TableRow>
               <TableHead className="w-1/6">Note ID</TableHead>
-              <TableHead>Visit ID</TableHead>
+              <TableHead>Patient name</TableHead>
               <TableHead>Physician</TableHead>
               <TableHead>Total Cost</TableHead>
               <TableHead>Recorded At</TableHead>
@@ -100,9 +115,11 @@ const PhysicianNotesTable = () => {
                 <React.Fragment key={note.note_id}>
                   <TableRow>
                     <TableCell>{note.note_id}</TableCell>
-                    <TableCell>{note.visit}</TableCell>
-                    <TableCell>{note.physician || "Unknown"}</TableCell>
-                    <TableCell>Ksh {parseFloat(note.total_cost).toFixed(2)}</TableCell>
+                    <TableCell>{note.patient_name}</TableCell>
+                    <TableCell>{note.staff_name || "Unknown"}</TableCell>
+                    <TableCell>
+                      Ksh {parseFloat(note.total_cost.toString()).toFixed(2)}
+                    </TableCell>
                     <TableCell>{note.recorded_at}</TableCell>
                     <TableCell className="text-center">
                       <Button
@@ -127,31 +144,38 @@ const PhysicianNotesTable = () => {
                             <span className="font-medium">Diagnosis:</span>{" "}
                             {note.diagnosis}
                           </div>
-                          {note.prescription && note.prescription.length > 0 && (
-                            <div>
-                              <span className="font-medium">Prescription:</span>
-                              <ul className="list-disc list-inside ml-4">
-                                {note.prescription.map((item, index) => (
-                                  <li key={index}>
-                                    {item.medication}: {item.dosage}
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
- 
-                         {note.lab_tests_ordered && note.lab_tests_ordered.length > 0 && (
-                           <div>
-                             <span className="font-medium">Lab Tests Ordered:</span>
-                             <ul className="list-disc list-inside ml-4">
-                               {note.lab_tests_ordered.map((test, index) => (
-                                 <li key={index}>
-                                   {test.test_name} {/* Accessing the test_name property */}
-                                 </li>
-                               ))}
-                             </ul>
-                           </div>
-                         )}
+                          {note.prescription &&
+                            note.prescription.length > 0 && (
+                              <div>
+                                <span className="font-medium">
+                                  Prescription:
+                                </span>
+                                <ul className="list-disc list-inside ml-4">
+                                  {note.prescription.map((item, index) => (
+                                    <li key={index}>
+                                      {item.medication}: {item.dosage}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+
+                          {note.lab_tests_ordered &&
+                            note.lab_tests_ordered.length > 0 && (
+                              <div>
+                                <span className="font-medium">
+                                  Lab Tests Ordered:
+                                </span>
+                                <ul className="list-disc list-inside ml-4">
+                                  {note.lab_tests_ordered.map((test, index) => (
+                                    <li key={index}>
+                                      {test.test_name}{" "}
+                                      {/* Accessing the test_name property */}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
                         </div>
                       </TableCell>
                     </TableRow>
