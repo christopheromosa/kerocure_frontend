@@ -86,7 +86,7 @@ export default function LoginForm() {
         } else if (data.role === "Administrator") {
           router.push("/departments/admin");
         }
-      }, 2000);
+      }, 1000);
     } catch (error) {
       // Show error toast
       toast.error(error instanceof Error ? error.message : "Login failed", {
@@ -105,33 +105,9 @@ export default function LoginForm() {
         priority // Load it as a high priority
       />
 
-      <div className="flex justify-between gap-4 p-2">
+      <div className="">
         <h1 className="text-xl">KEROCURE MEDICAL CENTER </h1>
-        {/* Theme Toggle Button */}
-
-        {theme === "light" ? (
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => setTheme("dark")}
-          >
-            <Sun
-              className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0"
-              onClick={() => setTheme("light")}
-            />
-          </Button>
-        ) : (
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => setTheme("light")}
-          >
-            <Moon
-              className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100"
-              onClick={() => setTheme("dark")}
-            />
-          </Button>
-        )}
+      
       </div>
 
       {/* Login Form */}

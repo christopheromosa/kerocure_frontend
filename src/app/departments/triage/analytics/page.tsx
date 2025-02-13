@@ -90,7 +90,7 @@ const TriageTable = () => {
       {/* Table */}
       <div className="overflow-x-auto">
         <Table>
-          <TableHeader className="bg-green-400">
+          <TableHeader className="">
             <TableRow>
               <TableHead className="w-1/6">Triage ID</TableHead>
               <TableHead>Visit ID</TableHead>

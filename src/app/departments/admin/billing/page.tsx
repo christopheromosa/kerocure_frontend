@@ -16,13 +16,13 @@ import LoadingPage from "@/components/loading_animation";
 interface Billing {
   bill_id: number;
   visit_id: number;
-  patient_name:string;
+  patient_name: string;
   consultation_cost: number;
   laboratory_cost: number;
   pharmacy_cost: number;
   total_cost: number;
   billed_by: string | null;
-  staff_name:string;
+  staff_name: string;
   recorded_at: string;
 }
 
@@ -42,6 +42,8 @@ export default function BillingTable() {
         if (!response.ok) throw new Error("Failed to fetch data");
 
         const data = await response.json();
+        console.log(data);
+
         setBillingData(data);
       } catch (err) {
         alert("Failed to load billing records");

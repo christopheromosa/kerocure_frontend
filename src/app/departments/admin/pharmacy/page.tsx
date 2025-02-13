@@ -22,7 +22,7 @@ interface Medication {
   prescriptions: Record<string, any> | null;
   cost: number;
   dispensed_by: string | null;
-  staff_name:string;
+  staff_name: string;
   dispensed_at: string;
 }
 
@@ -77,7 +77,6 @@ export default function MedicationsTable() {
         <TableHeader>
           <TableRow>
             <TableHead className="w-1/6">Patient Name</TableHead>
-            <TableHead className="w-1/6">Physician Note</TableHead>
             <TableHead className="w-1/3">Prescriptions</TableHead>
             <TableHead className="w-1/6">Cost</TableHead>
             <TableHead className="w-1/6">Dispensed By</TableHead>
@@ -89,7 +88,6 @@ export default function MedicationsTable() {
             <React.Fragment key={medication.medication_id}>
               <TableRow>
                 <TableCell>{medication.patient_name}</TableCell>
-                <TableCell>{medication.note_id}</TableCell>
                 <TableCell>
                   <Button
                     variant="ghost"

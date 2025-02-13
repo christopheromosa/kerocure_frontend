@@ -18,14 +18,14 @@ import LoadingPage from "@/components/loading_animation";
 type PhysicianNote = {
   note_id: number;
   visit: number;
-  patient_name:string;
+  patient_name: string;
   triage_id?: number | null;
   diagnosis: string;
   prescription: { [key: string]: string }[] | null;
   lab_tests_ordered: { [key: string]: string }[] | null;
   total_cost: number;
   physician: string | null;
-  staff_name:string;
+  staff_name: string;
   recorded_at: string;
 };
 
@@ -63,7 +63,7 @@ const PhysicianNotesTable = () => {
 
   // Filter records by Visit ID
   const filteredNotes = physicianNoteData.filter((note) =>
-    note.visit.toString().includes(search)
+    note.patient_name.toString().includes(search)
   );
 
   // Pagination logic
@@ -89,7 +89,7 @@ const PhysicianNotesTable = () => {
       <div className="flex justify-between items-center mb-4">
         <Input
           type="text"
-          placeholder="Search by Visit ID..."
+          placeholder="Search by Patient name..."
           className="w-1/3"
           value={search}
           onChange={(e) => setSearch(e.target.value)}

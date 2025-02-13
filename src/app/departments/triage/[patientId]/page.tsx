@@ -131,7 +131,7 @@ const onSubmit = async (data: triageType) => {
           diastolic: data.diastolic,
           pulse: data.pulse,
         },
-        recorded_by: authState?.user_id,
+        recorded_by: authState?.username,
       };
       console.log(triageData);
       

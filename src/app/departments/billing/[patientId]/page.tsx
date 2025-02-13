@@ -105,7 +105,7 @@ const BillingDetailsPage = () => {
     const receiptContent = `
       <h1>KEROCURE MEDICAL CENTER</h1>
       <h1>Receipt</h1>
-      <p>Patient Name: Ksh ${visitData?.patient_data?.first_name} ${visitData?.patient_data?.last_name} </p>
+      <p>Patient Name:  ${visitData?.patient_data?.first_name} ${visitData?.patient_data?.last_name} </p>
 
       <p>Consultation Fee: Ksh ${Number(consultationFee).toFixed(2)}</p>
       <p>Lab Cost: ksh ${visitData?.lab_data?.total_cost.toFixed(2)}</p>

@@ -21,7 +21,7 @@ interface LabResult {
   result: Record<string, any>; // JSON data
   total_cost: number;
   recorded_by: string | null;
-  staff_name:string;
+  staff_name: string;
   recorded_at: string;
 }
 
@@ -65,7 +65,6 @@ export default function LabResultsTable() {
         <TableHeader>
           <TableRow>
             <TableHead className="w-1/6">Patient Name</TableHead>
-            <TableHead className="w-1/6">Physician Note</TableHead>
             <TableHead className="w-1/3">Results</TableHead>
             <TableHead className="w-1/6">Total Cost</TableHead>
             <TableHead className="w-1/6">Recorded By</TableHead>
@@ -76,7 +75,6 @@ export default function LabResultsTable() {
           {displayedResults.map((result) => (
             <TableRow key={result.result_id}>
               <TableCell>{result.patient_name}</TableCell>
-              <TableCell>{result.note_id}</TableCell>
               <TableCell>
                 <pre className="text-xs  p-2 rounded flex flex-wrap gap-2 ">
                   {Array.isArray(result.result)

@@ -1,5 +1,5 @@
 "use client";
-import React from 'react';
+import React from "react";
 import { useEffect, useState } from "react";
 import {
   Table,
@@ -17,10 +17,10 @@ import LoadingPage from "@/components/loading_animation";
 type Triage = {
   triage_id: number;
   visit: number;
-  patient_name:string;
+  patient_name: string;
   vital_signs: { [key: string]: string | number };
   recorded_by: string | null;
-  staff_name:string;
+  staff_name: string;
   recorded_at: string;
 };
 
@@ -36,11 +36,13 @@ const TriageTable = () => {
     async function fetchTriageData() {
       setIsLoading(true);
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/triage/`);
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/triage/`
+        );
         if (!response.ok) throw new Error("Failed to fetch data");
-    
+
         const data = await response.json();
-        console.log(data)
+        console.log(data);
         setTriageData(data);
       } catch (err) {
         alert("Failed to load triage records");
@@ -53,7 +55,7 @@ const TriageTable = () => {
 
   // Filter triage records by Visit ID
   const filteredTriage = triageData?.filter((triage) =>
-    triage.visit.toString().includes(search)
+    triage.patient_name.toString().includes(search)
   );
 
   // Pagination logic
@@ -66,7 +68,9 @@ const TriageTable = () => {
   // Toggle expand/collapse for vital signs
   const toggleExpandRow = (triageId: number) => {
     setExpandedRows((prev) =>
-      prev.includes(triageId) ? prev.filter((id) => id !== triageId) : [...prev, triageId]
+      prev.includes(triageId)
+        ? prev.filter((id) => id !== triageId)
+        : [...prev, triageId]
     );
   };
 
@@ -77,7 +81,7 @@ const TriageTable = () => {
       <div className="flex justify-between items-center mb-4">
         <Input
           type="text"
-          placeholder="Search by Visit ID..."
+          placeholder="Search by patient name..."
           className="w-1/3"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -127,7 +131,10 @@ const TriageTable = () => {
                           {Object.entries(triage.vital_signs).map(
                             ([key, value]) => (
                               <li key={key}>
-                                <span className="font-medium capitalize bg-green">{key}:</span> {value}
+                                <span className="font-medium capitalize bg-green">
+                                  {key}:
+                                </span>{" "}
+                                {value}
                               </li>
                             )
                           )}
