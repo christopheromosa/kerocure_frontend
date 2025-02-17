@@ -4,6 +4,8 @@ import { useParams } from "next/navigation";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import {
   Table,
   TableHeader,
@@ -100,7 +102,15 @@ const LabResultsPage = () => {
           }
         );
         setShowSuccessDialog(true);
-        router.push("/departments/lab");
+        setTimeout(() => {
+          toast.success("submitted test results successfully!", {
+            autoClose: 1000, // Show toast for 2 seconds
+            onClose: () => {
+              router.push("/departments/lab");
+              window.location.reload(); // Refresh after the toast disappears
+            },
+          });
+        }, 1000);
       } else {
         throw new Error("Failed to submit test results");
       }
@@ -149,7 +159,7 @@ const LabResultsPage = () => {
               </TableBody>
             </Table>
             <div className="mt-4">
-              <label className="block font-semibold mb-1">Total  Cost</label>
+              <label className="block font-semibold mb-1">Total Cost</label>
               <Input
                 type="number"
                 value={totalCost}
@@ -196,6 +206,7 @@ const LabResultsPage = () => {
           </AlertDialogContent>
         </AlertDialog>
       </div>
+      <ToastContainer />
     </PageTransition>
   );
 };

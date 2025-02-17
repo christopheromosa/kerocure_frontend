@@ -1,4 +1,3 @@
-
 "use client";
 import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
@@ -7,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/context/AuthContext";
 import { useVisit } from "@/context/VisitContext";
-import { useRouter} from 'next/navigation';
+import { useRouter } from "next/navigation";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import {
@@ -30,8 +29,8 @@ const BillingDetailsPage = () => {
   const router = useRouter();
   const { fetchVisitData, visitData } = useVisit();
   const [consultationFee, setConsultationFee] = useState<string>("");
-  const [labCost, setLabCost] = useState<number>(0);
-  const [pharmacyCost, setPharmacyCost] = useState<number>(0);
+  // const [labCost, setLabCost] = useState<number>(0);
+  // const [pharmacyCost, setPharmacyCost] = useState<number>(0);
   const [totalCost, setTotalCost] = useState<number>(0);
   const [showSuccessDialog, setShowSuccessDialog] = useState<boolean>(false);
   const [showErrorDialog, setShowErrorDialog] = useState<boolean>(false);
@@ -44,7 +43,6 @@ const BillingDetailsPage = () => {
   }, [patientId, fetchVisitData]);
 
   // Fetch consultation fee from the server
- 
 
   // Calculate total cost
   const calculateTotalCost = () => {
@@ -63,14 +61,13 @@ const BillingDetailsPage = () => {
           Authorization: `Token ${authState?.token}`,
         },
         body: JSON.stringify({
-          consultation_cost:consultationFee,
+          consultation_cost: consultationFee,
           laboratory_cost: visitData?.lab_data?.total_cost,
           pharmacy_cost: visitData?.pharmacy_data?.cost,
-          total_cost:totalCost,
+          total_cost: totalCost,
           visit: visitData?.visit_id,
-          billed_by:authState?.user_id
-
-                  }),
+          billed_by: authState?.user_id,
+        }),
       });
 
       if (res.ok) {
@@ -90,7 +87,11 @@ const BillingDetailsPage = () => {
         );
 
         setShowSuccessDialog(true);
-        
+        setTimeout(() => {
+          toast.success("saved billing details successfully!", {
+            autoClose: 1000, // Show toast for 2 seconds
+          });
+        }, 1000);
       } else {
         throw new Error("Failed to save billing details");
       }
@@ -105,19 +106,31 @@ const BillingDetailsPage = () => {
     const receiptContent = `
       <h1>KEROCURE MEDICAL CENTER</h1>
       <h1>Receipt</h1>
-      <p>Patient Name:  ${visitData?.patient_data?.first_name} ${visitData?.patient_data?.last_name} </p>
+      <p>Patient Name:  ${visitData?.patient_data?.first_name} ${
+      visitData?.patient_data?.last_name
+    } </p>
 
       <p>Consultation Fee: Ksh ${Number(consultationFee).toFixed(2)}</p>
-      <p>Lab Cost: ksh ${visitData?.lab_data?.total_cost.toFixed(2)}</p>
-      <p>Pharmacy Cost: Ksh ${visitData?.pharmacy_data?.cost.toFixed(2)}</p>
+      <p>Lab Cost: ksh ${visitData?.lab_data?.total_cost.toFixed(2) || 0.0}</p>
+      <p>Pharmacy Cost: Ksh ${
+        visitData?.pharmacy_data?.cost.toFixed(2) || 0.0
+      }</p>
       <p>Total Cost: Ksh ${totalCost.toFixed(2)}</p>
     `;
     const printWindow = window.open("", "_blank");
     printWindow?.document.write(receiptContent);
     printWindow?.document.close();
     printWindow?.print();
-
-    router.push("/departments/billing")
+    setTimeout(() => {
+      toast.success("saved billing details successfully!", {
+        autoClose: 1000, // Show toast for 2 seconds
+        onClose: () => {
+          router.push("/departments/billing");
+          window.location.reload(); // Refresh after the toast disappears
+        },
+      });
+    }, 1000);
+    router.push("/departments/billing");
   };
 
   return (
@@ -145,7 +158,7 @@ const BillingDetailsPage = () => {
             </div>
 
             {/* Lab Cost */}
-  
+
             <div className="mb-4">
               <label className="font-medium">Lab Cost (Ksh):</label>
               <Input
@@ -155,7 +168,6 @@ const BillingDetailsPage = () => {
                 className="border border-gray-300 p-2 rounded w-full"
               />
             </div>
-
 
             {/* Pharmacy Cost */}
             <div className="mb-4">
@@ -170,18 +182,19 @@ const BillingDetailsPage = () => {
 
             {/* Calculate Total Button */}
 
-            
             <Button className="mt-4" onClick={calculateTotalCost}>
               Generate Total Cost
             </Button>
 
             {/* Total Cost */}
             <div className="mt-4">
-              <p className="font-medium">Total Cost: Ksh{totalCost.toFixed(2)}</p>
+              <p className="font-medium">
+                Total Cost: Ksh{totalCost.toFixed(2)}
+              </p>
             </div>
 
             {/* Save Billing Button */}
-         
+
             <Button className="mt-4" onClick={handleSaveBilling}>
               Save Billing Details
             </Button>
@@ -226,6 +239,7 @@ const BillingDetailsPage = () => {
           </AlertDialogContent>
         </AlertDialog>
       </div>
+      <ToastContainer />
     </PageTransition>
   );
 };

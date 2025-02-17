@@ -113,14 +113,16 @@ const PharmacyDetailsPage = () => {
             },
           }
         );
-        toast.success("Prescriptions saved successfully", {
-          autoClose: 5000, // Show toast for 2 seconds
-          onClose: () => {
-            window.location.reload();
-            // Refresh after the toast disappears
-          },
-        });
-        router.push("/departments/pharmacy");
+        setTimeout(() => {
+          toast.success("Prescriptions saved successfully", {
+            autoClose: 1000, // Show toast for 2 seconds
+            onClose: () => {
+              router.push("/departments/pharmacy");
+              window.location.reload();
+              // Refresh after the toast disappears
+            },
+          });
+        }, 1000);
 
         setShowSuccessDialog(true);
       } else {

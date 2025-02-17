@@ -40,6 +40,7 @@ import { useAuth } from "@/context/AuthContext";
 import PageTransition from "@/components/PageTransition";
 import MDEditor from "@uiw/react-md-editor";
 import LoadingPage from "@/components/loading_animation";
+import Link from "next/link";
 
 const testRequestsSchema = z.object({
   test_name: z.string().min(1, "Test name is required"),
@@ -90,31 +91,44 @@ const PatientManagementPage = () => {
   const handleSaveDiagnosis = async () => {
     try {
       if (!visitData?.consultation_data?.note_id) {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/consultation/`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Token ${authState?.token}`,
-          },
-          body: JSON.stringify({
-            diagnosis,
-            prescription: [],
-            lab_tests_ordered: [],
-            physician: authState.user_id,
-            visit: visitData?.visit_id,
-            triage: visitData?.triage_data?.triage_id,
-          }),
-        });
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/consultation/`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Token ${authState?.token}`,
+            },
+            body: JSON.stringify({
+              diagnosis,
+              prescription: [],
+              lab_tests_ordered: [],
+              physician: authState.user_id,
+              visit: visitData?.visit_id,
+              triage: visitData?.triage_data?.triage_id,
+            }),
+          }
+        );
         if (res.ok) {
           const consultation = await res.json();
           console.log(consultation);
           setConsultationId(consultation.note);
         }
+
         console.log(consultationId);
         setIsDiagnosisSaved(true);
-        alert("Diagnosis saved successfully!");
-        // router.push(`/departments/consultation/${patientId}`);
-        router.refresh();
+        setTimeout(() => {
+          toast.success("Diagnosis saved successfully!", {
+            autoClose: 1000, // Show toast for 2 seconds
+            onClose: () => {
+              router.refresh();
+              window.location.reload(); // Refresh after the toast disappears
+            },
+          });
+        }, 1000);
+        // alert("Diagnosis saved successfully!");
+        // // router.push(`/departments/consultation/${patientId}`);
+        // router.refresh();
         setRefresh(!refresh);
       } else {
         const res = await fetch(
@@ -136,9 +150,18 @@ const PatientManagementPage = () => {
           console.log(consultation); // Log the response to see the updated consultation data
           setConsultationId(consultation.note); // Update the state if needed
           setIsDiagnosisSaved(true); // Update the state to reflect that the diagnosis is saved
-          alert("Diagnosis updated successfully!");
-          // router.push(`/departments/consultation/${patientId}`);
-          router.refresh();
+          setTimeout(() => {
+            toast.success("Diagnosis updated successfully!!", {
+              autoClose: 1000, // Show toast for 2 seconds
+              onClose: () => {
+                router.refresh();
+                window.location.reload(); // Refresh after the toast disappears
+              },
+            });
+          }, 1000);
+          // alert("Diagnosis updated successfully!");
+          // // router.push(`/departments/consultation/${patientId}`);
+          // router.refresh();
           setRefresh(!refresh);
         } else {
           console.error("Failed to update diagnosis");
@@ -148,6 +171,14 @@ const PatientManagementPage = () => {
     } catch (error) {
       console.error("Failed to save diagnosis:", error);
       alert("Failed to save diagnosis. Please try again.");
+      setTimeout(() => {
+        toast.success("Failed to save diagnosis. Please try again.", {
+          autoClose: 1000, // Show toast for 2 seconds
+          onClose: () => {
+            window.location.reload(); // Refresh after the toast disappears
+          },
+        });
+      }, 1000);
     }
   };
 
@@ -217,16 +248,33 @@ const PatientManagementPage = () => {
         }
       );
       setShowTestRequestPreview(false);
+
       alert("Test requests saved successfully!");
-       toast.success("Test requests saved successfully!", {
-           autoClose: 5000, // Show toast for 2 seconds
-           onClose: () => {
-             window.location.reload(); // Refresh after the toast disappears
-           },
-         });
-      router.refresh();
+      setTimeout(() => {
+        toast.success("Test requests saved successfully!", {
+          autoClose: 1000, // Show toast for 2 seconds
+          onClose: () => {
+            router.refresh();
+            window.location.reload(); // Refresh after the toast disappears
+          },
+        });
+      }, 1000);
+      // router.refresh();
     } catch (error) {
       console.error("Failed to save test requests:", error);
+      setTimeout(() => {
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "Failed to save test requests.",
+          {
+            autoClose: 1000, // Show toast for 2 seconds
+            onClose: () => {
+              window.location.reload(); // Refresh after the toast disappears
+            },
+          }
+        );
+      }, 1000);
     }
   };
 
@@ -265,15 +313,15 @@ const PatientManagementPage = () => {
 
       setShowPrescriptionPreview(false);
       alert("Prescriptions saved successfully!");
-             toast.success("Prescriptions saved successfully", {
-           autoClose: 5000, // Show toast for 2 seconds
-           onClose: () => {
-             window.location.reload();
-              // Refresh after the toast disappears
-              
-      router.push("/departments/consultation");
-           },
-         });
+      setTimeout(() => {
+        toast.success("Prescriptions saved successfully", {
+          autoClose: 1000, // Show toast for 2 seconds
+          onClose: () => {
+            window.location.reload();
+            router.push("/departments/consultation");
+          },
+        });
+      }, 1000);
     } catch (error) {
       console.error("Failed to save prescriptions:", error);
     }
@@ -287,15 +335,17 @@ const PatientManagementPage = () => {
     {
       id: "actions",
       header: "Actions",
-      cell: ({ row }) => (
-        <Button
-          className=""
-          variant="destructive"
-          onClick={() => handleDeleteTestRequest(row.index)}
-        >
-          Delete
-        </Button>
-      ),
+      cell: ({ row }) => {
+        console.log("Rendering action button for row:", row.index); // Debugging
+        return (
+          <Button
+            variant="destructive"
+            onClick={() => handleDeleteTestRequest(row.index)}
+          >
+            Delete
+          </Button>
+        );
+      },
     },
   ];
 
@@ -311,14 +361,16 @@ const PatientManagementPage = () => {
     {
       id: "actions",
       header: "Actions",
-      cell: ({ row }) => (
-        <Button
-          variant="destructive"
-          onClick={() => handleDeletePrescription(row.index)}
-        >
-          Delete
-        </Button>
-      ),
+      cell: ({ row }) => {
+        return (
+          <Button
+            variant="destructive"
+            onClick={() => handleDeletePrescription(row.index)}
+          >
+            Delete
+          </Button>
+        );
+      },
     },
   ];
 
@@ -419,7 +471,16 @@ const PatientManagementPage = () => {
                 <CardTitle>Medical History</CardTitle>
               </CardHeader>
               <CardContent>
-                <p>Fetch and display past records coming soon.</p>
+                <p>
+                  Fetch and search patient past records{" "}
+                  <Link
+                    href={`/departments/consultation/analytics`}
+                    className="text-blue-700"
+                  >
+                    {" "}
+                    here
+                  </Link>
+                </p>
               </CardContent>
             </Card>
           </TabsContent>
@@ -435,6 +496,7 @@ const PatientManagementPage = () => {
                   <Controller
                     name="test_name"
                     control={testRequestControl}
+                    defaultValue=""
                     render={({ field }) => (
                       <Input {...field} placeholder="Enter test name" />
                     )}
@@ -456,15 +518,22 @@ const PatientManagementPage = () => {
                     ))}
                   </TableHeader>
                   <TableBody>
-                    {testRequestTable.getRowModel().rows.map((row) => (
-                      <TableRow key={row.id}>
-                        {row.getVisibleCells().map((cell) => (
-                          <TableCell key={cell.id}>
-                            {cell.renderValue() as string}
-                          </TableCell>
-                        ))}
-                      </TableRow>
-                    ))}
+                    {testRequestTable.getRowModel().rows.map((row) => {
+                      console.log("Rendering row:", row.id);
+
+                      return (
+                        <TableRow key={row.id}>
+                          {row.getVisibleCells().map((cell) => {
+                            console.log("Rendering cell:", cell);
+                            return (
+                              <TableCell key={cell.id}>
+                                {cell.renderValue() as string}
+                              </TableCell>
+                            );
+                          })}
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
                 <Button
@@ -516,6 +585,7 @@ const PatientManagementPage = () => {
                   <Controller
                     name="medication"
                     control={prescriptionControl}
+                    defaultValue=""
                     render={({ field }) => (
                       <Input {...field} placeholder="Enter medication" />
                     )}
@@ -524,6 +594,7 @@ const PatientManagementPage = () => {
                     <Controller
                       name="dosage"
                       control={prescriptionControl}
+                      defaultValue=""
                       render={({ field }) => (
                         <Input {...field} placeholder="Enter dosage" />
                       )}
@@ -658,7 +729,7 @@ const PatientManagementPage = () => {
           </AlertDialogContent>
         </AlertDialog>
       </div>
-       <ToastContainer />
+      <ToastContainer />
     </PageTransition>
   );
 };

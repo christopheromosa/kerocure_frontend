@@ -50,10 +50,8 @@ interface triageType {
 const Patient = () => {
   const { patientId } = useParams();
   console.log(patientId);
-   const [isLoading, setIsLoading] = useState(false);
-  
-  
-  
+  const [isLoading, setIsLoading] = useState(false);
+
   const [patientData, setPatientData] = useState<PatientType | null>(null);
   const { authState } = useAuth();
   const {
@@ -67,105 +65,117 @@ const Patient = () => {
 
   useEffect(() => {
     if (!patientId) return;
-    console.log(patientId);  
+    console.log(patientId);
 
     const fetchPatientData = async () => {
-       setIsLoading(true);
+      setIsLoading(true);
       const res = await fetch(
         `http://localhost:8000/patients/${Number(patientId)}/`
       );
       if (res.ok) {
-        const data = await res.json();               
+        const data = await res.json();
         setPatientData(data);
         setIsLoading(false);
       } else {
         setPatientData(null);
       }
     };
-       
-
-
 
     fetchPatientData();
   }, [patientId, authState?.token]);
 
-  if (!patientId ) return <Loading />;
+  if (!patientId) return <Loading />;
 
-const onSubmit = async (data: triageType) => {
-  if (!patientId) {
-    console.error("No patient ID found.");
-    return;
-  }
-  
-  
+  const onSubmit = async (data: triageType) => {
+    if (!patientId) {
+      console.error("No patient ID found.");
+      return;
+    }
 
-  // Create visit instance before submitting triage data
-  const visitData = {
-    patient: Number(patientId),
-    current_state: "TRIAGE",
-    next_state: "CONSULTATION",
-    total_cost: 0,
-  };
+    // Create visit instance before submitting triage data
+    const visitData = {
+      patient: Number(patientId),
+      current_state: "TRIAGE",
+      next_state: "CONSULTATION",
+      total_cost: 0,
+    };
 
-  try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/visits/`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Token ${authState?.token}`,
-      },
-      body: JSON.stringify(visitData),
-    });
-
-    if (res.ok) {
-      const visit = await res.json();
-      // setVisitId(visit.visit_id); // Set the visit ID for later use
-
-      // After creating the visit, submit the triage data
-      const triageData = {
-        visit: visit.visit_id,
-        vital_signs: {
-          weight: data.weight,
-          height: data.height,
-          systolic: data.systolic,
-          diastolic: data.diastolic,
-          pulse: data.pulse,
-        },
-        recorded_by: authState?.username,
-      };
-      console.log(triageData);
-      
-
-      const triageRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/triage/`, {
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/visits/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Token ${authState?.token}`,
         },
-        body: JSON.stringify(triageData),
+        body: JSON.stringify(visitData),
       });
 
-      if (triageRes.ok) {
-        console.log("Triage data submitted successfully!");
- toast.success("Patient proceed to consultation successfully!", {
-           autoClose: 5000, // Show toast for 2 seconds
-           onClose: () => {
-             window.location.reload(); // Refresh after the toast disappears
-           },
-         });
-        router.push("/departments/triage");
-      
-      } else {
-        console.error("Failed to submit triage data");
-      }
-    } else {
-      console.error("Failed to create visit");
-    }
-  } catch (error) {
-    console.error("Error:", error);
-  }
-};
+      if (res.ok) {
+        const visit = await res.json();
+        // setVisitId(visit.visit_id); // Set the visit ID for later use
 
+        // After creating the visit, submit the triage data
+        const triageData = {
+          visit: visit.visit_id,
+          vital_signs: {
+            weight: data.weight,
+            height: data.height,
+            systolic: data.systolic,
+            diastolic: data.diastolic,
+            pulse: data.pulse,
+          },
+          recorded_by: authState?.username,
+        };
+        console.log(triageData);
+
+        const triageRes = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/triage/`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Token ${authState?.token}`,
+            },
+            body: JSON.stringify(triageData),
+          }
+        );
+
+        if (triageRes.ok) {
+          console.log("Triage data submitted successfully!");
+
+          setTimeout(() => {
+            toast.success("Patient proceed to consultation successfully!", {
+              autoClose: 1000, // Show toast for 2 seconds
+              onClose: () => {
+                router.push("/departments/triage");
+                window.location.reload(); // Refresh after the toast disappears
+              },
+            });
+          }, 1000);
+          router.push("/departments/triage");
+        } else {
+          console.error("Failed to submit triage data");
+        }
+      } else {
+        console.error("Failed to create visit");
+      }
+    } catch (error) {
+      setTimeout(() => {
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "Patient registration failed. Try again.",
+          {
+            autoClose: 1000, // Show toast for 2 seconds
+            onClose: () => {
+              router.push("/departments/triage");
+              window.location.reload(); // Refresh after the toast disappears
+            },
+          }
+        );
+      }, 2000);
+    }
+  };
 
   return (
     <PageTransition>
@@ -231,11 +241,7 @@ const onSubmit = async (data: triageType) => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="systolic">Systolic</Label>
-                  <Input
-                    id="systolic"
-                    type="text"
-                    {...register("systolic")}
-                  />
+                  <Input id="systolic" type="text" {...register("systolic")} />
                   {errors.systolic && (
                     <p className="text-red-500 text-sm">
                       {errors.systolic.message as string}
@@ -254,11 +260,7 @@ const onSubmit = async (data: triageType) => {
               </div>
               <div>
                 <Label htmlFor="diastolic">Diastolic</Label>
-                <Input
-                  id="diastolic"
-                  type="text"
-                  {...register("diastolic")}
-                />
+                <Input id="diastolic" type="text" {...register("diastolic")} />
                 {errors.diastolic && (
                   <p className="text-red-500 text-sm">
                     {errors.diastolic.message as string}
@@ -277,7 +279,7 @@ const onSubmit = async (data: triageType) => {
           </form>
         </Card>
       </div>
-       <ToastContainer />
+      <ToastContainer />
     </PageTransition>
   );
 };
