@@ -23,6 +23,8 @@ import PageTransition from "@/components/PageTransition";
 import LoadingPage from "@/components/loading_animation";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import OrganizationInfo from "@/components/OrganizationInfo";
+import { FaUser } from "react-icons/fa";
 
 const triageSchema = z.object({
   weight: z.coerce.string().min(1, "Weight is required"),
@@ -38,6 +40,8 @@ type PatientType = {
   last_name: string;
   dob: string;
   contact_number: string;
+  gender: string;
+  residence: string;
 };
 interface triageType {
   weight: string;
@@ -181,7 +185,7 @@ const Patient = () => {
     <PageTransition>
       {isLoading && <LoadingPage />}
 
-      <div className="max-w-2xl mx-auto space-y-6 p-4">
+      <div className="max-w-2xl mx-auto space-y-6 p-4 w-full">
         {/* Patient Card */}
         {patientData && (
           <Card>
@@ -189,21 +193,38 @@ const Patient = () => {
               <CardTitle>Patient Information</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center gap-6">
-                {/* Patient Badge with Full Name */}
-                <Badge className="px-4 py-2 text-lg">{`${patientData.first_name} ${patientData.last_name}`}</Badge>
-
-                {/* Patient Details in a Row */}
-                <div className="flex flex-wrap gap-4 text-sm">
-                  <p>
-                    <strong>ID:</strong> {patientData.id}
-                  </p>
-                  <p>
-                    <strong>DOB:</strong> {patientData.dob}
-                  </p>
-                  <p>
-                    <strong>Contact:</strong> {patientData.contact_number}
-                  </p>
+              <div className="p-6  shadow-md rounded-md border w-full">
+                {/* Organization Details */}
+                <OrganizationInfo />
+                {/* Patient Details */}
+                <div className="flex justify-around items-center space-x-6 ">
+                  <div className="flex-shrink-0">
+                    {patientData.gender === "male" ? (
+                      <FaUser className="h-40 w-40 text-blue-500" />
+                    ) : (
+                      <FaUser className="h-40 w-40 text-pink-500" />
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <p>
+                      <strong>First Name:</strong>
+                      {patientData.first_name}
+                    </p>
+                    <p>
+                      <strong>Last Name:</strong> {patientData.last_name}
+                    </p>
+                    <p>
+                      <strong>Date of Birth:</strong>{" "}
+                      {new Date(patientData.dob).toLocaleDateString()}
+                    </p>
+                    <p>
+                      <strong>Residence:</strong> {patientData.residence}
+                    </p>
+                    <p>
+                      <strong>Contact Number:</strong>{" "}
+                      {patientData.contact_number}
+                    </p>
+                  </div>
                 </div>
               </div>
             </CardContent>

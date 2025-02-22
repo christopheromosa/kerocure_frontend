@@ -6,11 +6,11 @@ import {
 } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import {
+  Users,
   LayoutDashboard,
   Server,
   ClipboardCheck,
   Settings,
-  Users,
 } from "lucide-react";
 import {
   Breadcrumb,
@@ -24,20 +24,11 @@ import { usePathname } from "next/navigation";
 import { Separator } from "@/components/ui/separator";
 import { AuthProvider } from "@/context/AuthContext";
 
-
 export default function Layout({ children }: { children: React.ReactNode }) {
-  
   const links = [
     { label: "Dashboard", href: "", icon: LayoutDashboard },
-    { label: "patients", href: "/departments/triage", icon: Server },
-    { label: "patients list", href: "/departments/patients", icon: Users },
-    {
-      label: "reports",
-      href: "/departments/triage/analytics",
-      icon: ClipboardCheck,
-    },
-    { label: "profile", href: "/departments/triage/profile", icon: Settings },
-  ];
+    { label: "patients", href: "/departments/patients", icon: Server },
+      ];
   const pathname = usePathname();
   return (
     <AuthProvider>
@@ -52,7 +43,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 <BreadcrumbList>
                   <BreadcrumbItem className="hidden md:block">
                     <BreadcrumbLink href="/dashboard">
-                      Kerocure-Triage
+                      Kerocure-Patients
                     </BreadcrumbLink>
                   </BreadcrumbItem>
                   <BreadcrumbSeparator className="hidden md:block" />
