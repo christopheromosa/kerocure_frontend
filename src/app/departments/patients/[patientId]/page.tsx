@@ -6,7 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { FaMale, FaFemale, FaUser } from "react-icons/fa";
+import { FaUser } from "react-icons/fa";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useAuth } from "@/context/AuthContext";
@@ -105,6 +105,12 @@ export default function PatientPage() {
 
   return (
     <div className="p-6">
+      <Button
+        onClick={() => router.back()}
+        className="px-4 py-2 bg-blue-500 text-white rounded"
+      >
+        Go Back
+      </Button>
       <ToastContainer />
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">

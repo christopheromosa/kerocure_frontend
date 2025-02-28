@@ -3,7 +3,7 @@ import React from "react";
 
 const OrganizationInfo = () => {
   return (
-    <div className="flex items-center justify-between border-b pb-4 mb-6">
+    <div className="flex items-center justify-between border-b pb-2 mb-4">
       <div className="flex-shrink-0">
         <Image
           src="/kerocureLogo-removebg-preview.png" // Ensure the image is inside the public folder

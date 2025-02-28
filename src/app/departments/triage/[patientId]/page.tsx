@@ -50,11 +50,19 @@ interface triageType {
   diastolic: string;
   pulse: string;
 }
+export type DepartmentType = {
+  id: string;
+  name: string;
+};
 
 const Patient = () => {
   const { patientId } = useParams();
   console.log(patientId);
   const [isLoading, setIsLoading] = useState(false);
+  const [departments, setDepartments] = useState<DepartmentType[]>([]);
+  const [selectedDepartment, setSelectedDepartment] = useState<string | null>(
+    null
+  );
 
   const [patientData, setPatientData] = useState<PatientType | null>(null);
   const { authState } = useAuth();
@@ -88,6 +96,26 @@ const Patient = () => {
     fetchPatientData();
   }, [patientId, authState?.token]);
 
+  // Fetch departments data
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      try {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/departments/`
+        );
+        if (res.ok) {
+          const data = await res.json();
+          setDepartments(data);
+        } else {
+          console.error("Failed to fetch departments.");
+        }
+      } catch (error) {
+        console.error("Error fetching departments:", error);
+      }
+    };
+    fetchDepartments();
+  }, []);
+
   if (!patientId) return <Loading />;
 
   const onSubmit = async (data: triageType) => {
@@ -99,6 +127,7 @@ const Patient = () => {
     // Create visit instance before submitting triage data
     const visitData = {
       patient: Number(patientId),
+      department: selectedDepartment,
       current_state: "TRIAGE",
       next_state: "CONSULTATION",
       total_cost: 0,
@@ -185,19 +214,21 @@ const Patient = () => {
     <PageTransition>
       {isLoading && <LoadingPage />}
 
-      <div className="max-w-2xl mx-auto space-y-6 p-4 w-full">
+      <div className="mx-auto space-y-2 w-full">
         {/* Patient Card */}
         {patientData && (
           <Card>
             <CardHeader>
-              <CardTitle>Patient Information</CardTitle>
+              <CardTitle className="text-center uppercase">
+                Patient Information
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="p-6  shadow-md rounded-md border w-full">
+              <div className="p-2  shadow-md rounded-md border w-full">
                 {/* Organization Details */}
                 <OrganizationInfo />
                 {/* Patient Details */}
-                <div className="flex justify-around items-center space-x-6 ">
+                <div className="flex justify-around items-center space-x-2 ">
                   <div className="flex-shrink-0">
                     {patientData.gender === "male" ? (
                       <FaUser className="h-40 w-40 text-blue-500" />
@@ -233,13 +264,13 @@ const Patient = () => {
 
         {/* Triage Form */}
 
-        <Card className="w-full max-w-md mx-auto p-6 shadow-md border rounded-lg">
+        <Card className="w-full mx-auto p-2 shadow-md border rounded-lg">
           <CardHeader className="text-center font-bold text-lg">
             TRIAGE FORM APPLICATION
           </CardHeader>
           <form onSubmit={handleSubmit(onSubmit)}>
-            <CardContent className="grid gap-4">
-              <div className="grid grid-cols-2 gap-4">
+            <CardContent className="grid gap-2">
+              <div className="grid grid-cols-2 gap-2">
                 <div>
                   <Label htmlFor="weight">Weight</Label>
                   <Input id="weight" type="text" {...register("weight")} />
@@ -287,6 +318,22 @@ const Patient = () => {
                     {errors.diastolic.message as string}
                   </p>
                 )}
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="department">Department</Label>
+                <select
+                  id="department"
+                  className="border rounded p-2"
+                  onChange={(e) => setSelectedDepartment(e.target.value)}
+                  value={selectedDepartment || ""}
+                >
+                  <option value="">Select Department</option>
+                  {departments.map((dept) => (
+                    <option key={dept.id} value={dept.id}>
+                      {dept.name}
+                    </option>
+                  ))}
+                </select>
               </div>
             </CardContent>
             <CardFooter className="flex justify-between">

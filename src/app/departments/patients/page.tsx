@@ -57,26 +57,7 @@ export default function PatientList() {
   }, [authState?.token]);
 
   // Handle delete
-  const handleDelete = async (patientId: number) => {
-    if (window.confirm("Are you sure you want to delete this patient?")) {
-      try {
-        const response = await fetch(
-          `http://localhost:8000/patients/${patientId}`,
-          {
-            method: "DELETE",
-            headers: {
-              Authorization: `Token ${authState?.token}`,
-            },
-          }
-        );
-        if (!response.ok) throw new Error("Failed to delete patient");
-        toast.success("Patient deleted successfully");
-        setPatients(patients.filter((patient) => patient.id !== patientId));
-      } catch (error) {
-        toast.error("Failed to delete patient");
-      }
-    }
-  };
+
 
   // Filter patients based on search query
   const filteredPatients = patients.filter(
@@ -146,18 +127,6 @@ export default function PatientList() {
                     View
                   </Button>
                 </Link>
-                <Link href={`department/patients/${patient.id}/edit`}>
-                  <Button variant="outline" size="sm">
-                    Edit
-                  </Button>
-                </Link>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => handleDelete(patient.id)}
-                >
-                  Delete
-                </Button>
               </TableCell>
             </TableRow>
           ))}

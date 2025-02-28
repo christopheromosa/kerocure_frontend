@@ -4,387 +4,105 @@ import axios from "axios";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-
-import {
-  Table,
-  TableHeader,
-  TableRow,
-  TableHead,
-  TableBody,
-  TableCell,
-} from "@/components/ui/table";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, Controller } from "react-hook-form";
-import { z } from "zod";
-import {
-  useReactTable,
-  getCoreRowModel,
-  ColumnDef,
-} from "@tanstack/react-table";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { useParams, useRouter } from "next/navigation";
 import { useVisit } from "@/context/VisitContext";
 import { useAuth } from "@/context/AuthContext";
 import PageTransition from "@/components/PageTransition";
-import MDEditor from "@uiw/react-md-editor";
 import LoadingPage from "@/components/loading_animation";
-import Link from "next/link";
-
-const testRequestsSchema = z.object({
-  test_name: z.string().min(1, "Test name is required"),
-});
-
-const prescriptionSchema = z.object({
-  medication: z.string().min(1, "Medication is required"),
-  dosage: z.string().min(1, "Dosage is required"),
-});
-
-type TestRequest = z.infer<typeof testRequestsSchema>;
-type Prescription = z.infer<typeof prescriptionSchema>;
+import OrganizationInfo from "@/components/OrganizationInfo";
+import { DiagnosisTab } from "@/components/tabs/DiagnosisTab";
+import { MedicalHistoryTab } from "@/components/tabs/MedicalHistoryTab";
+import { TestRequestTab } from "@/components/tabs/TestRequestTab";
+import { PrescriptionsTab } from "@/components/tabs/PrescriptionsTab";
 
 const PatientManagementPage = () => {
   const { patientId } = useParams();
-
   const router = useRouter();
   const { visitData, fetchVisitData, loading } = useVisit();
   const [diagnosis, setDiagnosis] = useState<string>("");
-  const [testRequests, setTestRequests] = useState<TestRequest[]>([]);
-  const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
-  const [showTestRequestPreview, setShowTestRequestPreview] = useState(false);
-  const [showPrescriptionPreview, setShowPrescriptionPreview] = useState(false);
+  const [testRequests, setTestRequests] = useState<any[]>([]);
+  const [prescriptions, setPrescriptions] = useState<any[]>([]);
   const [isDiagnosisSaved, setIsDiagnosisSaved] = useState<boolean>(false);
-  const [consultationId, setConsultationId] = useState<number>();
-  const [refresh, setRefresh] = useState(false);
-
-  // const [labResults, setLabResults] = useState([]);
+  const [allVisits, setAllVisits] = useState<any[]>([]);
   const { authState } = useAuth();
-  console.log(visitData?.consultation_data);
 
+  // Fetch all patient visits on page load
+  useEffect(() => {
+    const fetchAllVisits = async () => {
+      try {
+        const response = await axios.get(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/patient_visits/${patientId}`
+        );
+        setAllVisits(response.data);
+      } catch (error) {
+        console.error("Failed to fetch visits:", error);
+      }
+    };
+
+    fetchAllVisits();
+  }, [patientId]);
+
+  // Fetch visit data for the current patient
   useEffect(() => {
     if (patientId) {
       fetchVisitData(patientId as string);
     }
-  }, [fetchVisitData, patientId, refresh]);
+  }, [fetchVisitData, patientId]);
 
+  // Set diagnosis if it exists in visit data
   useEffect(() => {
     if (visitData?.consultation_data?.diagnosis) {
       setDiagnosis(visitData.consultation_data.diagnosis);
     }
   }, [visitData]);
-  console.log(
-    "before updating diagnosis: ",
-    visitData?.consultation_data?.note_id
-  );
 
+  // Handle saving diagnosis
   const handleSaveDiagnosis = async () => {
     try {
       if (!visitData?.consultation_data?.note_id) {
-        const res = await fetch(
+        const res = await axios.post(
           `${process.env.NEXT_PUBLIC_API_URL}/consultation/`,
           {
-            method: "POST",
+            diagnosis,
+            prescription: [],
+            lab_tests_ordered: [],
+            physician: authState?.user_id,
+            visit: visitData?.visit_id,
+            triage: visitData?.triage_data?.triage_id,
+          },
+          {
             headers: {
-              "Content-Type": "application/json",
               Authorization: `Token ${authState?.token}`,
             },
-            body: JSON.stringify({
-              diagnosis,
-              prescription: [],
-              lab_tests_ordered: [],
-              physician: authState.user_id,
-              visit: visitData?.visit_id,
-              triage: visitData?.triage_data?.triage_id,
-            }),
           }
         );
-        if (res.ok) {
-          const consultation = await res.json();
-          console.log(consultation);
-          setConsultationId(consultation.note);
-        }
-
-        console.log(consultationId);
         setIsDiagnosisSaved(true);
-        setTimeout(() => {
-          toast.success("Diagnosis saved successfully!", {
-            autoClose: 1000, // Show toast for 2 seconds
-            onClose: () => {
-              router.refresh();
-              window.location.reload(); // Refresh after the toast disappears
-            },
-          });
-        }, 1000);
-        // alert("Diagnosis saved successfully!");
-        // // router.push(`/departments/consultation/${patientId}`);
-        // router.refresh();
-        setRefresh(!refresh);
+        toast.success("Diagnosis saved successfully!", { autoClose: 1000 });
       } else {
-        const res = await fetch(
+        const res = await axios.put(
           `${process.env.NEXT_PUBLIC_API_URL}/consultation/${visitData?.consultation_data?.note_id}/`,
           {
-            method: "PUT",
+            diagnosis,
+            visit: visitData?.visit_id,
+          },
+          {
             headers: {
-              "Content-Type": "application/json",
               Authorization: `Token ${authState?.token}`,
             },
-            body: JSON.stringify({
-              diagnosis: diagnosis,
-              visit: visitData?.visit_id,
-            }),
           }
         );
-        if (res.ok) {
-          const consultation = await res.json();
-          console.log(consultation); // Log the response to see the updated consultation data
-          setConsultationId(consultation.note); // Update the state if needed
-          setIsDiagnosisSaved(true); // Update the state to reflect that the diagnosis is saved
-          setTimeout(() => {
-            toast.success("Diagnosis updated successfully!!", {
-              autoClose: 1000, // Show toast for 2 seconds
-              onClose: () => {
-                router.refresh();
-                window.location.reload(); // Refresh after the toast disappears
-              },
-            });
-          }, 1000);
-          // alert("Diagnosis updated successfully!");
-          // // router.push(`/departments/consultation/${patientId}`);
-          // router.refresh();
-          setRefresh(!refresh);
-        } else {
-          console.error("Failed to update diagnosis");
-          alert("Failed to update diagnosis. Please try again.");
-        }
+        setIsDiagnosisSaved(true);
+        toast.success("Diagnosis updated successfully!", { autoClose: 1000 });
       }
     } catch (error) {
       console.error("Failed to save diagnosis:", error);
-      alert("Failed to save diagnosis. Please try again.");
-      setTimeout(() => {
-        toast.success("Failed to save diagnosis. Please try again.", {
-          autoClose: 1000, // Show toast for 2 seconds
-          onClose: () => {
-            window.location.reload(); // Refresh after the toast disappears
-          },
-        });
-      }, 1000);
+      toast.error("Failed to save diagnosis. Please try again.", {
+        autoClose: 1000,
+      });
     }
   };
-
-  const {
-    control: testRequestControl,
-    handleSubmit: handleTestRequestSubmit,
-    reset: resetTestRequestForm,
-  } = useForm<TestRequest>({
-    resolver: zodResolver(testRequestsSchema),
-  });
-
-  const {
-    control: prescriptionControl,
-    handleSubmit: handlePrescriptionSubmit,
-    reset: resetPrescriptionForm,
-  } = useForm<Prescription>({
-    resolver: zodResolver(prescriptionSchema),
-  });
-
-  const handleAddTestRequest = (data: TestRequest) => {
-    setTestRequests([...testRequests, data]);
-    resetTestRequestForm();
-  };
-
-  const handleAddPrescription = (data: Prescription) => {
-    setPrescriptions([...prescriptions, data]);
-    resetPrescriptionForm();
-  };
-
-  const handleDeleteTestRequest = (index: number) => {
-    setTestRequests(testRequests.filter((_, i) => i !== index));
-  };
-
-  const handleDeletePrescription = (index: number) => {
-    setPrescriptions(prescriptions.filter((_, i) => i !== index));
-  };
-
-  const handleSaveTestRequests = async () => {
-    try {
-      await axios.put(
-        `${process.env.NEXT_PUBLIC_API_URL}/visits/${visitData?.visit_id}/`,
-        {
-          patient: patientId,
-          current_state: "CONSULTATION",
-          next_state: "LABORATORY",
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Token ${authState?.token}`,
-          },
-        }
-      );
-
-      await axios.put(
-        `${process.env.NEXT_PUBLIC_API_URL}/consultation/${visitData?.consultation_data?.note_id}/`,
-        {
-          lab_tests_ordered: testRequests,
-          visit: visitData?.visit_id,
-          diagnosis: diagnosis,
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Token ${authState?.token}`,
-          },
-        }
-      );
-      setShowTestRequestPreview(false);
-
-      alert("Test requests saved successfully!");
-      setTimeout(() => {
-        toast.success("Test requests saved successfully!", {
-          autoClose: 1000, // Show toast for 2 seconds
-          onClose: () => {
-            router.refresh();
-            window.location.reload(); // Refresh after the toast disappears
-          },
-        });
-      }, 1000);
-      // router.refresh();
-    } catch (error) {
-      console.error("Failed to save test requests:", error);
-      setTimeout(() => {
-        toast.error(
-          error instanceof Error
-            ? error.message
-            : "Failed to save test requests.",
-          {
-            autoClose: 1000, // Show toast for 2 seconds
-            onClose: () => {
-              window.location.reload(); // Refresh after the toast disappears
-            },
-          }
-        );
-      }, 1000);
-    }
-  };
-
-  const handleSavePrescriptions = async () => {
-    console.log("prescriptions: ", prescriptions);
-    try {
-      await axios.put(
-        `${process.env.NEXT_PUBLIC_API_URL}/visits/${visitData?.visit_id}/`,
-        {
-          patient: patientId,
-          current_state: "CONSULTATION",
-          next_state: "PHARMACY",
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Token ${authState?.token}`,
-          },
-        }
-      );
-
-      await axios.put(
-        `${process.env.NEXT_PUBLIC_API_URL}/consultation/${visitData?.consultation_data?.note_id}/`,
-        {
-          prescription: prescriptions,
-          visit: visitData?.visit_id,
-          diagnosis: diagnosis,
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Token ${authState?.token}`,
-          },
-        }
-      );
-
-      setShowPrescriptionPreview(false);
-      alert("Prescriptions saved successfully!");
-      setTimeout(() => {
-        toast.success("Prescriptions saved successfully", {
-          autoClose: 1000, // Show toast for 2 seconds
-          onClose: () => {
-            window.location.reload();
-            router.push("/departments/consultation");
-          },
-        });
-      }, 1000);
-    } catch (error) {
-      console.error("Failed to save prescriptions:", error);
-    }
-  };
-
-  const testRequestColumns: ColumnDef<TestRequest>[] = [
-    {
-      accessorKey: "test_name",
-      header: "Test Name",
-    },
-    {
-      id: "actions",
-      header: "Actions",
-      cell: ({ row }) => {
-        console.log("Rendering action button for row:", row.index); // Debugging
-        return (
-          <Button
-            variant="destructive"
-            onClick={() => handleDeleteTestRequest(row.index)}
-          >
-            Delete
-          </Button>
-        );
-      },
-    },
-  ];
-
-  const prescriptionColumns: ColumnDef<Prescription>[] = [
-    {
-      accessorKey: "medication",
-      header: "Medication",
-    },
-    {
-      accessorKey: "dosage",
-      header: "Dosage",
-    },
-    {
-      id: "actions",
-      header: "Actions",
-      cell: ({ row }) => {
-        return (
-          <Button
-            variant="destructive"
-            onClick={() => handleDeletePrescription(row.index)}
-          >
-            Delete
-          </Button>
-        );
-      },
-    },
-  ];
-
-  const testRequestTable = useReactTable({
-    data: testRequests,
-    columns: testRequestColumns,
-    getCoreRowModel: getCoreRowModel(),
-  });
-
-  const prescriptionTable = useReactTable({
-    data: prescriptions,
-    columns: prescriptionColumns,
-    getCoreRowModel: getCoreRowModel(),
-  });
 
   return (
     <PageTransition>
@@ -434,300 +152,40 @@ const PatientManagementPage = () => {
             <TabsTrigger value="diagnosis">Diagnosis</TabsTrigger>
             <TabsTrigger value="medicalHistory">Medical History</TabsTrigger>
             <TabsTrigger value="testRequests">Test Requests</TabsTrigger>
-            <TabsTrigger value="labResults">Lab Results</TabsTrigger>
             <TabsTrigger value="prescriptions">Prescriptions</TabsTrigger>
           </TabsList>
 
-          {/* Diagnosis Section */}
+          {/* Diagnosis Tab */}
           <TabsContent value="diagnosis">
-            <Card>
-              <CardHeader>
-                <CardTitle>Diagnosis </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <MDEditor
-                  value={diagnosis}
-                  onChange={(value) => {
-                    setDiagnosis(value ?? "");
-                    setIsDiagnosisSaved(false);
-                  }}
-                />
-
-                <Button
-                  className="mt-4"
-                  onClick={handleSaveDiagnosis}
-                  disabled={isDiagnosisSaved}
-                >
-                  {isDiagnosisSaved ? "Diagnosis Saved" : "Save Diagnosis"}
-                </Button>
-              </CardContent>
-            </Card>
+            <DiagnosisTab
+              diagnosis={diagnosis}
+              setDiagnosis={setDiagnosis}
+              handleSaveDiagnosis={handleSaveDiagnosis}
+              isDiagnosisSaved={isDiagnosisSaved}
+            />
           </TabsContent>
 
-          {/* Medical History Section */}
+          {/* Medical History Tab */}
           <TabsContent value="medicalHistory">
-            <Card>
-              <CardHeader>
-                <CardTitle>Medical History</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p>
-                  Fetch and search patient past records{" "}
-                  <Link
-                    href={`/departments/consultation/analytics`}
-                    className="text-blue-700"
-                  >
-                    {" "}
-                    here
-                  </Link>
-                </p>
-              </CardContent>
-            </Card>
+            <MedicalHistoryTab visits={allVisits || []} />
           </TabsContent>
 
-          {/* Test Requests Section */}
+          {/* Test Requests Tab */}
           <TabsContent value="testRequests">
-            <Card>
-              <CardHeader>
-                <CardTitle>Test Requests</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleTestRequestSubmit(handleAddTestRequest)}>
-                  <Controller
-                    name="test_name"
-                    control={testRequestControl}
-                    defaultValue=""
-                    render={({ field }) => (
-                      <Input {...field} placeholder="Enter test name" />
-                    )}
-                  />
-                  <Button type="submit" className="mt-4">
-                    Add Test Request
-                  </Button>
-                </form>
-                <Table>
-                  <TableHeader>
-                    {testRequestTable.getHeaderGroups().map((headerGroup) => (
-                      <TableRow key={headerGroup.id}>
-                        {headerGroup.headers.map((header) => (
-                          <TableHead key={header.id}>
-                            {header.column.columnDef.header as string}
-                          </TableHead>
-                        ))}
-                      </TableRow>
-                    ))}
-                  </TableHeader>
-                  <TableBody>
-                    {testRequestTable.getRowModel().rows.map((row) => {
-                      console.log("Rendering row:", row.id);
-
-                      return (
-                        <TableRow key={row.id}>
-                          {row.getVisibleCells().map((cell) => {
-                            console.log("Rendering cell:", cell);
-                            return (
-                              <TableCell key={cell.id}>
-                                {cell.renderValue() as string}
-                              </TableCell>
-                            );
-                          })}
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-                <Button
-                  className="mt-4"
-                  onClick={() => setShowTestRequestPreview(true)}
-                >
-                  Save Test Requests
-                </Button>
-              </CardContent>
-            </Card>
+            <TestRequestTab
+              testRequests={testRequests}
+              setTestRequests={setTestRequests}
+            />
           </TabsContent>
 
-          {/* Lab Results Section */}
-          <TabsContent value="labResults">
-            <Card>
-              <CardHeader>
-                <CardTitle>Lab Results</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {visitData?.lab_data?.result ? (
-                  <ul>
-                    {visitData?.lab_data?.result.map((test, index) => (
-                      <li key={index}>
-                        {Object.entries(test).map(([testName, testResult]) => (
-                          <p key={testName}>
-                            <strong>{testName}:</strong> {testResult}
-                          </p>
-                        ))}
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p>No lab results available.</p>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Prescriptions Section */}
+          {/* Prescriptions Tab */}
           <TabsContent value="prescriptions">
-            <Card>
-              <CardHeader>
-                <CardTitle>Prescriptions</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <form
-                  onSubmit={handlePrescriptionSubmit(handleAddPrescription)}
-                >
-                  <Controller
-                    name="medication"
-                    control={prescriptionControl}
-                    defaultValue=""
-                    render={({ field }) => (
-                      <Input {...field} placeholder="Enter medication" />
-                    )}
-                  />
-                  <div className="mt-4">
-                    <Controller
-                      name="dosage"
-                      control={prescriptionControl}
-                      defaultValue=""
-                      render={({ field }) => (
-                        <Input {...field} placeholder="Enter dosage" />
-                      )}
-                    />
-                  </div>
-                  <Button type="submit" className="mt-4">
-                    Add Prescription
-                  </Button>
-                </form>
-                <Table>
-                  <TableHeader>
-                    {prescriptionTable.getHeaderGroups().map((headerGroup) => (
-                      <TableRow key={headerGroup.id}>
-                        {headerGroup.headers.map((header) => (
-                          <TableHead key={header.id}>
-                            {header.column.columnDef.header as string}
-                          </TableHead>
-                        ))}
-                      </TableRow>
-                    ))}
-                  </TableHeader>
-                  <TableBody>
-                    {prescriptionTable.getRowModel().rows.map((row) => (
-                      <TableRow key={row.id}>
-                        {row.getVisibleCells().map((cell) => (
-                          <TableCell key={cell.id}>
-                            {cell.renderValue() as string}
-                          </TableCell>
-                        ))}
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-                <Button
-                  className="mt-4"
-                  onClick={() => setShowPrescriptionPreview(true)}
-                >
-                  Save Prescriptions
-                </Button>
-              </CardContent>
-            </Card>
+            <PrescriptionsTab
+              prescriptions={prescriptions}
+              setPrescriptions={setPrescriptions}
+            />
           </TabsContent>
         </Tabs>
-
-        {/* Test Request Preview Dialog */}
-        <AlertDialog
-          open={showTestRequestPreview}
-          onOpenChange={setShowTestRequestPreview}
-        >
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Review Test Requests</AlertDialogTitle>
-              <AlertDialogDescription>
-                Please review the test requests before saving.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <Table>
-              <TableHeader>
-                {testRequestTable.getHeaderGroups().map((headerGroup) => (
-                  <TableRow key={headerGroup.id}>
-                    {headerGroup.headers.map((header) => (
-                      <TableHead key={header.id}>
-                        {header.column.columnDef.header as string}
-                      </TableHead>
-                    ))}
-                  </TableRow>
-                ))}
-              </TableHeader>
-              <TableBody>
-                {testRequestTable.getRowModel().rows.map((row) => (
-                  <TableRow key={row.id}>
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>
-                        {cell.renderValue() as string}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={handleSaveTestRequests}>
-                Save
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-
-        {/* Prescription Preview Dialog */}
-        <AlertDialog
-          open={showPrescriptionPreview}
-          onOpenChange={setShowPrescriptionPreview}
-        >
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Review Prescriptions</AlertDialogTitle>
-              <AlertDialogDescription>
-                Please review the prescriptions before saving.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <Table>
-              <TableHeader>
-                {prescriptionTable.getHeaderGroups().map((headerGroup) => (
-                  <TableRow key={headerGroup.id}>
-                    {headerGroup.headers.map((header) => (
-                      <TableHead key={header.id}>
-                        {header.column.columnDef.header as string}
-                      </TableHead>
-                    ))}
-                  </TableRow>
-                ))}
-              </TableHeader>
-              <TableBody>
-                {prescriptionTable.getRowModel().rows.map((row) => (
-                  <TableRow key={row.id}>
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>
-                        {cell.renderValue() as string}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={handleSavePrescriptions}>
-                Save
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
       </div>
       <ToastContainer />
     </PageTransition>

@@ -5,7 +5,13 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
-import { Users, LayoutDashboard,Server,ClipboardCheck,Settings } from "lucide-react";
+import {
+  Users,
+  LayoutDashboard,
+  Server,
+  ClipboardCheck,
+  Settings,
+} from "lucide-react";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -27,8 +33,17 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       icon: LayoutDashboard,
     },
     { label: "patients", href: "/departments/pharmacy", icon: Server },
-    { label: "reports", href: "/departments/pharmacy/analytics", icon: ClipboardCheck },
-     { label: "profile", href: "/departments/pharmacy/profile", icon: Settings },
+    {
+      label: "Drug management",
+      href: "/departments/pharmacy/drugManagement",
+      icon: Server,
+    },
+    {
+      label: "reports",
+      href: "/departments/pharmacy/analytics",
+      icon: ClipboardCheck,
+    },
+    { label: "profile", href: "/departments/pharmacy/profile", icon: Settings },
   ];
   const pathname = usePathname();
   return (
