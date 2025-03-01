@@ -23,15 +23,18 @@ import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { DrugForm } from "@/components/forms/drug-form";
 
-export default function DrugManagement(){
+export default function DrugManagement() {
   const [drugs, setDrugs] = useState<any[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [currentDrug, setCurrentDrug] = useState<any>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [drugToDelete, setDrugToDelete] = useState<any>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   // Fetch drugs from the backend
   const fetchDrugs = async () => {
+    setIsLoading(true);
     try {
       const response = await axios.get(
         `${process.env.NEXT_PUBLIC_API_URL}/drugs/`
@@ -40,6 +43,8 @@ export default function DrugManagement(){
     } catch (error) {
       console.error("Failed to fetch drugs:", error);
       toast.error("Failed to fetch drugs.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -87,52 +92,74 @@ export default function DrugManagement(){
     }
   };
 
+  // Filter drugs based on search query
+  const filteredDrugs = drugs.filter((drug) =>
+    drug.drug_name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>Drug Management</CardTitle>
       </CardHeader>
       <CardContent>
-        <Button onClick={() => setIsDialogOpen(true)}>Add Drug</Button>
+        <div className="flex justify-between mb-4">
+          <Input
+            placeholder="Search drugs..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-1/3"
+          />
+          <Button onClick={() => setIsDialogOpen(true)}>Add Drug</Button>
+        </div>
+
+        {/* Loading State */}
+        {isLoading && <p className="text-center">Loading drugs...</p>}
 
         {/* Drug List */}
-        <Table className="mt-4">
-          <TableHeader>
-            <TableRow>
-              <TableHead>Drug Name</TableHead>
-              <TableHead>Cost</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {drugs.map((drug) => (
-              <TableRow key={drug.id}>
-                <TableCell>{drug.drug_name}</TableCell>
-                <TableCell>${drug.cost}</TableCell>
-                <TableCell>
-                  <Button
-                    variant="ghost"
-                    onClick={() => {
-                      setCurrentDrug(drug);
-                      setIsDialogOpen(true);
-                    }}
-                  >
-                    Edit
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    onClick={() => {
-                      setDrugToDelete(drug);
-                      setIsDeleteDialogOpen(true);
-                    }}
-                  >
-                    Delete
-                  </Button>
-                </TableCell>
+        {!isLoading && (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Drug Name</TableHead>
+                <TableHead>Cost</TableHead>
+                <TableHead>Quantity</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Actions</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {filteredDrugs.map((drug) => (
+                <TableRow key={drug.id}>
+                  <TableCell>{drug.drug_name}</TableCell>
+                  <TableCell>${drug.cost}</TableCell>
+                  <TableCell>{drug.quantity}</TableCell>
+                  <TableCell>{drug.status}</TableCell>
+                  <TableCell>
+                    <Button
+                      variant="ghost"
+                      onClick={() => {
+                        setCurrentDrug(drug);
+                        setIsDialogOpen(true);
+                      }}
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      onClick={() => {
+                        setDrugToDelete(drug);
+                        setIsDeleteDialogOpen(true);
+                      }}
+                    >
+                      Delete
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
 
         {/* Add/Edit Drug Dialog */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -176,4 +203,4 @@ export default function DrugManagement(){
       </CardContent>
     </Card>
   );
-};
+}

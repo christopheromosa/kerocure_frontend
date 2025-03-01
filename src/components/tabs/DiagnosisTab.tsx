@@ -1,8 +1,15 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import MDEditor from "@uiw/react-md-editor";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import OrganizationInfo from "../OrganizationInfo";
 import axios from "axios";
 
@@ -14,31 +21,68 @@ export const DiagnosisTab = ({
 }: any) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDisease, setSelectedDisease] = useState("");
-  const [searchResults, setSearchResults] = useState([]);
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [allDiseases, setAllDiseases] = useState<any[]>([]);
+  const [isAddDiseaseDialogOpen, setIsAddDiseaseDialogOpen] = useState(false);
+  const [newDiseaseName, setNewDiseaseName] = useState("");
 
-  // Fetch diseases from the backend API
-  const handleSearch = async (e: any) => {
+  // Fetch all diseases on page load
+  useEffect(() => {
+    const fetchDiseases = async () => {
+      try {
+        const response = await axios.get(
+          `${process.env.NEXT_PUBLIC_API_URL}/diseases/`
+        );
+        setAllDiseases(response.data);
+      } catch (error) {
+        console.error("Failed to fetch diseases:", error);
+      }
+    };
+    fetchDiseases();
+  }, []);
+
+  // Handle search input
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const term = e.target.value;
     setSearchTerm(term);
 
     if (term.length > 2) {
-      try {
-        const response = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_URL}/diseases?search=${term}`
-        );
-        setSearchResults(response.data);
-      } catch (error) {
-        console.error("Failed to fetch diseases:", error);
-      }
+      const filteredDiseases = allDiseases.filter((disease) =>
+        disease.name.toLowerCase().includes(term.toLowerCase())
+      );
+      setSearchResults(filteredDiseases);
     } else {
       setSearchResults([]);
     }
   };
 
+  // Handle disease selection
   const handleSelectDisease = (disease: any) => {
-    setSelectedDisease(disease);
-    setDiagnosis((prev: any) => `${prev}\n- ${disease}`);
+    setSelectedDisease(disease.name);
+    setDiagnosis((prev: any) => `${prev}\n- ${disease.name}`);
     setSearchResults([]);
+    setSearchTerm("");
+  };
+
+  // Handle adding a new disease
+  const handleAddDisease = async () => {
+    if (!newDiseaseName) return;
+
+    try {
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_API_URL}/diseases/`,
+        {
+          name: newDiseaseName,
+        }
+      );
+      setAllDiseases((prev) => [...prev, response.data]);
+      setSelectedDisease(newDiseaseName);
+      setDiagnosis((prev: any) => `${prev}\n- ${newDiseaseName}`);
+      setIsAddDiseaseDialogOpen(false);
+      setNewDiseaseName("");
+    } catch (error) {
+      console.error("Failed to add disease:", error);
+    }
   };
 
   return (
@@ -55,7 +99,7 @@ export const DiagnosisTab = ({
           preview="edit"
         />
 
-        {/* Search input moved below the editor */}
+        {/* Search input */}
         <div className="mt-4">
           <Input
             placeholder="Search diseases..."
@@ -68,15 +112,25 @@ export const DiagnosisTab = ({
                 <li
                   key={index}
                   className="p-2 hover:bg-gray-100 cursor-pointer"
-                  onClick={() => handleSelectDisease(disease.name)}
+                  onClick={() => handleSelectDisease(disease)}
                 >
                   {disease.name}
                 </li>
               ))}
             </ul>
           )}
+          {searchTerm.length > 2 && searchResults.length === 0 && (
+            <Button
+              variant="link"
+              className="mt-2"
+              onClick={() => setIsAddDiseaseDialogOpen(true)}
+            >
+              Add Disease: {searchTerm}
+            </Button>
+          )}
         </div>
-        {/* Input for selected disease */}
+
+        {/* Selected disease input */}
         <div className="mt-4">
           <Input
             placeholder="Selected Disease"
@@ -85,7 +139,7 @@ export const DiagnosisTab = ({
           />
         </div>
 
-
+        {/* Save diagnosis button */}
         <Button
           className="mt-4"
           onClick={handleSaveDiagnosis}
@@ -94,6 +148,32 @@ export const DiagnosisTab = ({
           {isDiagnosisSaved ? "Diagnosis Saved" : "Save Diagnosis"}
         </Button>
       </CardContent>
+
+      {/* Add Disease Dialog */}
+      <Dialog
+        open={isAddDiseaseDialogOpen}
+        onOpenChange={setIsAddDiseaseDialogOpen}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add New Disease</DialogTitle>
+          </DialogHeader>
+          <Input
+            placeholder="Enter disease name"
+            value={newDiseaseName}
+            onChange={(e) => setNewDiseaseName(e.target.value)}
+          />
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsAddDiseaseDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleAddDisease}>Add Disease</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 };

@@ -20,12 +20,61 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
+import { useState, useEffect } from "react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const DashboardPage = () => {
-  // Mock data for demonstration
   const { data, isLoading, refetch } = useDashboardData();
+  const [selectedDepartment, setSelectedDepartment] = useState<string | null>(
+    null
+  );
+  const [departmentPatientsCount, setDepartmentPatientsCount] = useState<
+    number | null
+  >(null);
+  const [departments, setDepartments] = useState<any[]>([]);
 
-  console.log(data);
+  // Fetch departments on component mount
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      try {
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/departments/`
+        );
+        if (!response.ok) throw new Error("Failed to fetch departments");
+        const data = await response.json();
+        setDepartments(data);
+      } catch (error) {
+        console.error("Error fetching departments:", error);
+      }
+    };
+    fetchDepartments();
+  }, []);
+
+  // Fetch department-specific patient count when a department is selected
+  useEffect(() => {
+    if (selectedDepartment) {
+      const fetchDepartmentPatients = async () => {
+        try {
+          const response = await fetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/api/triage-department-patients/${selectedDepartment}`
+          );
+          if (!response.ok)
+            throw new Error("Failed to fetch department patients");
+          const data = await response.json();
+          setDepartmentPatientsCount(data.length);
+        } catch (error) {
+          console.error("Error fetching department patients:", error);
+        }
+      };
+      fetchDepartmentPatients();
+    }
+  }, [selectedDepartment]);
 
   const patientsInQueue = [
     { department: "Consultation", count: data?.consultationPatients },
@@ -41,6 +90,7 @@ const DashboardPage = () => {
       day: "numeric",
     }), // Converts "2025-02-05" to "Feb 5"
   }));
+
   return (
     <div className="p-6 space-y-6">
       {isLoading && <LoadingPage />}
@@ -48,6 +98,7 @@ const DashboardPage = () => {
         <h1 className="text-2xl font-bold">Dashboard</h1>
         <Button onClick={refetch}>Refresh data</Button>
       </div>
+
       {/* Patients in Queue */}
       <Card>
         <CardHeader>
@@ -61,7 +112,32 @@ const DashboardPage = () => {
                   <CardTitle className="text-lg">{item.department}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-2xl font-bold">{item.count}</p>
+                  {item.department === "Consultation" ? (
+                    <>
+                      <Select
+                        onValueChange={(value) => setSelectedDepartment(value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select Department" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {departments.map((dept) => (
+                            <SelectItem
+                              key={dept.id}
+                              value={dept.id.toString()}
+                            >
+                              {dept.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-2xl font-bold mt-4">
+                        {departmentPatientsCount ?? item.count}
+                      </p>
+                    </>
+                  ) : (
+                    <p className="text-2xl font-bold">{item.count}</p>
+                  )}
                 </CardContent>
               </Card>
             ))}

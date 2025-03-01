@@ -38,6 +38,15 @@ interface Prescription {
   dispensed: boolean;
 }
 
+// Define the type for a drug
+interface Drug {
+  id: number;
+  drug_name: string;
+  cost: number;
+  quantity: number;
+  status: string;
+}
+
 const PharmacyDetailsPage = () => {
   const params = useParams();
   const { visitData, fetchVisitData } = useVisit();
@@ -45,8 +54,16 @@ const PharmacyDetailsPage = () => {
   const { authState } = useAuth();
   const router = useRouter();
   const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
+  const [dispensedDrugs, setDispensedDrugs] = useState<Prescription[]>([]);
   const [showSuccessDialog, setShowSuccessDialog] = useState<boolean>(false);
   const [showErrorDialog, setShowErrorDialog] = useState<boolean>(false);
+  const [showDispenseDialog, setShowDispenseDialog] = useState<boolean>(false);
+  const [selectedPrescription, setSelectedPrescription] =
+    useState<Prescription | null>(null);
+  const [drugs, setDrugs] = useState<Drug[]>([]); // Store all drugs here
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [selectedDrug, setSelectedDrug] = useState<Drug | null>(null);
+  const [dispenseQuantity, setDispenseQuantity] = useState<number>(1);
 
   // Fetch patient details and prescriptions on page load
   useEffect(() => {
@@ -54,6 +71,28 @@ const PharmacyDetailsPage = () => {
       fetchVisitData(patientId.toString());
     }
   }, [patientId, fetchVisitData]);
+
+  // Fetch all drugs on page load
+  useEffect(() => {
+    const fetchAllDrugs = async () => {
+      try {
+        const response = await axios.get(
+          `${process.env.NEXT_PUBLIC_API_URL}/drugs/`,
+          {
+            headers: {
+              Authorization: `Token ${authState?.token}`,
+            },
+          }
+        );
+        setDrugs(response.data); // Store all drugs in state
+      } catch (error) {
+        console.error("Error fetching drugs:", error);
+      }
+    };
+
+    fetchAllDrugs();
+  }, [authState?.token]);
+
   // Initialize prescriptions state
   useEffect(() => {
     if (visitData?.consultation_data?.prescription) {
@@ -70,35 +109,75 @@ const PharmacyDetailsPage = () => {
     }
   }, [visitData]);
 
+  // Filter drugs locally based on search query
+  const filteredDrugs = drugs.filter((drug) =>
+    drug.drug_name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // Open dispense dialog
+  const openDispenseDialog = (prescription: Prescription) => {
+    setSelectedPrescription(prescription);
+    setShowDispenseDialog(true);
+  };
+
+  // Handle drug selection
+  const handleDrugSelection = (drug: Drug) => {
+    setSelectedDrug(drug);
+    setDispenseQuantity(1); // Reset quantity to 1
+  };
+
+  // Handle quantity adjustment
+  const adjustQuantity = (amount: number) => {
+    if (
+      selectedDrug &&
+      dispenseQuantity + amount > 0 &&
+      dispenseQuantity + amount <= selectedDrug.quantity
+    ) {
+      setDispenseQuantity(dispenseQuantity + amount);
+    }
+  };
+
+  // Complete dispensing
+  const handleCompleteDispensing = () => {
+    if (selectedDrug && selectedPrescription) {
+      const totalCost = selectedDrug.cost * dispenseQuantity;
+      const dispensedDrug = {
+        ...selectedPrescription,
+        medication_name: selectedDrug.drug_name,
+        quantity: dispenseQuantity.toString(),
+        cost: totalCost,
+        dispensed: true,
+      };
+      setDispensedDrugs((prev) => [...prev, dispensedDrug]);
+      setShowDispenseDialog(false);
+    }
+  };
+
   // Function to calculate total cost
   const calculateTotalCost = () => {
-    return prescriptions
-      .filter((prescription) => prescription.dispensed)
-      .reduce((total, prescription) => total + prescription.cost, 0);
+    return dispensedDrugs.reduce((total, drug) => total + drug.cost, 0);
   };
 
   // Function to save prescription details
   const handleSavePrescription = async () => {
-    console.log("prescriptions:", prescriptions); // Debug log
-    console.log("Total Cost:", calculateTotalCost()); // Debug log
-
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/pharmacy/`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Token ${authState?.token}`,
-        },
-        body: JSON.stringify({
+      const res = await axios.post(
+        `${process.env.NEXT_PUBLIC_API_URL}/pharmacy/`,
+        {
           visit: visitData?.visit_id,
           note: visitData?.consultation_data?.note_id,
-          prescriptions,
+          prescriptions: dispensedDrugs,
           cost: calculateTotalCost(),
           dispensed_by: authState?.user_id,
-        }),
-      });
+        },
+        {
+          headers: {
+            Authorization: `Token ${authState?.token}`,
+          },
+        }
+      );
 
-      if (res.ok) {
+      if (res.status === 201) {
         await axios.put(
           `${process.env.NEXT_PUBLIC_API_URL}/visits/${visitData?.visit_id}/`,
           {
@@ -108,22 +187,17 @@ const PharmacyDetailsPage = () => {
           },
           {
             headers: {
-              "Content-Type": "application/json",
               Authorization: `Token ${authState?.token}`,
             },
           }
         );
-        setTimeout(() => {
-          toast.success("Prescriptions saved successfully", {
-            autoClose: 1000, // Show toast for 2 seconds
-            onClose: () => {
-              router.push("/departments/pharmacy");
-              window.location.reload();
-              // Refresh after the toast disappears
-            },
-          });
-        }, 1000);
-
+        toast.success("Prescriptions saved successfully", {
+          autoClose: 1000,
+          onClose: () => {
+            router.push("/departments/pharmacy");
+            window.location.reload();
+          },
+        });
         setShowSuccessDialog(true);
       } else {
         throw new Error("Failed to save prescription details");
@@ -155,6 +229,7 @@ const PharmacyDetailsPage = () => {
                 <TableHead>Quantity</TableHead>
                 <TableHead>Dispensed</TableHead>
                 <TableHead>Cost</TableHead>
+                <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -192,6 +267,11 @@ const PharmacyDetailsPage = () => {
                       placeholder="Enter cost"
                     />
                   </TableCell>
+                  <TableCell>
+                    <Button onClick={() => openDispenseDialog(prescription)}>
+                      Dispense
+                    </Button>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -206,6 +286,55 @@ const PharmacyDetailsPage = () => {
           </Button>
         </CardContent>
       </Card>
+
+      {/* Dispense Dialog */}
+      <AlertDialog
+        open={showDispenseDialog}
+        onOpenChange={setShowDispenseDialog}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Dispense Drug</AlertDialogTitle>
+            <AlertDialogDescription>
+              Search for the drug and adjust the quantity.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-4">
+            <Input
+              placeholder="Search for a drug"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            {filteredDrugs.map((drug) => (
+              <div
+                key={drug.id}
+                className="p-2 border rounded cursor-pointer"
+                onClick={() => handleDrugSelection(drug)}
+              >
+                <p>{drug.drug_name}</p>
+                <p>Cost: Ksh {drug.cost}</p>
+                <p>Quantity: {drug.quantity}</p>
+                <p>Status: {drug.status}</p>
+              </div>
+            ))}
+            {selectedDrug && (
+              <div className="space-y-2">
+                <p>Selected Drug: {selectedDrug.drug_name}</p>
+                <div className="flex items-center space-x-2">
+                  <Button onClick={() => adjustQuantity(-1)}>-</Button>
+                  <Input type="number" value={dispenseQuantity} readOnly />
+                  <Button onClick={() => adjustQuantity(1)}>+</Button>
+                </div>
+                <p>
+                  Total Cost: Ksh{" "}
+                  {(selectedDrug.cost * dispenseQuantity).toFixed(2)}
+                </p>
+                <Button onClick={handleCompleteDispensing}>Complete</Button>
+              </div>
+            )}
+          </div>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Success Alert Dialog */}
       <AlertDialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>

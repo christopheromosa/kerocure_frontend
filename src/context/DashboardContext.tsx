@@ -44,6 +44,7 @@ const fetchDashboardData = async () => {
     billingRecords,
     billingTotalCost,
     patientsAll,
+    departmentsRes,
   ] = await Promise.all([
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/triage-patients/`).then(
       (res) => res.json()
@@ -66,6 +67,9 @@ const fetchDashboardData = async () => {
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/patients/`).then((res) =>
       res.json()
     ),
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/departments/`).then((res) =>
+      res.json()
+    ),
   ]);
 
   return {
@@ -76,6 +80,7 @@ const fetchDashboardData = async () => {
     billingRecords: billingRecords?.slice(-5) ?? [],
     revenues: billingTotalCost ?? 0,
     totalPatients: patientsAll ?? 0,
+    departments: departmentsRes ?? [],
   };
 };
 
