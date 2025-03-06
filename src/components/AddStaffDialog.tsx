@@ -15,6 +15,9 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Input } from "./ui/input";
+import { useState } from "react";
+import { Badge } from "@/components/ui/badge"; // For displaying selected roles as chips
+
 interface AddStaffDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
@@ -29,75 +32,111 @@ export const AddStaffDialog = ({
   formData,
   onInputChange,
   onSubmit,
-}: AddStaffDialogProps) => (
-  <Dialog open={isOpen} onOpenChange={onOpenChange}>
-    <DialogTrigger asChild>
-      <Button className="mt-6">Add Staff</Button>
-    </DialogTrigger>
-    <DialogContent>
-      <DialogHeader>
-        <DialogTitle>Add New Staff</DialogTitle>
-        <DialogDescription>
-          Enter the details of the new staff member.
-        </DialogDescription>
-      </DialogHeader>
-      <form onSubmit={onSubmit} className="space-y-4">
-        <Input
-          name="username"
-          placeholder="Username"
-          value={formData.username}
-          onChange={onInputChange}
-          required
-        />
-        <Input
-          name="first_name"
-          placeholder="First Name"
-          value={formData.first_name}
-          onChange={onInputChange}
-          required
-        />
-        <Input
-          name="last_name"
-          placeholder="Last Name"
-          value={formData.last_name}
-          onChange={onInputChange}
-          required
-        />
-        <Select
-          name="role"
-          value={formData.role}
-          onValueChange={(value) => onInputChange({ name: "role", value })}
-          required
+}: AddStaffDialogProps) => {
+  const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
+
+  const handleRoleChange = (value: string) => {
+    let updatedRoles;
+    if (selectedRoles.includes(value)) {
+      updatedRoles = selectedRoles.filter((role) => role !== value);
+    } else {
+      updatedRoles = [...selectedRoles, value];
+    }
+    setSelectedRoles(updatedRoles);
+    // Update formData.roles immediately
+    onInputChange({ target: { name: "roles", value: updatedRoles } });
+  };
+
+  const handleRemoveRole = (role: string) => {
+    const updatedRoles = selectedRoles.filter((r) => r !== role);
+    setSelectedRoles(updatedRoles);
+    // Update formData.roles immediately
+    onInputChange({ target: { name: "roles", value: updatedRoles } });
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogTrigger asChild>
+        <Button className="mt-6">Add Staff</Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Add New Staff</DialogTitle>
+          <DialogDescription>
+            Enter the details of the new staff member.
+          </DialogDescription>
+        </DialogHeader>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            onSubmit(e);
+          }}
+          className="space-y-4"
         >
-          <SelectTrigger>
-            <SelectValue placeholder="Select a Role" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="Triage">Triage</SelectItem>
-            <SelectItem value="Doctor">Doctor</SelectItem>
-            <SelectItem value="Lab Technician">Lab Technician</SelectItem>
-            <SelectItem value="Pharmacist">Pharmacist</SelectItem>
-            <SelectItem value="Administrator">Administrator</SelectItem>
-            <SelectItem value="Billing">Billing</SelectItem>
-          </SelectContent>
-        </Select>
-        <Input
-          name="phone_number"
-          placeholder="Phone Number"
-          value={formData.phone_number}
-          onChange={onInputChange}
-          required
-        />
-        <Input
-          name="password"
-          type="password"
-          placeholder="Password"
-          value={formData.password}
-          onChange={onInputChange}
-          required
-        />
-        <Button type="submit">Save</Button>
-      </form>
-    </DialogContent>
-  </Dialog>
-);
+          <Input
+            name="first_name"
+            placeholder="First Name"
+            value={formData.first_name}
+            onChange={onInputChange}
+            required
+          />
+          <Input
+            name="last_name"
+            placeholder="Last Name"
+            value={formData.last_name}
+            onChange={onInputChange}
+            required
+          />
+
+          <Input
+            name="phone_number"
+            placeholder="Phone Number"
+            value={formData.phone_number}
+            onChange={onInputChange}
+            required
+          />
+
+          {/* Multi-select dropdown for roles */}
+          <div className="space-y-2">
+            <label className="block text-sm font-medium">Roles</label>
+            <Select onValueChange={handleRoleChange}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select Roles" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Triage">Triage</SelectItem>
+                <SelectItem value="Doctor">Doctor</SelectItem>
+                <SelectItem value="Lab Technician">Lab Technician</SelectItem>
+                <SelectItem value="Pharmacist">Pharmacist</SelectItem>
+                <SelectItem value="Administrator">Administrator</SelectItem>
+                <SelectItem value="Billing">Billing</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {/* Display selected roles as chips */}
+            <div className="flex flex-wrap gap-2">
+              {selectedRoles.map((role) => (
+                <Badge
+                  key={role}
+                  className="flex items-center gap-2"
+                  variant="outline"
+                >
+                  {role}
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveRole(role)}
+                    className="text-sm text-red-500 hover:text-red-700"
+                  >
+                    ×
+                  </button>
+                </Badge>
+              ))}
+            </div>
+          </div>
+
+          <Button type="submit">Save</Button>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+};

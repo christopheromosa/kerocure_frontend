@@ -16,6 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { AddPatientDialog } from "@/components/forms/add-patient";
 
 type PatientType = {
   id: number;
@@ -58,7 +59,6 @@ export default function PatientList() {
 
   // Handle delete
 
-
   // Filter patients based on search query
   const filteredPatients = patients.filter(
     (patient) =>
@@ -74,16 +74,14 @@ export default function PatientList() {
         onClick={() => router.back()}
         className="px-4 py-2 bg-blue-500 text-white rounded"
       >
-        Go Back
+        Go Back to Dashboard
       </Button>
       <ToastContainer />
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Patient List</h1>
-        <Link href="/patients/add">
-          <Button className="bg-blue-600 hover:bg-blue-700 text-white">
-            Add New Patient
-          </Button>
-        </Link>
+        <div className="p-2 ml-2 float-left">
+          <AddPatientDialog />
+        </div>
       </div>
 
       {/* Search Input */}
@@ -98,8 +96,8 @@ export default function PatientList() {
       </div>
 
       {/* Patient Table */}
-      <Table className="border border-gray-200">
-        <TableHeader className="bg-gray-100">
+      <Table className="border">
+        <TableHeader>
           <TableRow>
             <TableHead>First Name</TableHead>
             <TableHead>Last Name</TableHead>

@@ -59,7 +59,7 @@ export default function PatientPage() {
     if (window.confirm("Are you sure you want to delete this patient?")) {
       try {
         const response = await fetch(
-          `http://localhost:8000/patients/${patientId}`,
+          `http://localhost:8000/patients/${patientId}/`,
           {
             method: "DELETE",
             headers: {
@@ -69,7 +69,7 @@ export default function PatientPage() {
         );
         if (!response.ok) throw new Error("Failed to delete patient");
         toast.success("Patient deleted successfully");
-        router.push("/patients"); // Redirect to patient list
+        router.push("/departments/patients"); // Redirect to patient list
       } catch (error) {
         toast.error("Failed to delete patient");
       }
@@ -83,7 +83,7 @@ export default function PatientPage() {
 
     try {
       const response = await fetch(
-        `http://localhost:8000/patients/${patientId}`,
+        `http://localhost:8000/patients/${patientId}/`,
         {
           method: "PUT",
           headers: {
@@ -205,8 +205,8 @@ export default function PatientPage() {
                 }
                 className="w-full p-2 border rounded"
               >
-                <option value="male">Male</option>
-                <option value="female">Female</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
               </select>
             </div>
           </div>
@@ -238,11 +238,15 @@ export default function PatientPage() {
                 {new Date(patient.dob).toLocaleDateString()}
               </p>
               <p>
+                <strong>Gender:</strong> {patient.gender}
+              </p>
+              <p>
                 <strong>Residence:</strong> {patient.residence}
               </p>
               <p>
                 <strong>Contact Number:</strong> {patient.contact_number}
               </p>
+
               <p>
                 <strong>Next of Kin:</strong> {patient.next_of_kin_name}
               </p>

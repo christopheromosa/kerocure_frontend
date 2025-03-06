@@ -23,10 +23,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const links = [
     {
       label: "Dashboard",
-      href: "",
+      href: "/departments/billing",
       icon: LayoutDashboard,
     },
-    { label: "patients", href: "/departments/billing", icon: Server },
+    { label: "patients", href: "/departments/billing/patients", icon: Server },
     { label: "reports", href: "/departments/billing/analytics", icon: ClipboardCheck },
      { label: "profile", href: "/departments/billing/profile", icon: Settings },
   ];
@@ -44,7 +44,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <Breadcrumb>
               <BreadcrumbList>
                 <BreadcrumbItem className="hidden md:block">
-                  <BreadcrumbLink href="/dashboard">
+                  <BreadcrumbLink href="/departments/billing">
                     Kerocure-Billing
                   </BreadcrumbLink>
                 </BreadcrumbItem>

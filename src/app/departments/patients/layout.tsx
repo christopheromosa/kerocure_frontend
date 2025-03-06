@@ -6,11 +6,8 @@ import {
 } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import {
-  Users,
   LayoutDashboard,
   Server,
-  ClipboardCheck,
-  Settings,
 } from "lucide-react";
 import {
   Breadcrumb,

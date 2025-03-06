@@ -11,6 +11,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import LoadingPage from "@/components/loading_animation";
+import { Input } from "@/components/ui/input";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
 // Example data structure for Billing records
 interface Billing {
@@ -29,7 +32,11 @@ interface Billing {
 export default function BillingTable() {
   const [currentPage, setCurrentPage] = useState(1);
   const [billingData, setBillingData] = useState<Billing[]>([]);
+  const [filteredData, setFilteredData] = useState<Billing[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [startDate, setStartDate] = useState<Date | null>(null);
+  const [endDate, setEndDate] = useState<Date | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const resultsPerPage = 5;
 
   useEffect(() => {
@@ -42,9 +49,8 @@ export default function BillingTable() {
         if (!response.ok) throw new Error("Failed to fetch data");
 
         const data = await response.json();
-        console.log(data);
-
         setBillingData(data);
+        setFilteredData(data); // Initialize filtered data with all records
       } catch (err) {
         alert("Failed to load billing records");
       } finally {
@@ -54,16 +60,76 @@ export default function BillingTable() {
     fetchBillingData();
   }, []);
 
+  // Filter data based on date range and search query
+  useEffect(() => {
+    let filtered = billingData;
+
+    // Filter by date range
+    if (startDate && endDate) {
+      filtered = filtered.filter((bill) => {
+        const recordedAt = new Date(bill.recorded_at);
+        return recordedAt >= startDate && recordedAt <= endDate;
+      });
+    }
+
+    // Filter by patient name
+    if (searchQuery) {
+      filtered = filtered.filter((bill) =>
+        bill.patient_name.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    setFilteredData(filtered);
+    setCurrentPage(1); // Reset to the first page after filtering
+  }, [startDate, endDate, searchQuery, billingData]);
+	
+
+  // Calculate total cost for all filtered records
+const totalCost = filteredData.reduce((sum, bill) => {
+  return sum + parseFloat(bill.total_cost); // Sum the total_cost of each filtered record
+}, 0);
+
   // Pagination logic
-  const totalPages = Math.ceil(billingData.length / resultsPerPage);
-  const displayedBills = billingData.slice(
+  const totalPages = Math.ceil(filteredData.length / resultsPerPage);
+  const displayedBills = filteredData.slice(
     (currentPage - 1) * resultsPerPage,
     currentPage * resultsPerPage
   );
 
   return (
-    <div className="p-6  shadow-md rounded-lg">
+    <div className="p-6 shadow-md rounded-lg">
       <h2 className="text-xl font-semibold mb-4">Billing Records</h2>
+
+      {/* Search and Date Range Filters */}
+      <div className="flex flex-col md:flex-row gap-4 mb-6">
+        <Input
+          type="text"
+          placeholder="Search by patient name..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full md:w-1/3"
+        />
+        <DatePicker
+          selected={startDate}
+          onChange={(date: Date | null) => setStartDate(date)} // Explicitly define the type
+          placeholderText="Start Date"
+          className="w-full md:w-1/3"
+        />
+        <DatePicker
+          selected={endDate}
+          onChange={(date: Date | null) => setEndDate(date)} // Explicitly define the type
+          placeholderText="End Date"
+          className="w-full md:w-1/3"
+        />
+      </div>
+
+      {/* Total Cost Display for All Filtered Records */}
+      <div className="mb-4">
+        <strong>Total Cost for All Records:</strong> Ksh{" "}
+        {parseFloat(totalCost.toString()).toFixed(2)}
+      </div>
+
+      {/* Billing Table */}
       <Table>
         <TableHeader>
           <TableRow>

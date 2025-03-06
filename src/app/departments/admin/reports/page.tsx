@@ -4,22 +4,28 @@ import { DataGrid, GridToolbar, GridPaginationModel } from "@mui/x-data-grid";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
-  DialogTrigger,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { jsPDF } from "jspdf";
-import "jspdf-autotable";
 import LoadingPage from "@/components/loading_animation";
-import autoTable from "jspdf-autotable";
 
 interface Visit {
   id: number;
   visit_date: string;
   visit_type: string;
+  patient_name: string;
+  patient_id: number;
+}
+
+interface VisitDetails {
+  id: number;
+  visit_date: string;
+  visit_type: string;
+  patient_name: string;
+  patient_id: number;
   triage: any[];
   consultation: any[];
   lab: any[];
@@ -30,7 +36,7 @@ interface Visit {
 const MedicalHistoryPage = () => {
   const [patientId, setPatientId] = useState<string>("");
   const [visits, setVisits] = useState<Visit[]>([]);
-  const [selectedVisit, setSelectedVisit] = useState<Visit | null>(null);
+  const [selectedVisit, setSelectedVisit] = useState<VisitDetails | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
   const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({
@@ -38,19 +44,18 @@ const MedicalHistoryPage = () => {
     pageSize: 5,
   });
 
-  // Fetch patient history
-  const fetchPatientHistory = async () => {
-    if (!patientId) return;
+  // Fetch all visits
+  const fetchAllVisits = async () => {
     setIsLoading(true);
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/get_patient_history/${patientId}`
+        `${process.env.NEXT_PUBLIC_API_URL}/api/all-visits/`
       );
-      if (!response.ok) throw new Error("Failed to fetch patient history");
+      if (!response.ok) throw new Error("Failed to fetch visits");
       const data = await response.json();
       setVisits(data);
     } catch (error) {
-      console.error("Error fetching patient history:", error);
+      console.error("Error fetching visits:", error);
     } finally {
       setIsLoading(false);
     }
@@ -61,7 +66,7 @@ const MedicalHistoryPage = () => {
     setIsLoading(true);
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/get_visit_details/${visitId}`
+        `${process.env.NEXT_PUBLIC_API_URL}/api/visit-details/${visitId}`
       );
       if (!response.ok) throw new Error("Failed to fetch visit details");
       const data = await response.json();
@@ -74,60 +79,28 @@ const MedicalHistoryPage = () => {
     }
   };
 
-  // Export selected visits as PDF
-  const exportToPDF = (selectedRows: Visit[]) => {
-    const doc = new jsPDF();
-    doc.text("Patient Visit History", 10, 10);
-
-    const tableData = selectedRows.map((visit) => [
-      visit.id,
-      visit.visit_date,
-      visit.visit_type,
-      visit.triage.length,
-      visit.consultation.length,
-      visit.lab.length,
-      visit.pharmacy.length,
-      visit.billing.length,
-    ]);
-
-    autoTable(doc, {
-      head: [
-        [
-          "Visit ID",
-          "Visit Date",
-          "Visit Type",
-          "Triage",
-          "Consultation",
-          "Lab",
-          "Pharmacy",
-          "Billing",
-        ],
-      ],
-      body: tableData,
-    });
-
-    doc.save("patient_visit_history.pdf");
-  };
-
   // Columns for the DataGrid
   const columns = [
     { field: "id", headerName: "Visit ID", width: 100 },
     { field: "visit_date", headerName: "Visit Date", width: 150 },
     { field: "visit_type", headerName: "Visit Type", width: 150 },
-    { field: "triage", headerName: "Triage", width: 100 },
-    { field: "consultation", headerName: "Consultation", width: 120 },
-    { field: "lab", headerName: "Lab", width: 100 },
-    { field: "pharmacy", headerName: "Pharmacy", width: 120 },
-    { field: "billing", headerName: "Billing", width: 100 },
+    { field: "patient_name", headerName: "Patient Name", width: 200 },
+    { field: "patient_id", headerName: "Patient ID", width: 120 },
     {
       field: "actions",
       headerName: "Actions",
       width: 120,
       renderCell: (params: any) => (
-        <Button onClick={() => fetchVisitDetails(params.row.id)}>View</Button>
+        <Button onClick={() => fetchVisitDetails(params.row.id)}>
+          View Details
+        </Button>
       ),
     },
   ];
+
+  useEffect(() => {
+    fetchAllVisits();
+  }, []);
 
   return (
     <div className="p-6">
@@ -141,7 +114,7 @@ const MedicalHistoryPage = () => {
           value={patientId}
           onChange={(e) => setPatientId(e.target.value)}
         />
-        <Button onClick={fetchPatientHistory}>Fetch History</Button>
+        <Button onClick={fetchAllVisits}>Fetch All Visits</Button>
       </div>
 
       {/* Visits Table */}
@@ -152,14 +125,7 @@ const MedicalHistoryPage = () => {
           paginationModel={paginationModel}
           onPaginationModelChange={setPaginationModel}
           pageSizeOptions={[5, 10, 20]}
-          checkboxSelection
           slots={{ toolbar: GridToolbar }}
-          onRowSelectionModelChange={(selection) => {
-            const selectedRows = visits.filter((visit) =>
-              selection.includes(visit.id)
-            );
-            exportToPDF(selectedRows);
-          }}
         />
       </div>
 
@@ -183,6 +149,9 @@ const MedicalHistoryPage = () => {
                   </p>
                   <p>
                     <strong>Visit Type:</strong> {selectedVisit.visit_type}
+                  </p>
+                  <p>
+                    <strong>Patient Name:</strong> {selectedVisit.patient_name}
                   </p>
                 </div>
               </div>

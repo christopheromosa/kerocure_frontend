@@ -24,12 +24,18 @@ import { usePathname } from "next/navigation";
 import { Separator } from "@/components/ui/separator";
 import { AuthProvider } from "@/context/AuthContext";
 
-
 export default function Layout({ children }: { children: React.ReactNode }) {
-  
   const links = [
-    { label: "Dashboard", href: "", icon: LayoutDashboard },
-    { label: "patients", href: "/departments/triage", icon: Server },
+    {
+      label: "Dashboard",
+      href: "/departments/triage",
+      icon: LayoutDashboard,
+    },
+    {
+      label: "patients queue",
+      href: "/departments/triage/patients",
+      icon: Server,
+    },
     { label: "patients list", href: "/departments/patients", icon: Users },
     {
       label: "reports",
@@ -51,7 +57,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               <Breadcrumb>
                 <BreadcrumbList>
                   <BreadcrumbItem className="hidden md:block">
-                    <BreadcrumbLink href="/dashboard">
+                    <BreadcrumbLink href="/departments/triage">
                       Kerocure-Triage
                     </BreadcrumbLink>
                   </BreadcrumbItem>

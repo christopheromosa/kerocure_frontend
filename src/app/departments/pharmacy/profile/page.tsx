@@ -8,12 +8,15 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
 import PageTransition from "@/components/PageTransition";
 import LoadingPage from "@/components/loading_animation";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface StaffType {
   first_name?: string;
   last_name?: string;
   username?: string;
-  role?: string;
+  roles?: string[];
   phone_number?: string;
   email?: string;
   authToken?: string;
@@ -65,13 +68,16 @@ export default function ProfilePage() {
         <LoadingPage />
       ) : (
         <div className="w-full p-6">
-          <Card className="w-full max-w-3xl mx-auto shadow-md p-6">
-            <CardHeader className="flex justify-between gap-4 p-2">
-              <CardTitle className="text-xl flex justify-between">
-                Profile {/* Theme Toggle Button */}
+          <Card className="w-full max-w-3xl mx-auto shadow-lg rounded-lg overflow-hidden">
+            <CardHeader className="bg-gradient-to-r from-primary to-primary/90 p-6">
+              <div className="flex justify-between items-center">
+                <CardTitle className="text-2xl font-bold text-white">
+                  Profile
+                </CardTitle>
                 <Button
-                  variant="outline"
+                  variant="ghost"
                   size="icon"
+                  className="text-white hover:bg-white/10"
                   onClick={() => setTheme(theme === "light" ? "dark" : "light")}
                 >
                   {theme === "light" ? (
@@ -80,34 +86,61 @@ export default function ProfilePage() {
                     <Moon className="h-5 w-5" />
                   )}
                 </Button>
-              </CardTitle>
+              </div>
             </CardHeader>
-            <CardContent className="space-y-2">
+            <CardContent className="p-6 space-y-6">
               {staff ? (
-                <>
-                  <p>
-                    <strong>First Name:</strong> {staff.first_name}{" "}
-                  </p>
-                  <p>
-                    {" "}
-                    <strong>Last Name:</strong> {staff.last_name}
-                  </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Avatar Section */}
+                  <div className="flex flex-col items-center space-y-4">
+                    <Avatar className="h-24 w-24">
+                      <AvatarImage
+                        src={`https://ui-avatars.com/api/?name=${staff.first_name}+${staff.last_name}&background=random`}
+                      />
+                      <AvatarFallback>
+                        {staff.first_name?.charAt(0)}
+                        {staff.last_name?.charAt(0)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <h3 className="text-xl font-semibold">
+                      {staff.first_name} {staff.last_name}
+                    </h3>
+                    <p className="text-muted-foreground">@{staff.username}</p>
+                  </div>
 
-                  <p>
-                    <strong>Username:</strong> {staff.username}
-                  </p>
-                  <p>
-                    <strong>Role:</strong> {staff.role}
-                  </p>
-                  <p>
-                    <strong>Phone:</strong> {staff.phone_number}
-                  </p>
-                  <ResetPasswordDialog
-                    apiUrl={`${process.env.NEXT_PUBLIC_API_URL}/staff/reset-password/`}
-                    authToken={authState?.token as string}
-                    user_id={authState?.user_id}
-                  />
-                </>
+                  {/* Details Section */}
+                  <div className="space-y-4">
+                    <div>
+                      <h4 className="text-sm font-medium text-muted-foreground">
+                        Roles
+                      </h4>
+                      <div className="flex flex-wrap gap-2">
+                        {staff.roles?.map((role, index) => (
+                          <Badge key={index} variant="secondary">
+                            {role}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <h4 className="text-sm font-medium text-muted-foreground">
+                        Contact Information
+                      </h4>
+                      <p className="text-sm">{staff.phone_number}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {staff.email}
+                      </p>
+                    </div>
+
+                    {/* Reset Password Button */}
+                    <ResetPasswordDialog
+                      apiUrl={`${process.env.NEXT_PUBLIC_API_URL}/staff/reset-password/`}
+                      authToken={authState?.token as string}
+                      user_id={authState?.user_id}
+                    />
+                  </div>
+                </div>
               ) : (
                 <p className="text-red-500">Failed to load profile data.</p>
               )}

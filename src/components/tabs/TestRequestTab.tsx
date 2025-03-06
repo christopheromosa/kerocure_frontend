@@ -14,18 +14,27 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogClose,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import axios from "axios";
 import { Input } from "@/components/ui/input";
 import OrganizationInfo from "../OrganizationInfo";
 
-export const TestRequestTab = ({ testRequests, setTestRequests }: any) => {
+export const TestRequestTab = ({
+  testRequests,
+  setTestRequests,
+  handleSaveTestRequests,
+}: any) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isConfirmationDialogOpen, setIsConfirmationDialogOpen] =
+    useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [labTests, setLabTests] = useState<any[]>([]);
-  const [selectedTests, setSelectedTests] = useState<any[]>([]);
+  const [selectedTests, setSelectedTests] = useState<any[]>(testRequests); // Initialize with existing test requests
 
+  // Fetch lab tests on component mount
   useEffect(() => {
     const fetchLabTests = async () => {
       try {
@@ -41,26 +50,55 @@ export const TestRequestTab = ({ testRequests, setTestRequests }: any) => {
     fetchLabTests();
   }, []);
 
+  // Sync selectedTests with parent's testRequests
+  useEffect(() => {
+    setSelectedTests(testRequests);
+  }, [testRequests]);
+
+  // Handle search input
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
   };
 
+  // Handle adding a test to the selected list
   const handleAddTest = (test: any) => {
-    setSelectedTests([...selectedTests, test]);
-    setSearchTerm("");
+    const updatedTests = [...selectedTests, test];
+    setSelectedTests(updatedTests);
+    setTestRequests(updatedTests); // Update parent's state
+    setSearchTerm(""); // Clear the search term
   };
 
+  // Handle deleting a test from the selected list
   const handleDeleteTest = (index: number) => {
-    setSelectedTests(selectedTests.filter((_, i) => i !== index));
+    const updatedTests = selectedTests.filter((_, i) => i !== index);
+    setSelectedTests(updatedTests);
+    setTestRequests(updatedTests); // Update parent's state
   };
 
+  // Handle saving test requests
   const handleSaveTests = () => {
-    setTestRequests(selectedTests);
-    setIsDialogOpen(false);
+    handleSaveTestRequests(); // Call the save function from the parent
+    setIsDialogOpen(false); // Close the "Add Test" dialog
+    setIsConfirmationDialogOpen(true); // Open the "Confirm Payment" dialog
   };
 
-  const filteredTests = labTests.filter((test) =>
-    test.name.toLowerCase().includes(searchTerm.toLowerCase())
+  // Handle confirming payment
+  const handleConfirmPayment = () => {
+    console.log("Payment confirmed for tests:", selectedTests);
+    setIsConfirmationDialogOpen(false); // Close the confirmation dialog
+  };
+
+  // Filter lab tests based on the search term
+  const filteredTests = searchTerm.trim()
+    ? labTests.filter((test) =>
+        test.service.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    : [];
+
+  // Calculate the total cost of selected tests
+  const totalCost = selectedTests.reduce(
+    (sum, test) => sum + parseInt(test.cost),
+    0
   );
 
   return (
@@ -71,30 +109,45 @@ export const TestRequestTab = ({ testRequests, setTestRequests }: any) => {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        {testRequests.length > 0 ? (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Test Name</TableHead>
-                <TableHead>Actions</TableHead>
+        {/* Table to display selected tests */}
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Test Name</TableHead>
+              <TableHead>Cost (Ksh)</TableHead>
+              <TableHead>Duration</TableHead>
+              <TableHead>Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {selectedTests.map((test: any, index: number) => (
+              <TableRow key={index}>
+                <TableCell>{test.service}</TableCell>
+                <TableCell>{test.cost}</TableCell>
+                <TableCell>{test.duration}</TableCell>
+                <TableCell>
+                  <Button onClick={() => handleDeleteTest(index)}>
+                    Delete
+                  </Button>
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {testRequests.map((test: any, index: number) => (
-                <TableRow key={index}>
-                  <TableCell>{test.name}</TableCell>
-                  <TableCell>
-                    <Button onClick={() => handleDeleteTest(index)}>
-                      Delete
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        ) : (
-          <Button onClick={() => setIsDialogOpen(true)}>Add Test</Button>
+            ))}
+          </TableBody>
+        </Table>
+
+        {/* "Add Test" Button */}
+        <Button onClick={() => setIsDialogOpen(true)} className="mt-4">
+          Add Test
+        </Button>
+
+        {/* "Save Test Requests" Button */}
+        {selectedTests.length > 0 && (
+          <Button onClick={handleSaveTests} className="mt-4 ml-4">
+            Save Test Requests
+          </Button>
         )}
+
+        {/* "Add Test" Dialog */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogContent>
             <DialogHeader>
@@ -110,17 +163,48 @@ export const TestRequestTab = ({ testRequests, setTestRequests }: any) => {
                 {filteredTests.map((test, index) => (
                   <li
                     key={index}
-                    className="p-2 hover:bg-gray-100 cursor-pointer"
+                    className="p-2 hover:bg-gray-600 cursor-pointer"
                     onClick={() => handleAddTest(test)}
                   >
-                    {test.name} - {test.duration}
+                    <div className="flex justify-between">
+                      <span>{test.service}</span>
+                      <span>Ksh {test.cost}</span>
+                      <span>{test.duration}</span>
+                    </div>
                   </li>
                 ))}
               </ul>
             )}
             <DialogFooter>
-              <Button onClick={handleSaveTests}>Save</Button>
               <Button onClick={() => setIsDialogOpen(false)}>Cancel</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* "Confirm Payment" Dialog */}
+        <Dialog
+          open={isConfirmationDialogOpen}
+          onOpenChange={setIsConfirmationDialogOpen}
+        >
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Confirm Payment</DialogTitle>
+              <DialogDescription>
+                Please confirm the payment before proceeding.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <p>
+                <strong>Total Amount to Pay:</strong> Ksh {totalCost}
+              </p>
+            </div>
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button variant="outline">Cancel</Button>
+              </DialogClose>
+              <Button onClick={handleConfirmPayment}>
+                Confirm and Proceed
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

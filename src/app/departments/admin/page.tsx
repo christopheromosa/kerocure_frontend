@@ -28,6 +28,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
 const DashboardPage = () => {
   const { data, isLoading, refetch } = useDashboardData();
@@ -38,6 +40,9 @@ const DashboardPage = () => {
     number | null
   >(null);
   const [departments, setDepartments] = useState<any[]>([]);
+  const [startDate, setStartDate] = useState<Date | null>(null); // Start date for filtering
+  const [endDate, setEndDate] = useState<Date | null>(null); // End date for filtering
+  const [filteredRevenues, setFilteredRevenues] = useState<any[]>([]); // State for filtered revenue data
 
   // Fetch departments on component mount
   useEffect(() => {
@@ -76,6 +81,19 @@ const DashboardPage = () => {
     }
   }, [selectedDepartment]);
 
+  // Filter revenue data based on the selected date range
+  useEffect(() => {
+    if (data?.revenues && startDate && endDate) {
+      const filtered = data.revenues.filter((item) => {
+        const itemDate = new Date(item.date);
+        return itemDate >= startDate && itemDate <= endDate;
+      });
+      setFilteredRevenues(filtered);
+    } else {
+      setFilteredRevenues(data?.revenues || []);
+    }
+  }, [data?.revenues, startDate, endDate]);
+
   const patientsInQueue = [
     { department: "Consultation", count: data?.consultationPatients },
     { department: "Laboratory", count: data?.labPatients },
@@ -83,7 +101,7 @@ const DashboardPage = () => {
     { department: "Billing", count: data?.billingPatients },
   ];
 
-  const formattedData = data?.revenues.map((item) => ({
+  const formattedData = filteredRevenues.map((item) => ({
     ...item,
     formattedDate: new Date(item.date).toLocaleDateString("en-US", {
       month: "short",
@@ -158,7 +176,30 @@ const DashboardPage = () => {
       {/* Revenue Chart */}
       <Card>
         <CardHeader>
-          <CardTitle>Revenue per Day</CardTitle>
+          <div className="flex justify-between items-center">
+            <CardTitle>Revenue per Day</CardTitle>
+            <div className="flex gap-2">
+              <DatePicker
+                selected={startDate}
+                onChange={(date) => setStartDate(date)}
+                selectsStart
+                startDate={startDate}
+                endDate={endDate}
+                placeholderText="Start Date"
+                className="p-2 border rounded"
+              />
+              <DatePicker
+                selected={endDate}
+                onChange={(date) => setEndDate(date)}
+                selectsEnd
+                startDate={startDate}
+                endDate={endDate}
+                minDate={startDate}
+                placeholderText="End Date"
+                className="p-2 border rounded"
+              />
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={300}>

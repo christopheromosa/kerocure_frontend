@@ -94,8 +94,6 @@ export const useDashboardData = () => {
 
 export const DashboardProvider = ({ children }: { children: ReactNode }) => {
   const { authState } = useAuth();
-  console.log(authState.token);
-
   const { data, isLoading, isError, refetch } = useQuery(
     "dashboardData",
     fetchDashboardData,

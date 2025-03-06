@@ -153,7 +153,7 @@ const PhysicianNotesTable = () => {
                                 <ul className="list-disc list-inside ml-4">
                                   {note.prescription.map((item, index) => (
                                     <li key={index}>
-                                      {item.medication}: {item.dosage}
+                                      {item.drug_name}: {item.status} : {item.quantity} : {item.cost}
                                     </li>
                                   ))}
                                 </ul>
@@ -169,7 +169,7 @@ const PhysicianNotesTable = () => {
                                 <ul className="list-disc list-inside ml-4">
                                   {note.lab_tests_ordered.map((test, index) => (
                                     <li key={index}>
-                                      {test.test_name}{" "}
+                                      {test.service} : {test.duration} : {test.cost}
                                       {/* Accessing the test_name property */}
                                     </li>
                                   ))}

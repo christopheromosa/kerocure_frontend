@@ -1,44 +1,63 @@
-"use client"
-import LoadingPage from "@/components/loading_animation";
-import PageTransition from "@/components/PageTransition";
-import { DataTable } from "@/components/tables/billing-data-table/billing-data-table";
-import {  columns } from "@/components/tables/billing-data-table/columns";
+"use client";
+import {
+  LayoutDashboard,
+  Server,
+  ClipboardCheck,
+  Settings,
+} from "lucide-react";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
 
+export default function BillingDashboard() {
+  const router = useRouter();
 
-import React, { useEffect, useState } from "react";
+  // Links for the dashboard cards (specific to the pharmacy department)
+  const links = [
+    { label: "Patients Queue", href: "/departments/billing/patients", icon: Server },
+    {
+      label: "Reports",
+      href: "/departments/billing/analytics",
+      icon: ClipboardCheck,
+    },
+    {
+      label: "Profile",
+      href: "/departments/billing/profile",
+      icon: Settings,
+    },
+  ];
 
-
-
-export default function LabPage() {
-  const [data, setData] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-
-  useEffect(() => {
-    async function getBillingPatientsData() {
-      setIsLoading(true);
-      // todo: implement fetch patients functionality
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/billing-patients/`,
-        {
-          cache: "no-store",
-        }
-      );
-      if (response.ok) {
-        const newData = await response.json();
-        setData(newData);
-        setIsLoading(false);
-      }
-    }
-    getBillingPatientsData();
-  }, []);
+  // Handle navigation when a card is clicked
+  const handleNavigation = (href: string) => {
+    router.push(href);
+  };
 
   return (
-    <PageTransition>
-      {isLoading && <LoadingPage />}
-
-      <div className="">
-        <DataTable columns={columns} data={data} />
-      </div>
-    </PageTransition>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
+      {links.map((link, index) => (
+        <Card
+          key={index}
+          className="hover:shadow-lg transition-shadow duration-200 cursor-pointer"
+          onClick={() => handleNavigation(link.href)}
+        >
+          <CardHeader>
+            <link.icon className="h-8 w-8 mb-2 text-primary" />
+            <CardTitle className="text-xl font-semibold">
+              {link.label}
+            </CardTitle>
+            <CardDescription>Navigate to {link.label} page</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button className="w-full">Go to {link.label}</Button>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
   );
 }

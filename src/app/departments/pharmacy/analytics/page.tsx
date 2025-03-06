@@ -77,8 +77,7 @@ export default function MedicationsTable() {
         <TableHeader>
           <TableRow>
             <TableHead className="w-1/6">Patient Name</TableHead>
-            <TableHead className="w-1/6">Physician Note</TableHead>
-            <TableHead className="w-1/3">Prescriptions</TableHead>
+             <TableHead className="w-1/6">Prescriptions</TableHead>
             <TableHead className="w-1/6">Cost</TableHead>
             <TableHead className="w-1/6">Dispensed By</TableHead>
             <TableHead className="w-1/6">Dispensed At</TableHead>
@@ -89,8 +88,7 @@ export default function MedicationsTable() {
             <React.Fragment key={medication.medication_id}>
               <TableRow>
                 <TableCell>{medication.patient_name}</TableCell>
-                <TableCell>{medication.note_id}</TableCell>
-                <TableCell>
+                                <TableCell>
                   <Button
                     variant="ghost"
                     onClick={() => toggleExpandRow(medication.medication_id)}

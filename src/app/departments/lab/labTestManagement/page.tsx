@@ -22,6 +22,7 @@ import {
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { LabTestForm } from "@/components/forms/lab-test-form";
+import { CircularProgress } from "@mui/material";
 
 export default function LabTestManagement() {
   const [labTests, setLabTests] = useState<any[]>([]);
@@ -29,6 +30,8 @@ export default function LabTestManagement() {
   const [currentLabTest, setCurrentLabTest] = useState<any>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [labTestToDelete, setLabTestToDelete] = useState<any>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   // Fetch lab tests from the backend
   const fetchLabTests = async () => {
@@ -90,12 +93,116 @@ export default function LabTestManagement() {
     }
   };
 
+  // Handle file upload
+  const handleFileUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    setUploadProgress(0);
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_API_URL}/upload-lab-tests/`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+           onUploadProgress: (progressEvent) => {
+          const percentCompleted = Math.round(
+            (progressEvent.loaded * 100) / (progressEvent.total || 1)
+          );
+
+          // Gradually increase the progress bar
+          const increaseProgress = (target: number) => {
+            setTimeout(() => {
+              setUploadProgress((prev) => {
+                if (prev < target) {
+                  increaseProgress(target); // Continue increasing
+                  return prev + 1; // Increment by 1%
+                }
+                return target; // Stop when target is reached
+              });
+            }, 50); // Adjust speed (50ms per step)
+          };
+
+          increaseProgress(percentCompleted);
+        },
+      }
+    );
+
+      toast.success(response.data.message);
+      fetchLabTests(); // Refresh the lab test list
+    } catch (error) {
+      console.error("Failed to upload file:", error);
+      if (axios.isAxiosError(error)) {
+        toast.error(error.response?.data.error || "Failed to upload file.");
+      } else {
+        toast.error("Failed to upload file.");
+      }
+    } finally {
+      setTimeout(() => {
+            setIsUploading(false);
+            setUploadProgress(0);
+          }, 1000); 
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>Lab Test Management</CardTitle>
       </CardHeader>
       <CardContent>
+        {/* Add File Upload Input */}
+                <div className="mb-4">
+                  <label className="block font-semibold text-gray-700 mb-2">
+                    Upload Laboratory price list File
+                  </label>
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                    <p className="text-sm text-gray-500 mb-4">
+                      Please upload an Excel file with the following format:
+                      <br />
+                      <span className="font-bold">SERVICES | COST | DURATION</span>
+                    </p>
+                    <input
+                      type="file"
+                      accept=".xlsx, .xls"
+                      onChange={handleFileUpload}
+                      disabled={isUploading}
+                      className="hidden"
+                      id="file-upload"
+                    />
+                    <label
+                      htmlFor="file-upload"
+                      className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg cursor-pointer hover:bg-blue-700"
+                    >
+                      <span>Choose File</span>
+                    </label>
+                    {isUploading && (
+                      <div className="mt-4 flex flex-col items-center">
+                        <CircularProgress
+                          variant="determinate"
+                          value={uploadProgress}
+                          size={60}
+                          thickness={5}
+                          className="text-blue-600"
+                        />
+                        <p className="mt-2 text-sm text-gray-600">
+                          Uploading... {uploadProgress}%
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+        {/* Add Lab Test Button */}
         <Button onClick={() => setIsDialogOpen(true)}>Add Lab Test</Button>
 
         {/* Lab Test List */}
@@ -112,7 +219,7 @@ export default function LabTestManagement() {
             {labTests.map((labTest) => (
               <TableRow key={labTest.id}>
                 <TableCell>{labTest.service}</TableCell>
-                <TableCell>${labTest.cost}</TableCell>
+                <TableCell>Ksh {labTest.cost}</TableCell>
                 <TableCell>{labTest.duration}</TableCell>
                 <TableCell>
                   <Button

@@ -38,13 +38,21 @@ const LabResultsPage = () => {
   const [testOrders, setTestOrders] = useState<Record<string, string>>({});
   const [showSuccessDialog, setShowSuccessDialog] = useState<boolean>(false);
   const [showErrorDialog, setShowErrorDialog] = useState<boolean>(false);
-  const [totalCost, setTotalCost] = useState<string>("");
+  const [totalCost, setTotalCost] = useState<number>(0);
 
-  // Extract test names from lab_test_ordered
-  const orders: string[] =
-    visitData?.consultation_data?.lab_test_ordered?.map(
-      (test) => test.test_name
-    ) ?? [];
+  // Extract test names, duration, and cost from lab_test_ordered
+  const orders: { service: string; duration: string; cost: number }[] =
+    visitData?.consultation_data?.lab_test_ordered?.map((test) => ({
+      service: test.service,
+      duration: test.duration,
+      cost: test.cost,
+    })) ?? [];
+
+  // Calculate total cost whenever orders change
+  useEffect(() => {
+    const calculatedTotalCost = orders.reduce((sum, test) => sum + test.cost, 0);
+    setTotalCost(calculatedTotalCost);
+  }, [orders]);
 
   // Fetch patient details and test orders on page load
   useEffect(() => {
@@ -56,7 +64,7 @@ const LabResultsPage = () => {
   // Function to handle updating test results
   const handleResultChange = (
     e: React.ChangeEvent<HTMLInputElement>,
-    testOrder: string
+    testOrder: string // testOrder is the service name
   ) => {
     setTestOrders((prev) => ({
       ...prev,
@@ -66,8 +74,11 @@ const LabResultsPage = () => {
 
   // Function to submit test results
   const handleSubmitResults = async () => {
-    const formattedResults = Object.entries(testOrders).map(([key, value]) => ({
-      [key]: value,
+    // Format results for submission
+    const formattedResults = orders.map((test) => ({
+      service: test.service,
+      result: testOrders[test.service] || "", // Use the service name as the key
+      cost: test.cost,
     }));
 
     try {
@@ -78,15 +89,16 @@ const LabResultsPage = () => {
           Authorization: `Token ${authState?.token}`,
         },
         body: JSON.stringify({
-          result: formattedResults,
+          result: formattedResults, // Send all results as an array
           visit: visitData?.visit_id,
           note: visitData?.consultation_data?.note_id,
           recorded_by: authState?.user_id,
-          total_cost: parseFloat(totalCost),
+          total_cost: totalCost, // Use the calculated total cost
         }),
       });
 
       if (res.ok) {
+        // Update visit state
         await axios.put(
           `http://localhost:8000/visits/${visitData?.visit_id}/`,
           {
@@ -101,13 +113,15 @@ const LabResultsPage = () => {
             },
           }
         );
+
+        // Show success dialog and toast
         setShowSuccessDialog(true);
         setTimeout(() => {
-          toast.success("submitted test results successfully!", {
-            autoClose: 1000, // Show toast for 2 seconds
+          toast.success("Submitted test results successfully!", {
+            autoClose: 1000,
             onClose: () => {
               router.push("/departments/lab");
-              window.location.reload(); // Refresh after the toast disappears
+               // Refresh after the toast disappears
             },
           });
         }, 1000);
@@ -139,18 +153,21 @@ const LabResultsPage = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Test Name</TableHead>
+                  <TableHead>Duration</TableHead>
+                  <TableHead>Cost</TableHead>
                   <TableHead>Result</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {orders.map((testOrder, index) => (
                   <TableRow key={index}>
-                    <TableCell>{testOrder}</TableCell>{" "}
-                    {/* Render the test name */}
+                    <TableCell>{testOrder.service}</TableCell>
+                    <TableCell>{testOrder.duration}</TableCell>
+                    <TableCell>{testOrder.cost}</TableCell>
                     <TableCell>
                       <Input
-                        value={testOrders[testOrder] || ""}
-                        onChange={(e) => handleResultChange(e, testOrder)}
+                        value={testOrders[testOrder.service] || ""}
+                        onChange={(e) => handleResultChange(e, testOrder.service)}
                         placeholder="Enter result"
                       />
                     </TableCell>
@@ -163,8 +180,7 @@ const LabResultsPage = () => {
               <Input
                 type="number"
                 value={totalCost}
-                onChange={(e) => setTotalCost(e.target.value)}
-                placeholder="Enter total cost"
+                readOnly // Make total cost read-only since it's calculated dynamically
               />
             </div>
             <Button className="mt-4" onClick={handleSubmitResults}>

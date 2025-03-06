@@ -21,6 +21,7 @@ interface ConsultationData {
   lab_test_ordered: { test_name: string }[];
   physician: number | null;
   recorded_at: string;
+  cost: number;
 }
 interface PatientData {
   id: number;
@@ -41,6 +42,7 @@ interface PharmacyData {
 
 interface VisitData {
   visit_id: number;
+  total_cost:number;
   triage_data: TriageData | null;
   consultation_data: ConsultationData | null;
   patient_data: PatientData | null;
@@ -69,9 +71,19 @@ export const VisitProvider = ({ children }: { children: ReactNode }) => {
   const { authState } = useAuth();
   console.log(authState.token);
 
-  // Function to fetch visit ID based on patient ID
+
+
   const fetchVisitData = useCallback(
     async (patientId: string) => {
+      if (!authState?.token) {
+        console.error("No authentication token available");
+        return;
+      }
+
+      console.log("Fetching visit data for patient:", patientId);
+      console.log("Auth Token:", authState?.token);
+      console.log("API URL:", process.env.NEXT_PUBLIC_API_URL);
+
       try {
         setLoading(true);
         const response = await fetch(
@@ -80,26 +92,33 @@ export const VisitProvider = ({ children }: { children: ReactNode }) => {
           )}/`,
           {
             headers: {
-              Authorization: `Token ${authState?.token}`,
+              Authorization: `Token ${authState?.token}`, // Change to Bearer if needed
             },
           }
         );
 
-        if (!response.ok) throw new Error("Failed to fetch visit data");
+        if (!response.ok) {
+          console.error(`Failed request: ${response.status}`);
+          throw new Error(
+            `Failed to fetch visit data (Status: ${response.status})`
+          );
+        }
 
         const data: VisitData = await response.json();
-
-        console.log("patientId: " + patientId + "data: ", data);
-        setVisitData(data);
+        if (Array.isArray(data)) {
+          setVisitData(data.length > 0 ? data[0] : null);
+        } else {
+          setVisitData(data);
+        }
       } catch (error) {
         console.error("Error fetching visit data:", error);
         setVisitData(null);
       } finally {
-        setLoading(false); // Set loading to false when fetching is done (success or error)
+        setLoading(false);
       }
     },
     [authState?.token]
-  ); // Dependencies for `useCallback`
+  );
 
   console.log(visitData);
   return (

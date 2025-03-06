@@ -25,6 +25,15 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import OrganizationInfo from "@/components/OrganizationInfo";
 import { FaUser } from "react-icons/fa";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
 
 const triageSchema = z.object({
   weight: z.coerce.string().min(1, "Weight is required"),
@@ -57,13 +66,11 @@ export type DepartmentType = {
 
 const Patient = () => {
   const { patientId } = useParams();
-  console.log(patientId);
   const [isLoading, setIsLoading] = useState(false);
   const [departments, setDepartments] = useState<DepartmentType[]>([]);
   const [selectedDepartment, setSelectedDepartment] = useState<string | null>(
     null
   );
-
   const [patientData, setPatientData] = useState<PatientType | null>(null);
   const { authState } = useAuth();
   const {
@@ -71,13 +78,17 @@ const Patient = () => {
     handleSubmit,
     formState: { errors },
   } = useForm<triageType>({ resolver: zodResolver(triageSchema) });
-
-  // const [visitId, setVisitId] = useState<number | null>(null);
   const router = useRouter();
+  const [showConfirmationDialog, setShowConfirmationDialog] =
+    useState<boolean>(false);
+  const [triageData, setTriageData] = useState<triageType | null>(null);
+  const [visitId, setVisitId] = useState<number | null>(null);
+
+  // Fixed cost for triage
+  const TRIAGE_COST = 200; // Ksh 200
 
   useEffect(() => {
     if (!patientId) return;
-    console.log(patientId);
 
     const fetchPatientData = async () => {
       setIsLoading(true);
@@ -124,13 +135,21 @@ const Patient = () => {
       return;
     }
 
+    // Set triage data and show confirmation dialog
+    setTriageData(data);
+    setShowConfirmationDialog(true);
+  };
+
+  const handleConfirm = async () => {
+    if (!triageData || !patientId) return;
+
     // Create visit instance before submitting triage data
     const visitData = {
       patient: Number(patientId),
       department: selectedDepartment,
       current_state: "TRIAGE",
       next_state: "CONSULTATION",
-      total_cost: 0,
+      total_cost: TRIAGE_COST, // Include the fixed triage cost
     };
 
     try {
@@ -145,22 +164,21 @@ const Patient = () => {
 
       if (res.ok) {
         const visit = await res.json();
-        // setVisitId(visit.visit_id); // Set the visit ID for later use
+        setVisitId(visit.visit_id); // Set the visit ID for later use
 
         // After creating the visit, submit the triage data
-        const triageData = {
+        const triagePayload = {
           visit: visit.visit_id,
           vital_signs: {
-            weight: data.weight,
-            height: data.height,
-            systolic: data.systolic,
-            diastolic: data.diastolic,
-            pulse: data.pulse,
+            weight: triageData.weight,
+            height: triageData.height,
+            systolic: triageData.systolic,
+            diastolic: triageData.diastolic,
+            pulse: triageData.pulse,
           },
-          recorded_by: authState?.username,
+          recorded_by: authState?.user_id,
         };
-        console.log(triageData);
-
+        console.log(authState?.user_id);
         const triageRes = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/triage/`,
           {
@@ -169,7 +187,7 @@ const Patient = () => {
               "Content-Type": "application/json",
               Authorization: `Token ${authState?.token}`,
             },
-            body: JSON.stringify(triageData),
+            body: JSON.stringify(triagePayload),
           }
         );
 
@@ -179,13 +197,12 @@ const Patient = () => {
           setTimeout(() => {
             toast.success("Patient proceed to consultation successfully!", {
               autoClose: 1000, // Show toast for 2 seconds
-              onClose: () => {
-                router.push("/departments/triage");
+              onClose: () => {               
                 window.location.reload(); // Refresh after the toast disappears
               },
             });
           }, 1000);
-          router.push("/departments/triage");
+          router.push("/departments/triage/patients");
         } else {
           console.error("Failed to submit triage data");
         }
@@ -207,6 +224,8 @@ const Patient = () => {
           }
         );
       }, 2000);
+    } finally {
+      setShowConfirmationDialog(false); // Close the confirmation dialog
     }
   };
 
@@ -224,11 +243,11 @@ const Patient = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="p-2  shadow-md rounded-md border w-full">
+              <div className="p-2 shadow-md rounded-md border w-full">
                 {/* Organization Details */}
                 <OrganizationInfo />
                 {/* Patient Details */}
-                <div className="flex justify-around items-center space-x-2 ">
+                <div className="flex justify-around items-center space-x-2">
                   <div className="flex-shrink-0">
                     {patientData.gender === "male" ? (
                       <FaUser className="h-40 w-40 text-blue-500" />
@@ -238,8 +257,7 @@ const Patient = () => {
                   </div>
                   <div className="space-y-2">
                     <p>
-                      <strong>First Name:</strong>
-                      {patientData.first_name}
+                      <strong>First Name:</strong> {patientData.first_name}
                     </p>
                     <p>
                       <strong>Last Name:</strong> {patientData.last_name}
@@ -263,7 +281,6 @@ const Patient = () => {
         )}
 
         {/* Triage Form */}
-
         <Card className="w-full mx-auto p-2 shadow-md border rounded-lg">
           <CardHeader className="text-center font-bold text-lg">
             TRIAGE FORM APPLICATION
@@ -320,7 +337,7 @@ const Patient = () => {
                 )}
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="department">Department</Label>
+                <Label htmlFor="department">Send to:</Label>
                 <select
                   id="department"
                   className="border rounded p-2"
@@ -347,6 +364,37 @@ const Patient = () => {
           </form>
         </Card>
       </div>
+
+      {/* Confirmation Dialog */}
+      <Dialog
+        open={showConfirmationDialog}
+        onOpenChange={setShowConfirmationDialog}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm Payment</DialogTitle>
+            <DialogDescription>
+              Please confirm the payment before proceeding to the next
+              department.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p>
+              <strong>Consultation Fee:</strong> Ksh {TRIAGE_COST.toFixed(2)}
+            </p>
+            <p>
+              <strong>Total Amount to Pay:</strong> Ksh {TRIAGE_COST.toFixed(2)}
+            </p>
+          </div>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline">Cancel</Button>
+            </DialogClose>
+            <Button onClick={handleConfirm}>Confirm and Proceed</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <ToastContainer />
     </PageTransition>
   );

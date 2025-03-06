@@ -14,18 +14,42 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogClose,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import OrganizationInfo from "../OrganizationInfo";
 import axios from "axios";
 import { Input } from "../ui/input";
+import { useRouter } from "next/navigation";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
-export const PrescriptionsTab = ({ prescriptions, setPrescriptions }: any) => {
+export const PrescriptionsTab = ({
+  prescriptions,
+  setPrescriptions,
+  handleSaveDrugPrescriptions,
+  note_id,
+  diagnosis,
+  visit
+}: any) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isConfirmationDialogOpen, setIsConfirmationDialogOpen] =
+    useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [drugs, setDrugs] = useState<any[]>([]);
-  const [selectedDrugs, setSelectedDrugs] = useState<any[]>([]);
+  const [selectedDrugs, setSelectedDrugs] = useState<any[]>(prescriptions);
+  const [diseaseSearchTerm, setDiseaseSearchTerm] = useState("");
+  const [selectedDisease, setSelectedDisease] = useState("");
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [allDiseases, setAllDiseases] = useState<any[]>([]);
+  const [isAddDiseaseDialogOpen, setIsAddDiseaseDialogOpen] = useState(false);
+  const [newDiseaseName, setNewDiseaseName] = useState("");
+  const router = useRouter();
 
+  console.log(note_id,diagnosis,visit);
+
+  // Fetch drugs and diseases on component mount
   useEffect(() => {
     const fetchDrugs = async () => {
       try {
@@ -38,29 +62,138 @@ export const PrescriptionsTab = ({ prescriptions, setPrescriptions }: any) => {
       }
     };
 
+    const fetchDiseases = async () => {
+      try {
+        const response = await axios.get(
+          `${process.env.NEXT_PUBLIC_API_URL}/diseases/`
+        );
+        setAllDiseases(response.data);
+      } catch (error) {
+        console.error("Failed to fetch diseases:", error);
+      }
+    };
+
     fetchDrugs();
+    fetchDiseases();
   }, []);
 
+  // Sync selectedDrugs with parent's prescriptions
+  useEffect(() => {
+    setSelectedDrugs(prescriptions);
+  }, [prescriptions]);
+
+  // Handle drug search input
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
   };
 
+  // Handle disease search input
+  const handleDiseaseSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const term = e.target.value;
+    setDiseaseSearchTerm(term);
+
+    if (term.length > 2) {
+      const filteredDiseases = allDiseases.filter((disease) =>
+        disease.name.toLowerCase().includes(term.toLowerCase())
+      );
+      setSearchResults(filteredDiseases);
+    } else {
+      setSearchResults([]);
+    }
+  };
+
+  // Handle adding a drug to the selected list
   const handleAddDrug = (drug: any) => {
-    setSelectedDrugs([...selectedDrugs, drug]);
+    const updatedDrugs = [...selectedDrugs, drug];
+    setSelectedDrugs(updatedDrugs);
+    setPrescriptions(updatedDrugs);
     setSearchTerm("");
   };
 
+  // Handle deleting a drug from the selected list
   const handleDeleteDrug = (index: number) => {
-    setSelectedDrugs(selectedDrugs.filter((_, i) => i !== index));
+    const updatedDrugs = selectedDrugs.filter((_, i) => i !== index);
+    setSelectedDrugs(updatedDrugs);
+    setPrescriptions(updatedDrugs);
   };
 
-  const handleSavePrescriptions = () => {
-    setPrescriptions(selectedDrugs);
-    setIsDialogOpen(false);
+  // Handle saving prescriptions
+  const handleSavePrescriptions = async () => {
+    try {
+      await handleSaveDrugPrescriptions(); // Save prescriptions
+      setIsDialogOpen(false); // Close the "Add Prescription" dialog
+      setIsConfirmationDialogOpen(true); // Open the "Confirm Payment" dialog
+    } catch (error) {
+      console.error("Failed to save prescriptions:", error);
+    }
   };
 
-  const filteredDrugs = drugs.filter((drug) =>
-    drug.name.toLowerCase().includes(searchTerm.toLowerCase())
+  // Handle confirming payment and saving disease
+  const handleConfirmPayment = async () => {
+  console.log(selectedDisease)
+    try {
+      // Update the consultation with the selected disease
+      await axios.put(
+        `${process.env.NEXT_PUBLIC_API_URL}/consultation/${note_id}/`,
+        {
+          disease: selectedDisease,
+          diagnosis:diagnosis,
+          visit:visit
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Token ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+setTimeout(() => {
+            toast.success("Patient proceed to pharmacy successfull!", {
+              autoClose: 1000, // Show toast for 2 seconds
+              onClose: () => {               
+          router.push("/departments/consultation/patients");
+              },
+            });
+          }, 1000);
+                window.location.reload(); // Refresh after the toast disappears
+            setIsConfirmationDialogOpen(false); // Close the confirmation dialog
+      // Optionally, you can trigger a page reload or navigation here if needed
+    } catch (error) {
+      console.error("Failed to save disease:", error);
+    }
+  };
+
+  // Handle adding a new disease
+  const handleAddDisease = async () => {
+    if (!newDiseaseName) return;
+
+    try {
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_API_URL}/diseases/`,
+        {
+          name: newDiseaseName,
+        }
+      );
+      setAllDiseases((prev) => [...prev, response.data]);
+      setSelectedDisease(newDiseaseName);
+      setIsAddDiseaseDialogOpen(false);
+      setNewDiseaseName("");
+    } catch (error) {
+      console.error("Failed to add disease:", error);
+    }
+  };
+
+  // Filter drugs based on the search term
+  const filteredDrugs = searchTerm.trim()
+    ? drugs.filter((drug) =>
+        drug.drug_name.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    : [];
+
+  // Calculate the total cost of selected drugs
+  const totalCost = selectedDrugs.reduce(
+    (sum, drug) => sum + parseInt(drug.cost),
+    0
   );
 
   return (
@@ -71,34 +204,46 @@ export const PrescriptionsTab = ({ prescriptions, setPrescriptions }: any) => {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        {prescriptions.length > 0 ? (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Medication</TableHead>
-                <TableHead>Dosage</TableHead>
-                <TableHead>Actions</TableHead>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Medication</TableHead>
+              <TableHead>Remaining</TableHead>
+              <TableHead>Cost (Ksh)</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {selectedDrugs.map((drug: any, index: number) => (
+              <TableRow key={index}>
+                <TableCell>{drug.drug_name}</TableCell>
+                <TableCell>{drug.quantity}</TableCell>
+                <TableCell>{drug.cost}</TableCell>
+                <TableCell>{drug.status}</TableCell>
+                <TableCell>
+                  <Button onClick={() => handleDeleteDrug(index)}>
+                    Delete
+                  </Button>
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {prescriptions.map((prescription: any, index: number) => (
-                <TableRow key={index}>
-                  <TableCell>{prescription.medication}</TableCell>
-                  <TableCell>{prescription.dosage}</TableCell>
-                  <TableCell>
-                    <Button onClick={() => handleDeleteDrug(index)}>
-                      Delete
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        ) : (
-          <Button onClick={() => setIsDialogOpen(true)}>
-            Add Prescription
+            ))}
+          </TableBody>
+        </Table>
+
+        {/* "Add Prescription" Button */}
+        <Button onClick={() => setIsDialogOpen(true)} className="mt-4">
+          Add Prescription
+        </Button>
+
+        {/* "Save Prescriptions" Button */}
+        {selectedDrugs.length > 0 && (
+          <Button onClick={handleSavePrescriptions} className="mt-4 ml-4">
+            Save Drug Prescriptions
           </Button>
         )}
+
+        {/* Add Prescription Dialog */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogContent>
             <DialogHeader>
@@ -114,20 +259,117 @@ export const PrescriptionsTab = ({ prescriptions, setPrescriptions }: any) => {
                 {filteredDrugs.map((drug, index) => (
                   <li
                     key={index}
-                    className="p-2 hover:bg-gray-100 cursor-pointer"
+                    className="p-2 hover:bg-gray-600 cursor-pointer"
                     onClick={() => handleAddDrug(drug)}
                   >
-                    {drug.name} - {drug.dosage}
+                    <div className="flex justify-between">
+                      <span>{drug.drug_name}</span>
+                      <span>{drug.quantity}</span>
+                      <span>Ksh {drug.cost}</span>
+                      <span>{drug.status}</span>
+                    </div>
                   </li>
                 ))}
               </ul>
             )}
             <DialogFooter>
-              <Button onClick={handleSavePrescriptions}>Save</Button>
               <Button onClick={() => setIsDialogOpen(false)}>Cancel</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* Confirmation Dialog with Disease Selection */}
+        <Dialog
+          open={isConfirmationDialogOpen}
+          onOpenChange={setIsConfirmationDialogOpen}
+        >
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Confirm Payment</DialogTitle>
+              <DialogDescription>
+                Please confirm the payment and select the disease affecting the patient.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <p>
+                <strong>Total Amount to Pay:</strong> Ksh {totalCost}
+              </p>
+
+              {/* Disease Search and Selection */}
+              <Input
+                placeholder="Search diseases..."
+                value={diseaseSearchTerm}
+                onChange={handleDiseaseSearch}
+              />
+              {searchResults.length > 0 && (
+                <ul className="mt-2 border rounded-lg p-2 max-h-40 overflow-y-auto">
+                  {searchResults.map((disease: any, index) => (
+                    <li
+                      key={index}
+                      className="p-2 hover:bg-gray-700 cursor-pointer"
+                      onClick={() => setSelectedDisease(disease.name)}
+                    >
+                      {disease.name}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {diseaseSearchTerm.length > 2 && searchResults.length === 0 && (
+                <div className="mt-2">
+                  <p className="text-sm text-gray-600">No disease found.</p>
+                  <Button
+                    className="mt-2"
+                    onClick={() => setIsAddDiseaseDialogOpen(true)}
+                  >
+                    Add Disease
+                  </Button>
+                </div>
+              )}
+
+              {/* Selected Disease */}
+              <Input
+                placeholder="Selected Disease"
+                value={selectedDisease}
+                readOnly
+              />
+            </div>
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button variant="outline">Cancel</Button>
+              </DialogClose>
+              <Button onClick={handleConfirmPayment}>
+                Confirm and Proceed
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Add Disease Dialog */}
+        <Dialog
+          open={isAddDiseaseDialogOpen}
+          onOpenChange={setIsAddDiseaseDialogOpen}
+        >
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Add New Disease</DialogTitle>
+            </DialogHeader>
+            <Input
+              placeholder="Enter disease name"
+              value={newDiseaseName}
+              onChange={(e) => setNewDiseaseName(e.target.value)}
+            />
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setIsAddDiseaseDialogOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button onClick={handleAddDisease}>Add Disease</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+        <ToastContainer />
       </CardContent>
     </Card>
   );

@@ -23,6 +23,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogCancel
 } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/context/AuthContext";
 import { useVisit } from "@/context/VisitContext";
@@ -99,9 +100,9 @@ const PharmacyDetailsPage = () => {
       const initialPrescriptions = visitData.consultation_data.prescription.map(
         (prescription, index) => ({
           id: index,
-          medication_name: prescription.medication,
-          quantity: prescription.dosage,
-          cost: 0,
+          medication_name: prescription.drug_name,
+          quantity: prescription.quantity,
+          cost: prescription.cost,
           dispensed: false,
         })
       );
@@ -110,9 +111,9 @@ const PharmacyDetailsPage = () => {
   }, [visitData]);
 
   // Filter drugs locally based on search query
-  const filteredDrugs = drugs.filter((drug) =>
+  const filteredDrugs = searchQuery.trim()? drugs.filter((drug) =>
     drug.drug_name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  ):[];
 
   // Open dispense dialog
   const openDispenseDialog = (prescription: Prescription) => {
@@ -138,20 +139,60 @@ const PharmacyDetailsPage = () => {
   };
 
   // Complete dispensing
-  const handleCompleteDispensing = () => {
-    if (selectedDrug && selectedPrescription) {
+const handleCompleteDispensing = async () => {
+  if (selectedDrug && selectedPrescription) {
+    try {
+      // Calculate total cost
       const totalCost = selectedDrug.cost * dispenseQuantity;
-      const dispensedDrug = {
-        ...selectedPrescription,
-        medication_name: selectedDrug.drug_name,
-        quantity: dispenseQuantity.toString(),
-        cost: totalCost,
-        dispensed: true,
-      };
-      setDispensedDrugs((prev) => [...prev, dispensedDrug]);
-      setShowDispenseDialog(false);
+
+      // Deduct the dispensed quantity from the drug's quantity in the database
+      const updatedQuantity = selectedDrug.quantity - dispenseQuantity;
+
+      // Update the drug in the database
+      const response = await axios.put(
+        `${process.env.NEXT_PUBLIC_API_URL}/drugs/${selectedDrug.id}/`,
+        {
+          ...selectedDrug,
+          quantity: updatedQuantity,
+        },
+        {
+          headers: {
+            Authorization: `Token ${authState?.token}`,
+          },
+        }
+      );
+
+      if (response.status === 200) {
+        // Update the local drugs state
+        setDrugs((prev) =>
+          prev.map((drug) =>
+            drug.id === selectedDrug.id
+              ? { ...drug, quantity: updatedQuantity }
+              : drug
+          )
+        );
+
+        // Add the dispensed drug to the dispensedDrugs list
+        const dispensedDrug = {
+          ...selectedPrescription,
+          medication_name: selectedDrug.drug_name,
+          quantity: dispenseQuantity.toString(),
+          cost: totalCost,
+          dispensed: true,
+        };
+        setDispensedDrugs((prev) => [...prev, dispensedDrug]);
+
+        // Close the dispense dialog
+        setShowDispenseDialog(false);
+      } else {
+        throw new Error("Failed to update drug quantity");
+      }
+    } catch (error) {
+      console.error("Error updating drug quantity:", error);
+      toast.error("Failed to update drug quantity. Please try again.");
     }
-  };
+  }
+};
 
   // Function to calculate total cost
   const calculateTotalCost = () => {
@@ -195,8 +236,7 @@ const PharmacyDetailsPage = () => {
           autoClose: 1000,
           onClose: () => {
             router.push("/departments/pharmacy");
-            window.location.reload();
-          },
+                      },
         });
         setShowSuccessDialog(true);
       } else {
@@ -264,6 +304,7 @@ const PharmacyDetailsPage = () => {
                           )
                         )
                       }
+                      disabled
                       placeholder="Enter cost"
                     />
                   </TableCell>
@@ -333,6 +374,10 @@ const PharmacyDetailsPage = () => {
               </div>
             )}
           </div>
+          <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+              </AlertDialogFooter>
+            
         </AlertDialogContent>
       </AlertDialog>
 

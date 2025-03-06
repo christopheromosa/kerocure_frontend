@@ -1,45 +1,67 @@
-// import SuccessDialog from "@/components/SuccessDialog";
 "use client";
-import { AddPatientDialog } from "@/components/forms/add-patient";
-import LoadingPage from "@/components/loading_animation";
-import PageTransition from "@/components/PageTransition";
-import { columns } from "@/components/tables/triage-data-table/columns";
-import { DataTable } from "@/components/tables/triage-data-table/triage-data-table";
-import { useEffect, useState } from "react";
+import {
+  LayoutDashboard,
+  Server,
+  ClipboardCheck,
+  Settings,
+  Users,
+} from "lucide-react";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
 
-export default function TriagePage() {
-  const [data, setData] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
+export default function Dashboard() {
+  const router = useRouter();
 
-  useEffect(() => {
-    async function getPatientsData() {
-      setIsLoading(true);
-      // todo: implement fetch patients functionality
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/patients`,
-        {
-          cache: "no-store",
-        }
-      );
-      if (response.ok) {
-        const newData = await response.json();
-        setData(newData);
-        setIsLoading(false);
-      }
-    }
-    getPatientsData();
-  }, []);
+  // Links for the dashboard cards
+  const links = [
+    // {
+    //   label: "Dashboard",
+    //   href: "/departments/triage",
+    //   icon: LayoutDashboard,
+    // },
+    { label: "Patients", href: "/departments/triage/patients", icon: Server },
+
+    {
+      label: "Reports",
+      href: "/departments/triage/analytics",
+      icon: ClipboardCheck,
+    },
+    { label: "Profile", href: "/departments/triage/profile", icon: Settings },
+    { label: "Patients List", href: "/departments/patients", icon: Users },
+  ];
+
+  // Handle navigation when a card is clicked
+  const handleNavigation = (href: string) => {
+    router.push(href);
+  };
 
   return (
-    <PageTransition>
-      {isLoading && <LoadingPage />}
-      <div className="flex flex-col">
-        {/* <SuccessDialog/> */}
-        <div className="p-2 ml-2 float-left">
-          <AddPatientDialog />
-        </div>
-        <DataTable columns={columns} data={data} />
-      </div>
-    </PageTransition>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
+      {links.map((link, index) => (
+        <Card
+          key={index}
+          className="hover:shadow-lg transition-shadow duration-200 cursor-pointer"
+          onClick={() => handleNavigation(link.href)}
+        >
+          <CardHeader>
+            <link.icon className="h-8 w-8 mb-2 text-primary" />
+            <CardTitle className="text-xl font-semibold">
+              {link.label}
+            </CardTitle>
+            <CardDescription>Navigate to {link.label} page</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button className="w-full">Go to {link.label}</Button>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
   );
 }

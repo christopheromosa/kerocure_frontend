@@ -11,6 +11,7 @@ import {
   Server,
   ClipboardCheck,
   Settings,
+  Pill
 } from "lucide-react";
 import {
   Breadcrumb,
@@ -29,14 +30,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const links = [
     {
       label: "Dashboard",
-      href: "",
+      href: "/departments/pharmacy",
       icon: LayoutDashboard,
     },
-    { label: "patients", href: "/departments/pharmacy", icon: Server },
+    { label: "patients", href: "/departments/pharmacy/patients", icon: Server },
     {
       label: "Drug management",
       href: "/departments/pharmacy/drugManagement",
-      icon: Server,
+      icon: Pill,
     },
     {
       label: "reports",

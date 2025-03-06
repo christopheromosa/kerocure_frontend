@@ -1,94 +1,65 @@
 "use client";
-import { columns } from "@/components/tables/consultation-data-table/columns";
-import { DataTable } from "@/components/tables/consultation-data-table/consultation-data-table";
-import React, { useEffect, useState } from "react";
-import PageTransition from "@/components/PageTransition";
-import LoadingPage from "@/components/loading_animation";
-import { DepartmentType } from "../triage/[patientId]/page";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  LayoutDashboard,
+  Server,
+  ClipboardCheck,
+  Microscope,
+  Settings,
+} from "lucide-react";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
 
-export default function ConsultationPage() {
-  const [data, setData] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [departments, setDepartments] = useState<DepartmentType[]>([]);
-  const [selectedDepartment, setSelectedDepartment] = useState("");
+export default function ConsultationDashboard() {
+  const router = useRouter();
 
-  useEffect(() => {
-    async function getTriagedPatientsData() {
-      setIsLoading(true);
-      // todo: implement fetch patients functionality
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/triage-patients/`,
-        {
-          cache: "no-store",
-        }
-      );
-      if (response.ok) {
-        const newData = await response.json();
-        setData(newData);
-        setIsLoading(false);
-      }
-    }
-    getTriagedPatientsData();
-  }, []);
-  useEffect(() => {
-    async function getDepartments() {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/departments/`,
-        {
-          cache: "no-store",
-        }
-      );
-      if (response.ok) {
-        const deptData = await response.json();
-        setDepartments(deptData);
-      }
-    }
-    getDepartments();
-  }, []);
+  // Links for the dashboard cards (specific to the consultion department)
+  const links = [
+    { label: "Patients Queue", href: "/departments/consultation/patients", icon: Server },
+    { label: "Lab", href: "/departments/consultation/lab", icon: Microscope },
+    {
+      label: "Tasks Completed",
+      href: "/departments/consultation/analytics",
+      icon: ClipboardCheck,
+    },
+    {
+      label: "Profile",
+      href: "/departments/consultation/profile",
+      icon: Settings,
+    },
+  ];
 
-  // Filter patients based on selected department
-  const filteredData =
-    selectedDepartment === "all"
-      ? data
-      : data.filter(
-          (patient) =>
-            (patient as any).department?.id === Number(selectedDepartment)
-        );
+  // Handle navigation when a card is clicked
+  const handleNavigation = (href: string) => {
+    router.push(href);
+  };
 
   return (
-    <PageTransition>
-      {/* Department Select Dropdown */}
-      <div className="mb-4 flex justify-around">
-        <label htmlFor="department" className="mr-2 font-medium">
-          Filter by Department:
-        </label>
-        <Select
-          value={selectedDepartment}
-          onValueChange={setSelectedDepartment}
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
+      {links.map((link, index) => (
+        <Card
+          key={index}
+          className="hover:shadow-lg transition-shadow duration-200 cursor-pointer"
+          onClick={() => handleNavigation(link.href)}
         >
-          <SelectTrigger className="w-[250px] border rounded px-3 py-2">
-            <SelectValue placeholder="All Departments" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Departments</SelectItem>{" "}
-            {/* Changed empty string to 'all' */}
-            {departments.map((dept) => (
-              <SelectItem key={dept.id} value={String(dept.id)}>
-                {dept.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      {isLoading && <LoadingPage />}
-      <DataTable columns={columns} data={filteredData} />
-    </PageTransition>
+          <CardHeader>
+            <link.icon className="h-8 w-8 mb-2 text-primary" />
+            <CardTitle className="text-xl font-semibold">
+              {link.label}
+            </CardTitle>
+            <CardDescription>Navigate to {link.label} page</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button className="w-full">Go to {link.label}</Button>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
   );
 }

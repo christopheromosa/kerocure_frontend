@@ -25,6 +25,7 @@ type Triage = {
   staff_name: string;
   recorded_by: string | null;
   recorded_at: string;
+  visit_type: string;
 };
 
 const TriageTable = () => {
@@ -33,7 +34,7 @@ const TriageTable = () => {
   const [triageData, setTriageData] = useState<Triage[]>([]);
   const [expandedRows, setExpandedRows] = useState<number[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const itemsPerPage = 3;
+  const itemsPerPage =5;
 
   useEffect(() => {
     async function fetchTriageData() {
@@ -45,6 +46,7 @@ const TriageTable = () => {
         if (!response.ok) throw new Error("Failed to fetch data");
 
         const data = await response.json();
+        console.log(data);
         setTriageData(data);
       } catch (err) {
         alert("Failed to load triage records");
@@ -60,7 +62,7 @@ const TriageTable = () => {
     triage.patient_name.toString().includes(search)
   );
 
-  // Pagination logic
+   // Pagination logic
   const totalPages = Math.ceil(filteredTriage.length / itemsPerPage);
   const displayedTriage = filteredTriage.slice(
     (currentPage - 1) * itemsPerPage,
@@ -121,7 +123,7 @@ const TriageTable = () => {
                         )}
                       </Button>
                     </TableCell>
-                    <TableCell>{triage.staff_name || "Unknown"}</TableCell>
+                    <TableCell>{triage.staff_name}</TableCell>
                     <TableCell>{triage.recorded_at}</TableCell>
                   </TableRow>
 

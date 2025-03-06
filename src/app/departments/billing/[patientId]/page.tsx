@@ -28,9 +28,6 @@ const BillingDetailsPage = () => {
   const { authState } = useAuth();
   const router = useRouter();
   const { fetchVisitData, visitData } = useVisit();
-  const [consultationFee, setConsultationFee] = useState<string>("");
-  // const [labCost, setLabCost] = useState<number>(0);
-  // const [pharmacyCost, setPharmacyCost] = useState<number>(0);
   const [totalCost, setTotalCost] = useState<number>(0);
   const [showSuccessDialog, setShowSuccessDialog] = useState<boolean>(false);
   const [showErrorDialog, setShowErrorDialog] = useState<boolean>(false);
@@ -42,15 +39,17 @@ const BillingDetailsPage = () => {
     }
   }, [patientId, fetchVisitData]);
 
-  // Fetch consultation fee from the server
+
 
   // Calculate total cost
   const calculateTotalCost = () => {
+    const consultationCost = visitData?.total_cost || 0;
     const labCost = visitData?.lab_data?.total_cost || 0;
     const pharmacyCost = visitData?.pharmacy_data?.cost || 0;
-    const total = Number(consultationFee) + labCost + pharmacyCost;
+    const total = consultationCost + labCost + pharmacyCost;
     setTotalCost(total);
   };
+
   // Save billing details
   const handleSaveBilling = async () => {
     try {
@@ -61,7 +60,7 @@ const BillingDetailsPage = () => {
           Authorization: `Token ${authState?.token}`,
         },
         body: JSON.stringify({
-          consultation_cost: consultationFee,
+          consultation_cost: visitData?.total_cost,
           laboratory_cost: visitData?.lab_data?.total_cost,
           pharmacy_cost: visitData?.pharmacy_data?.cost,
           total_cost: totalCost,
@@ -88,10 +87,12 @@ const BillingDetailsPage = () => {
 
         setShowSuccessDialog(true);
         setTimeout(() => {
-          toast.success("saved billing details successfully!", {
-            autoClose: 1000, // Show toast for 2 seconds
+          toast.success("Saved billing details successfully!", {
+            autoClose: 1000,
+            
           });
         }, 1000);
+        
       } else {
         throw new Error("Failed to save billing details");
       }
@@ -104,33 +105,121 @@ const BillingDetailsPage = () => {
   // Print receipt
   const handlePrintReceipt = () => {
     const receiptContent = `
-      <h1>KEROCURE MEDICAL CENTER</h1>
-      <h1>Receipt</h1>
-      <p>Patient Name:  ${visitData?.patient_data?.first_name} ${
+      <html>
+        <head>
+          <title>Receipt</title>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              margin: 0;
+              padding: 20px;
+              background-color: #f9f9f9;
+            }
+            .container {
+              max-width: 600px;
+              margin: 0 auto;
+              background-color: #fff;
+              padding: 20px;
+              border: 1px solid #ddd;
+              border-radius: 8px;
+              box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            }
+            .header {
+              text-align: center;
+              border-bottom: 2px solid #000;
+              padding-bottom: 20px;
+              margin-bottom: 20px;
+            }
+            .header img {
+              width: 150px;
+              height: auto;
+              margin-bottom: 10px;
+            }
+            .header h1 {
+              margin: 0;
+              font-size: 24px;
+              color: #333;
+            }
+            .header p {
+              margin: 5px 0;
+              font-size: 14px;
+              color: #666;
+            }
+            .content {
+              margin-top: 20px;
+            }
+            .content h2 {
+              font-size: 20px;
+              color: #333;
+              margin-bottom: 10px;
+            }
+            .content p {
+              margin: 8px 0;
+              font-size: 16px;
+              color: #555;
+            }
+            .content .total {
+              font-size: 18px;
+              font-weight: bold;
+              color: #000;
+              margin-top: 20px;
+              padding-top: 10px;
+              border-top: 2px solid #000;
+            }
+            .footer {
+              margin-top: 30px;
+              text-align: center;
+              font-size: 14px;
+              color: #777;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <!-- Header -->
+            <div class="header">
+              <img src="/kerocureLogo-removebg-preview.png" alt="Organization Logo" />
+              <h1>KEROCURE MEDICAL CENTER</h1>
+              <p>PO BOX: 3172 - 4255, KISII</p>
+              <p>Email: Kerocure1@gmail.com | Tel: +254711111111</p>
+            </div>
+    
+            <!-- Content -->
+            <div class="content">
+              <h2>Receipt</h2>
+              <p><strong>Patient Name:</strong> ${visitData?.patient_data?.first_name} ${
       visitData?.patient_data?.last_name
-    } </p>
-
-      <p>Consultation Fee: Ksh ${Number(consultationFee).toFixed(2)}</p>
-      <p>Lab Cost: ksh ${visitData?.lab_data?.total_cost.toFixed(2) || 0.0}</p>
-      <p>Pharmacy Cost: Ksh ${
-        visitData?.pharmacy_data?.cost.toFixed(2) || 0.0
-      }</p>
-      <p>Total Cost: Ksh ${totalCost.toFixed(2)}</p>
+    }</p>
+              <p><strong>Consultation Fee:</strong> Ksh ${visitData?.total_cost || 0.0}</p>
+              <p><strong>Lab Cost:</strong> Ksh ${visitData?.lab_data?.total_cost || 0.0}</p>
+              <p><strong>Pharmacy Cost:</strong> Ksh ${visitData?.pharmacy_data?.cost || 0.0}</p>
+              <p class="total"><strong>Total Cost:</strong> Ksh ${totalCost.toFixed(2)}</p>
+            </div>
+    
+            <!-- Footer -->
+            <div class="footer">
+              <p>Thank you for choosing KEROCURE MEDICAL CENTER!</p>
+              <p>For inquiries, please contact us at +254711111111.</p>
+            </div>
+          </div>
+        </body>
+      </html>
     `;
+
     const printWindow = window.open("", "_blank");
     printWindow?.document.write(receiptContent);
     printWindow?.document.close();
     printWindow?.print();
+
     setTimeout(() => {
-      toast.success("saved billing details successfully!", {
-        autoClose: 1000, // Show toast for 2 seconds
+      toast.success("Saved billing details successfully!", {
+        autoClose: 1000,
         onClose: () => {
           router.push("/departments/billing");
-          window.location.reload(); // Refresh after the toast disappears
+          window.location.reload();
         },
       });
     }, 1000);
-    router.push("/departments/billing");
   };
 
   return (
@@ -147,18 +236,16 @@ const BillingDetailsPage = () => {
           <CardContent>
             {/* Consultation Fee */}
             <div className="mb-4">
-              <label className="font-medium">Consultation Fee (Ksh):</label>
+              <label className="font-medium">Consultation Cost(Ksh):</label>
               <Input
                 type="text"
-                value={consultationFee}
-                onChange={(e) => setConsultationFee(e.target.value)}
-                placeholder="Enter consultation fee"
+                value={visitData?.total_cost || 0.0}
+                readOnly
                 className="border border-gray-300 p-2 rounded w-full"
               />
             </div>
 
             {/* Lab Cost */}
-
             <div className="mb-4">
               <label className="font-medium">Lab Cost (Ksh):</label>
               <Input
@@ -181,7 +268,6 @@ const BillingDetailsPage = () => {
             </div>
 
             {/* Calculate Total Button */}
-
             <Button className="mt-4" onClick={calculateTotalCost}>
               Generate Total Cost
             </Button>
@@ -194,7 +280,6 @@ const BillingDetailsPage = () => {
             </div>
 
             {/* Save Billing Button */}
-
             <Button className="mt-4" onClick={handleSaveBilling}>
               Save Billing Details
             </Button>

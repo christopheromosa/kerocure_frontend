@@ -47,12 +47,12 @@ export const columns: ColumnDef<PatientType>[] = [
     enableHiding: false,
   },
   {
-    id:"id",
+    id: "id",
     accessorKey: "id",
     header: "PatientID",
   },
   {
-    id:"first_name",
+    id: "first_name",
     accessorKey: "first_name",
     header: ({ column }) => {
       return (
@@ -67,7 +67,7 @@ export const columns: ColumnDef<PatientType>[] = [
     },
   },
   {
-    id:"last_name",
+    id: "last_name",
     accessorKey: "last_name",
     header: ({ column }) => {
       return (
@@ -82,7 +82,7 @@ export const columns: ColumnDef<PatientType>[] = [
     },
   },
   {
-    id:"dob",
+    id: "dob",
     accessorKey: "dob",
     header: ({ column }) => {
       return (
@@ -98,7 +98,7 @@ export const columns: ColumnDef<PatientType>[] = [
   },
 
   {
-    id:"contact_number",
+    id: "contact_number",
     accessorKey: "contact_number",
     header: "Contact Number",
   },
@@ -116,13 +116,6 @@ export const columns: ColumnDef<PatientType>[] = [
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem
-              onClick={() =>
-                navigator.clipboard.writeText(patient.patientId.toString())
-              }
-            >
-              Copy payment ID
-            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem>
               <Link href={`/departments/consultation/${patient.id}`}>

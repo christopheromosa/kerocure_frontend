@@ -81,7 +81,7 @@ export function AddPatientDialog() {
 
       // Show success toast after a delay
       setTimeout(() => {
-        toast.success(`Patient created successfully! ${data.first_name}`, {
+        toast.success(`Patient created successfully for:  ${data.first_name} ${data.last_name}`, {
           autoClose: 1000,
         });
 
@@ -265,6 +265,12 @@ export function AddPatientDialog() {
                 <p>Next of Kin: {next_of_kin_name}</p>
                 <p>Next of Kin Contact: {next_of_kin_contact_number}</p>
               </div>
+              <Button
+                onClick={() => router.back()}
+                className="px-4 py-2 bg-blue-500 text-white rounded"
+              >
+                Go Back to Dashboard
+              </Button>
             </div>
           )}
         </DialogContent>
