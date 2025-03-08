@@ -20,6 +20,7 @@ import {
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { CircularProgress } from "@mui/material";
+import axios from "axios";
 
 interface Drug {
   id?: number;
@@ -119,9 +120,9 @@ export default function DrugManagement() {
   };
 
   // Handle file upload
-  const handleFileUpload = async (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
+
+
+ const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -132,32 +133,47 @@ export default function DrugManagement() {
     formData.append("file", file);
 
     try {
-      const response = await fetch(
+      await axios.post(
         `${process.env.NEXT_PUBLIC_API_URL}/upload-drug-stock/`,
+        formData,
         {
-          method: "POST",
-          body: formData,
-          onUploadProgress: (progressEvent) => {
-            const percentCompleted = Math.round(
-              (progressEvent.loaded * 100) / (progressEvent.total || 1)
-            );
-            setUploadProgress(percentCompleted);
+          headers: {
+            "Content-Type": "multipart/form-data",
           },
-        }
-      );
+           onUploadProgress: (progressEvent) => {
+          const percentCompleted = Math.round(
+            (progressEvent.loaded * 100) / (progressEvent.total || 1)
+          );
 
-      if (response.ok) {
-        toast.success("File uploaded successfully!");
-        fetchDrugs(); // Refresh the drug list
-      } else {
-        throw new Error("Failed to upload file.");
+          // Gradually increase the progress bar
+          const increaseProgress = (target: number) => {
+            setTimeout(() => {
+              setUploadProgress((prev) => {
+                if (prev < target) {
+                  increaseProgress(target); // Continue increasing
+                  return prev + 1; // Increment by 1%
+                }
+                return target; // Stop when target is reached
+              });
+            }, 50); // Adjust speed (50ms per step)
+          };
+
+          increaseProgress(percentCompleted);
+        },
       }
+    );
+
+
+      toast.success("File uploaded successfully!");
+      fetchDrugs();
     } catch (error) {
       console.error("Failed to upload file:", error);
       toast.error("Failed to upload file.");
     } finally {
-      setIsUploading(false);
-      setUploadProgress(0);
+       setTimeout(() => {
+            setIsUploading(false);
+            setUploadProgress(0);
+          }, 1000); 
     }
   };
 

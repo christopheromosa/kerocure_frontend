@@ -86,7 +86,7 @@ export default function BillingTable() {
 
   // Calculate total cost for all filtered records
 const totalCost = filteredData.reduce((sum, bill) => {
-  return sum + parseFloat(bill.total_cost); // Sum the total_cost of each filtered record
+  return sum + bill.total_cost; // Directly add the total_cost of each filtered record
 }, 0);
 
   // Pagination logic

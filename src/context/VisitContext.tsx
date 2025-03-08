@@ -17,8 +17,14 @@ interface TriageData {
 interface ConsultationData {
   note_id: number;
   diagnosis: string;
-  prescription: { medication: string; dosage: string }[];
-  lab_test_ordered: { test_name: string }[];
+  prescription: {
+    id: number;
+    medication_name: string;
+    quantity: string;
+    cost: number;
+    dispensed: boolean;
+  }[];
+  lab_test_ordered:  { service: string; duration: string; cost: number }[];
   physician: number | null;
   recorded_at: string;
   cost: number;

@@ -15,16 +15,22 @@ import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import LoadingPage from "@/components/loading_animation";
 
+type LabTest = {
+  service: string;
+  duration: string;
+  cost: number;
+};
+
 type PhysicianNote = {
   note_id: number;
   visit: number;
-  patient_name:string;
+  patient_name: string;
   triage_id?: number | null;
   diagnosis: string;
   prescription: { [key: string]: string }[] | null;
-  lab_tests_ordered: { test_name: string }[] | null;
+  lab_tests_ordered: LabTest[] | null; // Updated to include service, duration, and cost
   total_cost: number;
-  staff_name:string;
+  staff_name: string;
   physician: string | null;
   recorded_at: string;
 };
@@ -33,13 +39,9 @@ const PhysicianNotesTable = () => {
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [expandedRows, setExpandedRows] = useState<number[]>([]);
-  const [physicianNoteData, setPhysicianNoteData] = useState<PhysicianNote[]>(
-    []
-  );
+  const [physicianNoteData, setPhysicianNoteData] = useState<PhysicianNote[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const itemsPerPage = 3;
-
-  console.log(physicianNoteData);
 
   useEffect(() => {
     async function fetchPatientsData() {
@@ -61,7 +63,7 @@ const PhysicianNotesTable = () => {
     fetchPatientsData();
   }, []);
 
-  // Filter records by Visit ID
+  // Filter records by Patient Name
   const filteredNotes = physicianNoteData.filter((note) =>
     note.patient_name.toString().includes(search)
   );
@@ -89,7 +91,7 @@ const PhysicianNotesTable = () => {
       <div className="flex justify-between items-center mb-4">
         <Input
           type="text"
-          placeholder="Search by Visit ID..."
+          placeholder="Search by Patient Name..."
           className="w-1/3"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -102,7 +104,7 @@ const PhysicianNotesTable = () => {
           <TableHeader>
             <TableRow>
               <TableHead className="w-1/6">Note ID</TableHead>
-              <TableHead>Patient name</TableHead>
+              <TableHead>Patient Name</TableHead>
               <TableHead>Physician</TableHead>
               <TableHead>Total Cost</TableHead>
               <TableHead>Recorded At</TableHead>
@@ -170,7 +172,6 @@ const PhysicianNotesTable = () => {
                                   {note.lab_tests_ordered.map((test, index) => (
                                     <li key={index}>
                                       {test.service} : {test.duration} : {test.cost}
-                                      {/* Accessing the test_name property */}
                                     </li>
                                   ))}
                                 </ul>

@@ -194,7 +194,7 @@ const DashboardPage = () => {
                 selectsEnd
                 startDate={startDate}
                 endDate={endDate}
-                minDate={startDate}
+                minDate={startDate || undefined} // Convert null to undefined
                 placeholderText="End Date"
                 className="p-2 border rounded"
               />

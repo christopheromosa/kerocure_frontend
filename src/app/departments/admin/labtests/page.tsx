@@ -20,6 +20,7 @@ import {
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { CircularProgress } from "@mui/material";
+import axios from "axios";
 
 interface LabTest {
   id?: number;
@@ -119,7 +120,6 @@ export default function LabTestManagement() {
     }
   };
 
-  // Handle file upload
   const handleFileUpload = async (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
@@ -133,32 +133,50 @@ export default function LabTestManagement() {
     formData.append("file", file);
 
     try {
-      const response = await fetch(
+      const response = await axios.post(
         `${process.env.NEXT_PUBLIC_API_URL}/upload-lab-tests/`,
+        formData,
         {
-          method: "POST",
-          body: formData,
-          onUploadProgress: (progressEvent) => {
-            const percentCompleted = Math.round(
-              (progressEvent.loaded * 100) / (progressEvent.total || 1)
-            );
-            setUploadProgress(percentCompleted);
+          headers: {
+            "Content-Type": "multipart/form-data",
           },
-        }
-      );
+           onUploadProgress: (progressEvent) => {
+          const percentCompleted = Math.round(
+            (progressEvent.loaded * 100) / (progressEvent.total || 1)
+          );
 
-      if (response.ok) {
-        toast.success("File uploaded successfully!");
-        fetchLabTests(); // Refresh the lab test list
-      } else {
-        throw new Error("Failed to upload file.");
+          // Gradually increase the progress bar
+          const increaseProgress = (target: number) => {
+            setTimeout(() => {
+              setUploadProgress((prev) => {
+                if (prev < target) {
+                  increaseProgress(target); // Continue increasing
+                  return prev + 1; // Increment by 1%
+                }
+                return target; // Stop when target is reached
+              });
+            }, 50); // Adjust speed (50ms per step)
+          };
+
+          increaseProgress(percentCompleted);
+        },
       }
+    );
+
+      toast.success(response.data.message);
+      fetchLabTests(); // Refresh the lab test list
     } catch (error) {
       console.error("Failed to upload file:", error);
-      toast.error("Failed to upload file.");
+      if (axios.isAxiosError(error)) {
+        toast.error(error.response?.data.error || "Failed to upload file.");
+      } else {
+        toast.error("Failed to upload file.");
+      }
     } finally {
-      setIsUploading(false);
-      setUploadProgress(0);
+      setTimeout(() => {
+            setIsUploading(false);
+            setUploadProgress(0);
+          }, 1000); 
     }
   };
 

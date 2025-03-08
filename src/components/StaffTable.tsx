@@ -30,10 +30,8 @@ export const StaffTable = ({
   // Filter staff data based on search query and role
   const filteredStaff = staffData.filter((staffMember) => {
     const matchesSearch =
-      staffMember.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      staffMember.first_name
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase()) ||
+      (staffMember.username?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false) ||
+      staffMember.first_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       staffMember.last_name.toLowerCase().includes(searchQuery.toLowerCase());
 
     const matchesRole = filterRole
@@ -42,7 +40,9 @@ export const StaffTable = ({
 
     return matchesSearch && matchesRole;
   });
+
   console.log(staffData);
+
   return (
     <div className="space-y-4">
       {/* Search and Filter Controls */}
@@ -97,9 +97,11 @@ export const StaffTable = ({
                 </div>
               </TableCell>
               <TableCell>{staffMember.phone_number}</TableCell>
-              <TableCell><Badge className={`${staffMember.is_active ? "bg-blue-700" : "bg-red-700"}`}>
-                {staffMember.is_active ? "Active" : "Inactive"}
-              </Badge></TableCell>
+              <TableCell>
+                <Badge className={`${staffMember.is_active ? "bg-blue-700" : "bg-red-700"}`}>
+                  {staffMember.is_active ? "Active" : "Inactive"}
+                </Badge>
+              </TableCell>
               <TableCell className="space-x-2">
                 <Button
                   variant="outline"

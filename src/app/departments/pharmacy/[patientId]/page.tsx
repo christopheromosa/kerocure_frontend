@@ -100,7 +100,7 @@ const PharmacyDetailsPage = () => {
       const initialPrescriptions = visitData.consultation_data.prescription.map(
         (prescription, index) => ({
           id: index,
-          medication_name: prescription.drug_name,
+          medication_name: prescription.medication_name,
           quantity: prescription.quantity,
           cost: prescription.cost,
           dispensed: false,

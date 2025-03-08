@@ -29,6 +29,22 @@ import PageTransition from "@/components/PageTransition";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 
+type LabTestOrder = {
+  service: string;
+  duration: string;
+  cost: number;
+};
+
+type ConsultationData = {
+  lab_test_ordered: LabTestOrder[];
+  // Add other properties as needed
+};
+
+type VisitData = {
+  consultation_data: ConsultationData;
+  // Add other properties as needed
+};
+
 const LabResultsPage = () => {
   const params = useParams();
   const router = useRouter();
@@ -121,7 +137,7 @@ const LabResultsPage = () => {
             autoClose: 1000,
             onClose: () => {
               router.push("/departments/lab");
-               // Refresh after the toast disappears
+              // Refresh after the toast disappears
             },
           });
         }, 1000);
