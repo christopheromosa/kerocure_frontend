@@ -46,7 +46,7 @@ export default function ConsultationPage() {
       }
     }
     getTriagedPatientsData();
-  }, []);
+  }, [authState.token]);
   useEffect(() => {
     async function getDepartments() {
       const response = await fetch(
@@ -65,7 +65,7 @@ export default function ConsultationPage() {
       }
     }
     getDepartments();
-  }, []);
+  }, [authState.token]);
 
   // Filter patients based on selected department
   const filteredData =

@@ -64,12 +64,12 @@ export default function LabTestManagement() {
         // Edit existing lab test
         await axios.put(
           `${process.env.NEXT_PUBLIC_API_URL}/labtests/${currentLabTest.id}/`,
+          labTest,
           {
             headers: {
               "Content-Type": "application/json",
               Authorization: `Token ${authState?.token}`,
             },
-            labTest,
           }
         );
         toast.success("Lab test updated successfully!");
@@ -77,12 +77,12 @@ export default function LabTestManagement() {
         // Add new lab test
         await axios.post(
           `${process.env.NEXT_PUBLIC_API_URL}/labtests/`,
-           {
+          labTest,
+          {
             headers: {
               "Content-Type": "application/json",
               Authorization: `Token ${authState?.token}`,
             },
-            labTest
           }
         );
         toast.success("Lab test added successfully!");

@@ -42,7 +42,13 @@ export default function DrugManagement() {
     setIsLoading(true);
     try {
       const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_URL}/drugs/`
+        `${process.env.NEXT_PUBLIC_API_URL}/drugs/`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Token ${authState?.token}`,
+          },
+        }
       );
       setDrugs(response.data);
     } catch (error) {
@@ -75,7 +81,12 @@ export default function DrugManagement() {
         toast.success("Drug updated successfully!");
       } else {
         // Add new drug
-        await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/drugs/`, drug);
+        await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/drugs/`, drug, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Token ${authState?.token}`,
+          },
+        });
         toast.success("Drug added successfully!");
       }
       fetchDrugs(); // Refresh the list
@@ -134,6 +145,7 @@ export default function DrugManagement() {
         {
           headers: {
             "Content-Type": "multipart/form-data",
+            Authorization: `Token ${authState?.token}`,
           },
           onUploadProgress: (progressEvent) => {
             const percentCompleted = Math.round(
