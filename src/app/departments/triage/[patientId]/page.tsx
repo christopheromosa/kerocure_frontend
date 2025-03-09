@@ -35,6 +35,7 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 
+
 const triageSchema = z.object({
   weight: z.coerce.string().min(1, "Weight is required"),
   height: z.coerce.string().min(1, "Height is required"),
@@ -93,7 +94,13 @@ const Patient = () => {
     const fetchPatientData = async () => {
       setIsLoading(true);
       const res = await fetch(
-        `http://localhost:8000/patients/${Number(patientId)}/`
+        `http://localhost:8000/patients/${Number(patientId)}/`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Token ${authState?.token}`,
+          },
+        }
       );
       if (res.ok) {
         const data = await res.json();
@@ -112,7 +119,13 @@ const Patient = () => {
     const fetchDepartments = async () => {
       try {
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/departments/`
+          `${process.env.NEXT_PUBLIC_API_URL}/departments/`,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Token ${authState?.token}`,
+            },
+          }
         );
         if (res.ok) {
           const data = await res.json();

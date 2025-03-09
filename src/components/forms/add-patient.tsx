@@ -45,7 +45,7 @@ export function AddPatientDialog() {
   const [next_of_kin_name, setNextOfKinName] = useState<string>("");
   const [next_of_kin_contact_number, setNextOfKinContact_number] =
     useState<string>("");
-  const [gender, setGender] = useState<string>("male"); // Add gender state
+  const [gender, setGender] = useState<string>("Male"); // Add gender state
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -235,8 +235,8 @@ export function AddPatientDialog() {
                     onChange={(e) => setGender(e.target.value)}
                     className="col-span-3"
                   >
-                    <option value="male">Male</option>
-                    <option value="female">Female</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
                   </select>
                 </div>
               </div>

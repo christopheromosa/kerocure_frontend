@@ -30,9 +30,12 @@ import {
 } from "@/components/ui/select";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import { useAuth } from "@/context/AuthContext";
 
 const DashboardPage = () => {
   const { data, isLoading, refetch } = useDashboardData();
+   const { authState } = useAuth();
+
   const [selectedDepartment, setSelectedDepartment] = useState<string | null>(
     null
   );
@@ -49,7 +52,13 @@ const DashboardPage = () => {
     const fetchDepartments = async () => {
       try {
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/departments/`
+          `${process.env.NEXT_PUBLIC_API_URL}/departments/`,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Token ${authState?.token}`,
+            },
+          }
         );
         if (!response.ok) throw new Error("Failed to fetch departments");
         const data = await response.json();
@@ -67,7 +76,13 @@ const DashboardPage = () => {
       const fetchDepartmentPatients = async () => {
         try {
           const response = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/triage-department-patients/${selectedDepartment}`
+            `${process.env.NEXT_PUBLIC_API_URL}/api/triage-department-patients/${selectedDepartment}`,
+            {
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Token ${authState?.token}`,
+              },
+            }
           );
           if (!response.ok)
             throw new Error("Failed to fetch department patients");
@@ -79,7 +94,7 @@ const DashboardPage = () => {
       };
       fetchDepartmentPatients();
     }
-  }, [selectedDepartment]);
+  }, [selectedDepartment,authState.token]);
 
   // Filter revenue data based on the selected date range
   useEffect(() => {

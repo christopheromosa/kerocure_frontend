@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import LoadingPage from "@/components/loading_animation";
+import { useAuth } from "@/context/AuthContext";
 
 type LabTest = {
   service: string;
@@ -42,13 +43,20 @@ const PhysicianNotesTable = () => {
   const [physicianNoteData, setPhysicianNoteData] = useState<PhysicianNote[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const itemsPerPage = 3;
+  const { authState } = useAuth();
 
   useEffect(() => {
     async function fetchPatientsData() {
       setIsLoading(true);
       try {
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/consultation/`
+          `${process.env.NEXT_PUBLIC_API_URL}/consultation/`,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Token ${authState?.token}`,
+            },
+          }
         );
         if (!response.ok) throw new Error("Failed to fetch data");
 

@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import LoadingPage from "@/components/loading_animation";
+import { useAuth } from "@/context/AuthContext";
 
 // Example data structure for Medications
 interface Medication {
@@ -32,13 +33,20 @@ export default function MedicationsTable() {
   const [expandedRows, setExpandedRows] = useState<number[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const resultsPerPage = 5;
+  const { authState } = useAuth();
 
   useEffect(() => {
     async function fetchMedicationData() {
       setIsLoading(true);
       try {
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/pharmacy/`
+          `${process.env.NEXT_PUBLIC_API_URL}/pharmacy/`,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Token ${authState?.token}`,
+            },
+          }
         );
         if (!response.ok) throw new Error("Failed to fetch data");
 

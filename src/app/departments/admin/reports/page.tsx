@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import LoadingPage from "@/components/loading_animation";
+import { useAuth } from "@/context/AuthContext";
 
 interface Visit {
   id: number;
@@ -43,13 +44,20 @@ const MedicalHistoryPage = () => {
     page: 0,
     pageSize: 5,
   });
+  const { authState } = useAuth();
 
   // Fetch all visits
   const fetchAllVisits = async () => {
     setIsLoading(true);
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/all-visits/`
+        `${process.env.NEXT_PUBLIC_API_URL}/api/all-visits/`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Token ${authState?.token}`,
+          },
+        }
       );
       if (!response.ok) throw new Error("Failed to fetch visits");
       const data = await response.json();
@@ -66,7 +74,13 @@ const MedicalHistoryPage = () => {
     setIsLoading(true);
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/visit-details/${visitId}`
+        `${process.env.NEXT_PUBLIC_API_URL}/api/visit-details/${visitId}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Token ${authState?.token}`,
+          },
+        }
       );
       if (!response.ok) throw new Error("Failed to fetch visit details");
       const data = await response.json();

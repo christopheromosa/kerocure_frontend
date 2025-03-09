@@ -76,6 +76,7 @@ const BillingDetailsPage = () => {
             patient: patientId,
             current_state: "BILLING",
             next_state: "COMPLETED",
+            visit_status:"completed"
           },
           {
             headers: {

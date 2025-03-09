@@ -21,6 +21,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import axios from "axios";
 import { Input } from "@/components/ui/input";
 import OrganizationInfo from "../OrganizationInfo";
+import { useAuth } from "@/context/AuthContext";
 
 export const TestRequestTab = ({
   testRequests,
@@ -33,13 +34,20 @@ export const TestRequestTab = ({
   const [searchTerm, setSearchTerm] = useState("");
   const [labTests, setLabTests] = useState<any[]>([]);
   const [selectedTests, setSelectedTests] = useState<any[]>(testRequests); // Initialize with existing test requests
+  const { authState } = useAuth();
 
   // Fetch lab tests on component mount
   useEffect(() => {
     const fetchLabTests = async () => {
       try {
         const response = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_URL}/labtests/`
+          `${process.env.NEXT_PUBLIC_API_URL}/labtests/`,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Token ${authState?.token}`,
+            },
+          }
         );
         setLabTests(response.data);
       } catch (error) {

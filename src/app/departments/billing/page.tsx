@@ -1,10 +1,5 @@
 "use client";
-import {
-  LayoutDashboard,
-  Server,
-  ClipboardCheck,
-  Settings,
-} from "lucide-react";
+import { Server, ClipboardCheck, Settings } from "lucide-react";
 import {
   Card,
   CardHeader,
@@ -20,7 +15,11 @@ export default function BillingDashboard() {
 
   // Links for the dashboard cards (specific to the pharmacy department)
   const links = [
-    { label: "Patients Queue", href: "/departments/billing/patients", icon: Server },
+    {
+      label: "Patients Queue",
+      href: "/departments/billing/patients",
+      icon: Server,
+    },
     {
       label: "Reports",
       href: "/departments/billing/analytics",

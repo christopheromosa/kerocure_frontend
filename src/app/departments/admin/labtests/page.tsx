@@ -21,6 +21,7 @@ import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { CircularProgress } from "@mui/material";
 import axios from "axios";
+import { useAuth } from "@/context/AuthContext";
 
 interface LabTest {
   id?: number;
@@ -37,13 +38,20 @@ export default function LabTestManagement() {
   const [isLoading, setIsLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const { authState } = useAuth();
 
   // Fetch all lab tests on page load
   const fetchLabTests = async () => {
     setIsLoading(true);
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/labtests/`
+        `${process.env.NEXT_PUBLIC_API_URL}/labtests/`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Token ${authState?.token}`,
+          },
+        }
       );
       const data = await response.json();
       setLabTests(data);
@@ -76,6 +84,7 @@ export default function LabTestManagement() {
         method,
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Token ${authState?.token}`,
         },
         body: JSON.stringify(labTest),
       });
@@ -105,6 +114,10 @@ export default function LabTestManagement() {
         `${process.env.NEXT_PUBLIC_API_URL}/labtests/${id}/`,
         {
           method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Token ${authState?.token}`,
+          },
         }
       );
 
@@ -139,29 +152,30 @@ export default function LabTestManagement() {
         {
           headers: {
             "Content-Type": "multipart/form-data",
+            Authorization: `Token ${authState?.token}`,
           },
-           onUploadProgress: (progressEvent) => {
-          const percentCompleted = Math.round(
-            (progressEvent.loaded * 100) / (progressEvent.total || 1)
-          );
+          onUploadProgress: (progressEvent) => {
+            const percentCompleted = Math.round(
+              (progressEvent.loaded * 100) / (progressEvent.total || 1)
+            );
 
-          // Gradually increase the progress bar
-          const increaseProgress = (target: number) => {
-            setTimeout(() => {
-              setUploadProgress((prev) => {
-                if (prev < target) {
-                  increaseProgress(target); // Continue increasing
-                  return prev + 1; // Increment by 1%
-                }
-                return target; // Stop when target is reached
-              });
-            }, 50); // Adjust speed (50ms per step)
-          };
+            // Gradually increase the progress bar
+            const increaseProgress = (target: number) => {
+              setTimeout(() => {
+                setUploadProgress((prev) => {
+                  if (prev < target) {
+                    increaseProgress(target); // Continue increasing
+                    return prev + 1; // Increment by 1%
+                  }
+                  return target; // Stop when target is reached
+                });
+              }, 50); // Adjust speed (50ms per step)
+            };
 
-          increaseProgress(percentCompleted);
-        },
-      }
-    );
+            increaseProgress(percentCompleted);
+          },
+        }
+      );
 
       toast.success(response.data.message);
       fetchLabTests(); // Refresh the lab test list
@@ -174,9 +188,9 @@ export default function LabTestManagement() {
       }
     } finally {
       setTimeout(() => {
-            setIsUploading(false);
-            setUploadProgress(0);
-          }, 1000); 
+        setIsUploading(false);
+        setUploadProgress(0);
+      }, 1000);
     }
   };
 

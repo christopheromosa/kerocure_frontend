@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle} from "@/components/ui/card";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useParams, useRouter } from "next/navigation";
@@ -11,12 +11,12 @@ import { useVisit } from "@/context/VisitContext";
 import { useAuth } from "@/context/AuthContext";
 import PageTransition from "@/components/PageTransition";
 import LoadingPage from "@/components/loading_animation";
-import OrganizationInfo from "@/components/OrganizationInfo";
 import { DiagnosisTab } from "@/components/tabs/DiagnosisTab";
 import { MedicalHistoryTab } from "@/components/tabs/MedicalHistoryTab";
 import { TestRequestTab } from "@/components/tabs/TestRequestTab";
 import { PrescriptionsTab } from "@/components/tabs/PrescriptionsTab";
 import { LabResultsTab } from "@/components/tabs/LabResultsTab";
+
 
 const PatientManagementPage = () => {
   const { patientId } = useParams();
@@ -38,7 +38,13 @@ const PatientManagementPage = () => {
       const fetchAllVisits = async () => {
         try {
           const response = await axios.get(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/patient_visits/${patientId}`
+            `${process.env.NEXT_PUBLIC_API_URL}/api/patient_visits/${patientId}`,
+            {
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Token ${authState?.token}`,
+              },
+            }
           );
           setAllVisits(response.data);
         } catch (error) {
@@ -48,7 +54,7 @@ const PatientManagementPage = () => {
 
       fetchAllVisits();
     }
-  }, [fetchVisitData, patientId]);
+  }, [fetchVisitData, patientId,authState.token]);
 
   // Set diagnosis if it exists in visit data
   useEffect(() => {

@@ -21,6 +21,7 @@ interface ConsultationData {
     id: number;
     medication_name: string;
     quantity: string;
+    dosage:string;
     cost: number;
     dispensed: boolean;
   }[];

@@ -37,6 +37,7 @@ interface Prescription {
   quantity: string;
   cost: number;
   dispensed: boolean;
+  dosage:string;
 }
 
 // Define the type for a drug
@@ -103,6 +104,7 @@ const PharmacyDetailsPage = () => {
           medication_name: prescription.medication_name,
           quantity: prescription.quantity,
           cost: prescription.cost,
+          dosage:prescription.dosage,
           dispensed: false,
         })
       );
@@ -267,6 +269,7 @@ const handleCompleteDispensing = async () => {
               <TableRow>
                 <TableHead>Medication</TableHead>
                 <TableHead>Quantity</TableHead>
+                <TableHead>Dosage</TableHead>
                 <TableHead>Dispensed</TableHead>
                 <TableHead>Cost</TableHead>
                 <TableHead>Actions</TableHead>
@@ -277,6 +280,7 @@ const handleCompleteDispensing = async () => {
                 <TableRow key={prescription.id}>
                   <TableCell>{prescription.medication_name}</TableCell>
                   <TableCell>{prescription.quantity}</TableCell>
+                  <TableCell>{prescription.dosage}</TableCell>
                   <TableCell>
                     <Checkbox
                       checked={prescription.dispensed}

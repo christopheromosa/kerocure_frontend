@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/table";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { useAuth } from "@/context/AuthContext";
 
 interface Disease {
   id?: number;
@@ -31,12 +32,19 @@ export default function DiseaseManagement() {
   const [currentDisease, setCurrentDisease] = useState<Disease | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const { authState } = useAuth();
 
   const fetchDiseases = async () => {
     setIsLoading(true);
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/diseases/`
+        `${process.env.NEXT_PUBLIC_API_URL}/diseases/`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Token ${authState?.token}`,
+          },
+        }
       );
       const data = await response.json();
       setDiseases(data);

@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import LoadingPage from "@/components/loading_animation";
+import { useAuth } from "@/context/AuthContext";
 
 // Example data structure for Billing records
 interface Billing {
@@ -31,13 +32,20 @@ export default function BillingTable() {
   const [billingData, setBillingData] = useState<Billing[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const resultsPerPage = 5;
+    const { authState } = useAuth();
 
   useEffect(() => {
     async function fetchBillingData() {
       setIsLoading(true);
       try {
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/billing/`
+          `${process.env.NEXT_PUBLIC_API_URL}/billing/`,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Token ${authState?.token}`,
+            },
+          }
         );
         if (!response.ok) throw new Error("Failed to fetch data");
 

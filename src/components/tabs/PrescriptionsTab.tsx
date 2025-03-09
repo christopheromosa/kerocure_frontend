@@ -24,6 +24,7 @@ import { Input } from "../ui/input";
 import { useRouter } from "next/navigation";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { useAuth } from "@/context/AuthContext";
 
 export const PrescriptionsTab = ({
   prescriptions,
@@ -46,6 +47,7 @@ export const PrescriptionsTab = ({
   const [isAddDiseaseDialogOpen, setIsAddDiseaseDialogOpen] = useState(false);
   const [newDiseaseName, setNewDiseaseName] = useState("");
   const router = useRouter();
+  const { authState } = useAuth();
 
   console.log(note_id,diagnosis,visit);
 
@@ -54,7 +56,13 @@ export const PrescriptionsTab = ({
     const fetchDrugs = async () => {
       try {
         const response = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_URL}/drugs/`
+          `${process.env.NEXT_PUBLIC_API_URL}/drugs/`,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Token ${authState?.token}`,
+            },
+          }
         );
         setDrugs(response.data);
       } catch (error) {
@@ -65,7 +73,13 @@ export const PrescriptionsTab = ({
     const fetchDiseases = async () => {
       try {
         const response = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_URL}/diseases/`
+          `${process.env.NEXT_PUBLIC_API_URL}/diseases/`,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Token ${authState?.token}`,
+            },
+          }
         );
         setAllDiseases(response.data);
       } catch (error) {
@@ -75,7 +89,7 @@ export const PrescriptionsTab = ({
 
     fetchDrugs();
     fetchDiseases();
-  }, []);
+  }, [authState.token]);
 
   // Sync selectedDrugs with parent's prescriptions
   useEffect(() => {
@@ -103,12 +117,12 @@ export const PrescriptionsTab = ({
   };
 
   // Handle adding a drug to the selected list
-  const handleAddDrug = (drug: any) => {
-    const updatedDrugs = [...selectedDrugs, drug];
-    setSelectedDrugs(updatedDrugs);
-    setPrescriptions(updatedDrugs);
-    setSearchTerm("");
-  };
+const handleAddDrug = (drug: any) => {
+  const updatedDrugs = [...selectedDrugs, { ...drug, dosage: "" }];
+  setSelectedDrugs(updatedDrugs);
+  setPrescriptions(updatedDrugs);
+  setSearchTerm("");
+};
 
   // Handle deleting a drug from the selected list
   const handleDeleteDrug = (index: number) => {
@@ -220,6 +234,19 @@ setTimeout(() => {
                 <TableCell>{drug.drug_name}</TableCell>
                 <TableCell>{drug.quantity}</TableCell>
                 <TableCell>{drug.cost}</TableCell>
+                <TableCell>
+                        <Input
+                          type="text"
+                          placeholder="Enter dosage"
+                          value={drug.dosage}
+                          onChange={(e) => {
+                            const updatedDrugs = [...selectedDrugs];
+                            updatedDrugs[index].dosage = e.target.value;
+                            setSelectedDrugs(updatedDrugs);
+                            setPrescriptions(updatedDrugs);
+                          }}
+                        />
+                      </TableCell>
                 <TableCell>{drug.status}</TableCell>
                 <TableCell>
                   <Button onClick={() => handleDeleteDrug(index)}>

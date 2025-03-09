@@ -14,6 +14,7 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 import LoadingPage from "@/components/loading_animation";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import { useAuth } from "@/context/AuthContext";
 
 type PhysicianNote = {
   note_id: number;
@@ -42,13 +43,20 @@ const PhysicianNotesTable = () => {
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [diseaseFilter, setDiseaseFilter] = useState("");
   const itemsPerPage = 3;
+    const { authState } = useAuth();
 
   useEffect(() => {
     async function fetchPatientsData() {
       setIsLoading(true);
       try {
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/consultation/`
+          `${process.env.NEXT_PUBLIC_API_URL}/consultation/`,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Token ${authState?.token}`,
+            },
+          }
         );
         if (!response.ok) throw new Error("Failed to fetch data");
 

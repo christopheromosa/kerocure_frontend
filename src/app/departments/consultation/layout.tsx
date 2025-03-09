@@ -5,7 +5,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
-import { Users, LayoutDashboard,ClipboardCheck,Server,Microscope,Settings } from "lucide-react";
+import { LayoutDashboard,ClipboardCheck,Server,Microscope,Settings } from "lucide-react";
 import {
   Breadcrumb,
   BreadcrumbItem,

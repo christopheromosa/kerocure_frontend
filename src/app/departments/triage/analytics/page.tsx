@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Plus, Minus } from "lucide-react";
 import LoadingPage from "@/components/loading_animation";
+import { useAuth } from "@/context/AuthContext";
 
 // import { DataTable } from "@/components/tables/records-data-table/recordsTable";
 
@@ -35,13 +36,20 @@ const TriageTable = () => {
   const [expandedRows, setExpandedRows] = useState<number[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const itemsPerPage =5;
+  const { authState } = useAuth();
 
   useEffect(() => {
     async function fetchTriageData() {
       setIsLoading(true);
       try {
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/triage/`
+          `${process.env.NEXT_PUBLIC_API_URL}/triage/`,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Token ${authState?.token}`,
+            },
+          }
         );
         if (!response.ok) throw new Error("Failed to fetch data");
 

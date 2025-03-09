@@ -21,6 +21,7 @@ import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { CircularProgress } from "@mui/material";
 import axios from "axios";
+import { useAuth } from "@/context/AuthContext";
 
 interface Drug {
   id?: number;
@@ -38,12 +39,21 @@ export default function DrugManagement() {
   const [isLoading, setIsLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const { authState } = useAuth();
 
   // Fetch all drugs on page load
   const fetchDrugs = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/drugs/`);
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/drugs/`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Token ${authState?.token}`,
+          },
+        }
+      );
       const data = await response.json();
       setDrugs(data);
     } catch (error) {
@@ -121,8 +131,9 @@ export default function DrugManagement() {
 
   // Handle file upload
 
-
- const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -140,29 +151,28 @@ export default function DrugManagement() {
           headers: {
             "Content-Type": "multipart/form-data",
           },
-           onUploadProgress: (progressEvent) => {
-          const percentCompleted = Math.round(
-            (progressEvent.loaded * 100) / (progressEvent.total || 1)
-          );
+          onUploadProgress: (progressEvent) => {
+            const percentCompleted = Math.round(
+              (progressEvent.loaded * 100) / (progressEvent.total || 1)
+            );
 
-          // Gradually increase the progress bar
-          const increaseProgress = (target: number) => {
-            setTimeout(() => {
-              setUploadProgress((prev) => {
-                if (prev < target) {
-                  increaseProgress(target); // Continue increasing
-                  return prev + 1; // Increment by 1%
-                }
-                return target; // Stop when target is reached
-              });
-            }, 50); // Adjust speed (50ms per step)
-          };
+            // Gradually increase the progress bar
+            const increaseProgress = (target: number) => {
+              setTimeout(() => {
+                setUploadProgress((prev) => {
+                  if (prev < target) {
+                    increaseProgress(target); // Continue increasing
+                    return prev + 1; // Increment by 1%
+                  }
+                  return target; // Stop when target is reached
+                });
+              }, 50); // Adjust speed (50ms per step)
+            };
 
-          increaseProgress(percentCompleted);
-        },
-      }
-    );
-
+            increaseProgress(percentCompleted);
+          },
+        }
+      );
 
       toast.success("File uploaded successfully!");
       fetchDrugs();
@@ -170,10 +180,10 @@ export default function DrugManagement() {
       console.error("Failed to upload file:", error);
       toast.error("Failed to upload file.");
     } finally {
-       setTimeout(() => {
-            setIsUploading(false);
-            setUploadProgress(0);
-          }, 1000); 
+      setTimeout(() => {
+        setIsUploading(false);
+        setUploadProgress(0);
+      }, 1000);
     }
   };
 

@@ -21,6 +21,8 @@ import {
   Activity,
   FlaskConical,
   Settings,
+  Users
+  
 } from "lucide-react";
 import {
   Breadcrumb,
@@ -43,6 +45,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       icon: LayoutDashboard,
     },
     { label: "Staff", href: "/departments/admin/staff", icon: UserCheck },
+     {
+      label: "Visits",
+      href: "/departments/admin/visits",
+      icon: Users,
+    },
     {
       label: "Patients",
       href: "/departments/admin/patients",

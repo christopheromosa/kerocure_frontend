@@ -10,7 +10,6 @@ import { FaUser } from "react-icons/fa";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useAuth } from "@/context/AuthContext";
-import Image from "next/image";
 import OrganizationInfo from "@/components/OrganizationInfo";
 
 type PatientType = {

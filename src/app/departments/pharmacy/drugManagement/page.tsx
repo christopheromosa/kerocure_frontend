@@ -23,6 +23,7 @@ import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { DrugForm } from "@/components/forms/drug-form";
 import { CircularProgress } from "@mui/material";
+import { useAuth } from "@/context/AuthContext";
 
 export default function DrugManagement() {
   const [drugs, setDrugs] = useState<any[]>([]);
@@ -34,6 +35,7 @@ export default function DrugManagement() {
   const [isLoading, setIsLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const { authState } = useAuth();
 
   // Fetch drugs from the backend
   const fetchDrugs = async () => {
@@ -62,7 +64,13 @@ export default function DrugManagement() {
         // Edit existing drug
         await axios.put(
           `${process.env.NEXT_PUBLIC_API_URL}/drugs/${currentDrug.id}/`,
-          drug
+          drug,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Token ${authState?.token}`,
+            },
+          }
         );
         toast.success("Drug updated successfully!");
       } else {
@@ -83,7 +91,13 @@ export default function DrugManagement() {
   const handleDeleteDrug = async () => {
     try {
       await axios.delete(
-        `${process.env.NEXT_PUBLIC_API_URL}/drugs/${drugToDelete.id}/`
+        `${process.env.NEXT_PUBLIC_API_URL}/drugs/${drugToDelete.id}/`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Token ${authState?.token}`,
+          },
+        }
       );
       toast.success("Drug deleted successfully!");
       fetchDrugs(); // Refresh the list
@@ -101,7 +115,9 @@ export default function DrugManagement() {
   );
 
   // Handle file upload
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -119,29 +135,28 @@ export default function DrugManagement() {
           headers: {
             "Content-Type": "multipart/form-data",
           },
-           onUploadProgress: (progressEvent) => {
-          const percentCompleted = Math.round(
-            (progressEvent.loaded * 100) / (progressEvent.total || 1)
-          );
+          onUploadProgress: (progressEvent) => {
+            const percentCompleted = Math.round(
+              (progressEvent.loaded * 100) / (progressEvent.total || 1)
+            );
 
-          // Gradually increase the progress bar
-          const increaseProgress = (target: number) => {
-            setTimeout(() => {
-              setUploadProgress((prev) => {
-                if (prev < target) {
-                  increaseProgress(target); // Continue increasing
-                  return prev + 1; // Increment by 1%
-                }
-                return target; // Stop when target is reached
-              });
-            }, 50); // Adjust speed (50ms per step)
-          };
+            // Gradually increase the progress bar
+            const increaseProgress = (target: number) => {
+              setTimeout(() => {
+                setUploadProgress((prev) => {
+                  if (prev < target) {
+                    increaseProgress(target); // Continue increasing
+                    return prev + 1; // Increment by 1%
+                  }
+                  return target; // Stop when target is reached
+                });
+              }, 50); // Adjust speed (50ms per step)
+            };
 
-          increaseProgress(percentCompleted);
-        },
-      }
-    );
-
+            increaseProgress(percentCompleted);
+          },
+        }
+      );
 
       toast.success("File uploaded successfully!");
       fetchDrugs();
@@ -149,10 +164,10 @@ export default function DrugManagement() {
       console.error("Failed to upload file:", error);
       toast.error("Failed to upload file.");
     } finally {
-       setTimeout(() => {
-            setIsUploading(false);
-            setUploadProgress(0);
-          }, 1000); 
+      setTimeout(() => {
+        setIsUploading(false);
+        setUploadProgress(0);
+      }, 1000);
     }
   };
 

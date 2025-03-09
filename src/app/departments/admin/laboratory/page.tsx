@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import LoadingPage from "@/components/loading_animation";
+import { useAuth } from "@/context/AuthContext";
 
 // Example data structure for Lab Results
 interface LabResult {
@@ -30,12 +31,21 @@ export default function LabResultsTable() {
   const resultsPerPage = 5;
   const [labResultsData, setLabResultsData] = useState<LabResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const { authState } = useAuth();
 
   useEffect(() => {
     async function fetchPatientsData() {
       setIsLoading(true);
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/lab/`);
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/lab/`,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Token ${authState?.token}`,
+            },
+          }
+        );
         if (!response.ok) throw new Error("Failed to fetch data");
 
         const data = await response.json();

@@ -19,17 +19,25 @@ import {
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import axios from "axios";
 import OrganizationInfo from "../OrganizationInfo";
+import { useAuth } from "@/context/AuthContext";
 
 export const MedicalHistoryTab = ({ visits }: any) => {
   const [selectedVisit, setSelectedVisit] = useState<any>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchDate, setSearchDate] = useState("");
+  const { authState } = useAuth();
 
   // Fetch visit details from the backend API
   const handleViewVisit = async (visitId: any) => {
     try {
       const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/patient_visits_details/${visitId}`
+        `${process.env.NEXT_PUBLIC_API_URL}/api/patient_visits_details/${visitId}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Token ${authState?.token}`,
+          },
+        }
       );
       setSelectedVisit(response.data);
       setIsDialogOpen(true);
@@ -41,7 +49,9 @@ export const MedicalHistoryTab = ({ visits }: any) => {
   // Filter visits by the selected date
   const filteredVisits = searchDate
     ? visits.filter((visit: any) => {
-        const visitDate = new Date(visit.visit_date).toISOString().split("T")[0]; // Format as YYYY-MM-DD
+        const visitDate = new Date(visit.visit_date)
+          .toISOString()
+          .split("T")[0]; // Format as YYYY-MM-DD
         return visitDate === searchDate;
       })
     : visits;
@@ -153,8 +163,12 @@ export const MedicalHistoryTab = ({ visits }: any) => {
                       .map(
                         (consultation: any) => `
                       <ul>
-                        <li><strong>Diagnosis:</strong> ${consultation.diagnosis}</li>
-                        <li><strong>Disease:</strong> ${consultation.disease || "N/A"}</li>
+                        <li><strong>Diagnosis:</strong> ${
+                          consultation.diagnosis
+                        }</li>
+                        <li><strong>Disease:</strong> ${
+                          consultation.disease || "N/A"
+                        }</li>
                         <li><strong>Prescription:</strong></li>
                         ${consultation.prescription
                           .map(
@@ -259,7 +273,7 @@ export const MedicalHistoryTab = ({ visits }: any) => {
         </body>
       </html>
     `;
-  
+
     const printWindow = window.open("", "_blank");
     printWindow?.document.write(printContent);
     printWindow?.document.close();
@@ -321,10 +335,11 @@ export const MedicalHistoryTab = ({ visits }: any) => {
                     {new Date(selectedVisit.visit_date).toLocaleDateString()}
                   </p>
                   <p>
-                    <strong>Type of Visit:</strong> {selectedVisit.visit_type || "N/A"}
+                    <strong>Type of Visit:</strong>{" "}
+                    {selectedVisit.visit_type || "N/A"}
                   </p>
                 </div>
-        
+
                 {/* Grid Layout for Sections */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Triage Section */}
@@ -336,11 +351,18 @@ export const MedicalHistoryTab = ({ visits }: any) => {
                           <strong>Vital Signs:</strong>
                         </p>
                         <ul className="list-disc pl-6">
-                          <li>Pulse: {selectedVisit.triage.vital_signs.pulse}</li>
-                          <li>Height: {selectedVisit.triage.vital_signs.height}</li>
-                          <li>Weight: {selectedVisit.triage.vital_signs.weight}</li>
                           <li>
-                            Blood Pressure: {selectedVisit.triage.vital_signs.systolic}/
+                            Pulse: {selectedVisit.triage.vital_signs.pulse}
+                          </li>
+                          <li>
+                            Height: {selectedVisit.triage.vital_signs.height}
+                          </li>
+                          <li>
+                            Weight: {selectedVisit.triage.vital_signs.weight}
+                          </li>
+                          <li>
+                            Blood Pressure:{" "}
+                            {selectedVisit.triage.vital_signs.systolic}/
                             {selectedVisit.triage.vital_signs.diastolic}
                           </li>
                         </ul>
@@ -349,7 +371,7 @@ export const MedicalHistoryTab = ({ visits }: any) => {
                       <p>No triage data available.</p>
                     )}
                   </div>
-        
+
                   {/* Consultation Section */}
                   <div className="bg-gray-500 p-4 rounded-lg border">
                     <h3 className="font-semibold text-lg mb-2">Consultation</h3>
@@ -360,7 +382,8 @@ export const MedicalHistoryTab = ({ visits }: any) => {
                             <strong>Diagnosis:</strong> {consultation.diagnosis}
                           </p>
                           <p>
-                            <strong>Disease:</strong> {consultation.disease || "N/A"}
+                            <strong>Disease:</strong>{" "}
+                            {consultation.disease || "N/A"}
                           </p>
                           <p>
                             <strong>Prescription:</strong>
@@ -368,7 +391,8 @@ export const MedicalHistoryTab = ({ visits }: any) => {
                           <ul className="list-disc pl-6">
                             {consultation.prescription.map((p: any) => (
                               <li key={p.id}>
-                                {p.drug_name} - {p.quantity} units (Cost: Ksh {p.cost})
+                                {p.drug_name} - {p.quantity} units (Cost: Ksh{" "}
+                                {p.cost})
                               </li>
                             ))}
                           </ul>
@@ -378,8 +402,8 @@ export const MedicalHistoryTab = ({ visits }: any) => {
                           <ul className="list-disc pl-6">
                             {consultation.lab_tests_ordered.map((test: any) => (
                               <li key={test.id}>
-                                {test.service} - Cost: Ksh {test.cost} (Duration:{" "}
-                                {test.duration})
+                                {test.service} - Cost: Ksh {test.cost}{" "}
+                                (Duration: {test.duration})
                               </li>
                             ))}
                           </ul>
@@ -389,7 +413,7 @@ export const MedicalHistoryTab = ({ visits }: any) => {
                       <p>No consultation data available.</p>
                     )}
                   </div>
-        
+
                   {/* Lab Section */}
                   <div className="bg-gray-500 p-4 rounded-lg border">
                     <h3 className="font-semibold text-lg mb-2">Lab Tests</h3>
@@ -411,7 +435,7 @@ export const MedicalHistoryTab = ({ visits }: any) => {
                       <p>No lab tests available.</p>
                     )}
                   </div>
-        
+
                   {/* Pharmacy Section */}
                   <div className="bg-gray-500 p-4 rounded-lg border">
                     <h3 className="font-semibold text-lg mb-2">Medications</h3>
@@ -421,7 +445,8 @@ export const MedicalHistoryTab = ({ visits }: any) => {
                           <ul className="list-disc pl-6">
                             {pharmacy.prescriptions.map((p: any) => (
                               <li key={p.id}>
-                                <strong>Medication:</strong> {p.medication_name} <br />
+                                <strong>Medication:</strong> {p.medication_name}{" "}
+                                <br />
                                 <strong>Quantity:</strong> {p.quantity} <br />
                                 <strong>Cost:</strong> Ksh {p.cost}
                               </li>
@@ -433,7 +458,7 @@ export const MedicalHistoryTab = ({ visits }: any) => {
                       <p>No medications prescribed.</p>
                     )}
                   </div>
-        
+
                   {/* Billing Section */}
                   <div className="bg-gray-500 p-4 rounded-lg border">
                     <h3 className="font-semibold text-lg mb-2">Billing</h3>
@@ -442,14 +467,16 @@ export const MedicalHistoryTab = ({ visits }: any) => {
                         <div key={billing.bill_id} className="space-y-2">
                           <ul className="list-disc pl-6">
                             <li>
-                              <strong>Total Cost:</strong> Ksh {billing.total_cost}
+                              <strong>Total Cost:</strong> Ksh{" "}
+                              {billing.total_cost}
                             </li>
                             <li>
                               <strong>Consultation Cost:</strong> Ksh{" "}
                               {billing.consultation_cost}
                             </li>
                             <li>
-                              <strong>Lab Cost:</strong> Ksh {billing.laboratory_cost}
+                              <strong>Lab Cost:</strong> Ksh{" "}
+                              {billing.laboratory_cost}
                             </li>
                             <li>
                               <strong>Pharmacy Cost:</strong> Ksh{" "}

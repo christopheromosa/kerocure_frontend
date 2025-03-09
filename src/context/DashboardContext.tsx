@@ -5,6 +5,7 @@ import { useAuth } from "./AuthContext";
 import { useQuery } from "react-query";
 import LoadingPage from "@/components/loading_animation";
 
+
 type Billing = {
   id: number;
   totalCost: number;
@@ -35,7 +36,9 @@ interface DashboardData {
 
 const DashboardContext = createContext<DashboardData | undefined>(undefined);
 
+
 const fetchDashboardData = async () => {
+  
   const [
     consultationQueueRes,
     labQueueRes,

@@ -4,6 +4,7 @@ import { DataTable } from "@/components/tables/consultation-data-table/consultat
 import React, { useEffect, useState } from "react";
 import PageTransition from "@/components/PageTransition";
 import LoadingPage from "@/components/loading_animation";
+import { useAuth } from "@/context/AuthContext";
 import {
   Select,
   SelectContent,
@@ -11,7 +12,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
 
 export interface Department {
   id: number;
@@ -23,6 +23,7 @@ export default function ConsultationPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [selectedDepartment, setSelectedDepartment] = useState("all");
+  const { authState } = useAuth();
 
   useEffect(() => {
     async function getTriagedPatientsData() {
@@ -31,6 +32,10 @@ export default function ConsultationPage() {
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/triage-patients/`,
         {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Token ${authState?.token}`,
+          },
           cache: "no-store",
         }
       );
@@ -47,6 +52,10 @@ export default function ConsultationPage() {
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/departments/`,
         {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Token ${authState?.token}`,
+          },
           cache: "no-store",
         }
       );

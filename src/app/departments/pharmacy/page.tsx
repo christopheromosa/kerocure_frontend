@@ -1,11 +1,5 @@
 "use client";
-import {
-  LayoutDashboard,
-  Server,
-  ClipboardCheck,
-  Settings,
-  Pill
-} from "lucide-react";
+import { Server, ClipboardCheck, Settings, Pill } from "lucide-react";
 import {
   Card,
   CardHeader,

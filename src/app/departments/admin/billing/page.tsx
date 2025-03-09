@@ -14,6 +14,7 @@ import LoadingPage from "@/components/loading_animation";
 import { Input } from "@/components/ui/input";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import { useAuth } from "@/context/AuthContext";
 
 // Example data structure for Billing records
 interface Billing {
@@ -38,13 +39,20 @@ export default function BillingTable() {
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const resultsPerPage = 5;
+  const { authState } = useAuth();
 
   useEffect(() => {
     async function fetchBillingData() {
       setIsLoading(true);
       try {
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/billing/`
+          `${process.env.NEXT_PUBLIC_API_URL}/billing/`,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Token ${authState?.token}`,
+            },
+          }
         );
         if (!response.ok) throw new Error("Failed to fetch data");
 
@@ -82,13 +90,19 @@ export default function BillingTable() {
     setFilteredData(filtered);
     setCurrentPage(1); // Reset to the first page after filtering
   }, [startDate, endDate, searchQuery, billingData]);
-	
 
   // Calculate total cost for all filtered records
-const totalCost = filteredData.reduce((sum, bill) => {
-  return sum + bill.total_cost; // Directly add the total_cost of each filtered record
-}, 0);
+  const formatedTotalCost = filteredData.reduce((sum, bill) => {
+    // Ensure total_cost is a number
+    const billTotal =
+      typeof bill.total_cost === "string"
+        ? parseFloat(bill.total_cost)
+        : bill.total_cost;
+    return sum + (isNaN(billTotal) ? 0 : billTotal); // Add billTotal to the sum, default to 0 if NaN
+  }, 0);
 
+  // Display total cost with 2 decimal places
+  const totalCost = formatedTotalCost.toFixed(2);
   // Pagination logic
   const totalPages = Math.ceil(filteredData.length / resultsPerPage);
   const displayedBills = filteredData.slice(

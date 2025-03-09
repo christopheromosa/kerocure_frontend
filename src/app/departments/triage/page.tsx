@@ -21,13 +21,7 @@ export default function Dashboard() {
 
   // Links for the dashboard cards
   const links = [
-    // {
-    //   label: "Dashboard",
-    //   href: "/departments/triage",
-    //   icon: LayoutDashboard,
-    // },
     { label: "Patients", href: "/departments/triage/patients", icon: Server },
-
     {
       label: "Reports",
       href: "/departments/triage/analytics",
