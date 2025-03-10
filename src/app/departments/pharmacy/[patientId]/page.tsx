@@ -66,6 +66,7 @@ const PharmacyDetailsPage = () => {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedDrug, setSelectedDrug] = useState<Drug | null>(null);
   const [dispenseQuantity, setDispenseQuantity] = useState<number>(1);
+  const [showConfirmationDialog, setShowConfirmationDialog] = useState<boolean>(false);
 
   // Fetch patient details and prescriptions on page load
   useEffect(() => {
@@ -145,15 +146,20 @@ const PharmacyDetailsPage = () => {
   };
 
   // Complete dispensing
-  const handleCompleteDispensing = async () => {
+ const handleCompleteDispensing = async () => {
+    setShowConfirmationDialog(true);
+  };
+  
+  const confirmDispensing = async () => {
+    setShowConfirmationDialog(false);
     if (selectedDrug && selectedPrescription) {
       try {
         // Calculate total cost
         const totalCost = selectedDrug.cost * dispenseQuantity;
-
+  
         // Deduct the dispensed quantity from the drug's quantity in the database
         const updatedQuantity = selectedDrug.quantity - dispenseQuantity;
-
+  
         // Update the drug in the database
         const response = await axios.put(
           `${process.env.NEXT_PUBLIC_API_URL}/drugs/${selectedDrug.id}/`,
@@ -167,7 +173,7 @@ const PharmacyDetailsPage = () => {
             },
           }
         );
-
+  
         if (response.status === 200) {
           // Update the local drugs state
           setDrugs((prev) =>
@@ -177,7 +183,7 @@ const PharmacyDetailsPage = () => {
                 : drug
             )
           );
-
+  
           // Add the dispensed drug to the dispensedDrugs list
           const dispensedDrug = {
             ...selectedPrescription,
@@ -187,7 +193,7 @@ const PharmacyDetailsPage = () => {
             dispensed: true,
           };
           setDispensedDrugs((prev) => [...prev, dispensedDrug]);
-
+  
           // Close the dispense dialog
           setShowDispenseDialog(false);
         } else {
@@ -391,6 +397,22 @@ const PharmacyDetailsPage = () => {
           </div>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+{/* Confirmation Dialog */}
+      <AlertDialog open={showConfirmationDialog} onOpenChange={setShowConfirmationDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Dispensing</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to dispense this drug? This action cannot be undone and will directly modify the database.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDispensing}>Confirm</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
