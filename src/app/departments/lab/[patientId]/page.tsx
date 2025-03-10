@@ -66,7 +66,10 @@ const LabResultsPage = () => {
 
   // Calculate total cost whenever orders change
   useEffect(() => {
-    const calculatedTotalCost = orders.reduce((sum, test) => sum + test.cost, 0);
+    const calculatedTotalCost = orders.reduce(
+      (sum, test) => sum + test.cost,
+      0
+    );
     setTotalCost(calculatedTotalCost);
   }, [orders]);
 
@@ -129,18 +132,11 @@ const LabResultsPage = () => {
             },
           }
         );
-
-        // Show success dialog and toast
+        toast.success("Submitted test results successfully!", {
+          autoClose: 1000,
+        });
+        // Show success dialog
         setShowSuccessDialog(true);
-        setTimeout(() => {
-          toast.success("Submitted test results successfully!", {
-            autoClose: 1000,
-            onClose: () => {
-              router.push("/departments/lab");
-              // Refresh after the toast disappears
-            },
-          });
-        }, 1000);
       } else {
         throw new Error("Failed to submit test results");
       }
@@ -148,6 +144,12 @@ const LabResultsPage = () => {
       console.error("Error submitting test results:", error);
       setShowErrorDialog(true);
     }
+  };
+
+  // Function to handle "OK" button click in the success dialog
+  const handleSuccessDialogClose = () => {
+    setShowSuccessDialog(false); // Close the dialog
+    router.push("/departments/lab"); // Redirect to /departments/lab
   };
 
   if (!patientId) {
@@ -183,7 +185,9 @@ const LabResultsPage = () => {
                     <TableCell>
                       <Input
                         value={testOrders[testOrder.service] || ""}
-                        onChange={(e) => handleResultChange(e, testOrder.service)}
+                        onChange={(e) =>
+                          handleResultChange(e, testOrder.service)
+                        }
                         placeholder="Enter result"
                       />
                     </TableCell>
@@ -218,7 +222,9 @@ const LabResultsPage = () => {
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogAction>OK</AlertDialogAction>
+              <AlertDialogAction onClick={handleSuccessDialogClose}>
+                OK
+              </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>

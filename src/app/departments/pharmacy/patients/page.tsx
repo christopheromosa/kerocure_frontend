@@ -16,7 +16,7 @@ export default function PharmacyPage() {
       setIsLoading(true);
       // todo: implement fetch patients functionality
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/pharmacy-patients`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/pharmacy-patients/`,
         {
           headers: {
             "Content-Type": "application/json",

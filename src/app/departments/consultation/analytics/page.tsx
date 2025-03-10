@@ -40,7 +40,9 @@ const PhysicianNotesTable = () => {
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [expandedRows, setExpandedRows] = useState<number[]>([]);
-  const [physicianNoteData, setPhysicianNoteData] = useState<PhysicianNote[]>([]);
+  const [physicianNoteData, setPhysicianNoteData] = useState<PhysicianNote[]>(
+    []
+  );
   const [isLoading, setIsLoading] = useState(false);
   const itemsPerPage = 3;
   const { authState } = useAuth();
@@ -111,7 +113,6 @@ const PhysicianNotesTable = () => {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-1/6">Note ID</TableHead>
               <TableHead>Patient Name</TableHead>
               <TableHead>Physician</TableHead>
               <TableHead>Total Cost</TableHead>
@@ -124,7 +125,6 @@ const PhysicianNotesTable = () => {
               displayedNotes.map((note) => (
                 <React.Fragment key={note.note_id}>
                   <TableRow>
-                    <TableCell>{note.note_id}</TableCell>
                     <TableCell>{note.patient_name}</TableCell>
                     <TableCell>{note.staff_name || "Unknown"}</TableCell>
                     <TableCell>
@@ -148,7 +148,7 @@ const PhysicianNotesTable = () => {
                   {/* Expandable Row */}
                   {expandedRows.includes(note.note_id) && (
                     <TableRow key={`details-${note.note_id}`}>
-                      <TableCell colSpan={6} className="p-4">
+                      <TableCell colSpan={6} className="p-4 ">
                         <div className="space-y-3">
                           <div>
                             <span className="font-medium">Diagnosis:</span>{" "}
@@ -163,7 +163,8 @@ const PhysicianNotesTable = () => {
                                 <ul className="list-disc list-inside ml-4">
                                   {note.prescription.map((item, index) => (
                                     <li key={index}>
-                                      {item.drug_name}: {item.status} : {item.quantity} : {item.cost}
+                                      {item.drug_name}: {item.status} :{" "}
+                                      {item.quantity} : {item.cost}
                                     </li>
                                   ))}
                                 </ul>
@@ -179,7 +180,8 @@ const PhysicianNotesTable = () => {
                                 <ul className="list-disc list-inside ml-4">
                                   {note.lab_tests_ordered.map((test, index) => (
                                     <li key={index}>
-                                      {test.service} : {test.duration} : {test.cost}
+                                      {test.service} : {test.duration} :{" "}
+                                      {test.cost}
                                     </li>
                                   ))}
                                 </ul>

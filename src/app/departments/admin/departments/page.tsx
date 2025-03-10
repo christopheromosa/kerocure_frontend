@@ -193,7 +193,6 @@ export default function DepartmentsPage() {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>ID</TableHead>
             <TableHead>Name</TableHead>
             <TableHead>Actions</TableHead>
           </TableRow>
@@ -201,7 +200,6 @@ export default function DepartmentsPage() {
         <TableBody>
           {filteredDepartments.map((department) => (
             <TableRow key={department.id}>
-              <TableCell>{department.id}</TableCell>
               <TableCell>{department.name}</TableCell>
               <TableCell className="space-x-2">
                 <Button

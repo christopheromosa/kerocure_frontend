@@ -34,7 +34,7 @@ export default function TriagePage() {
       }
     }
     getPatientsData();
-  }, []);
+  }, [authState?.token]);
 
   return (
     <PageTransition>

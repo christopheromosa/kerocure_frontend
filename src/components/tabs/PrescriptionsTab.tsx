@@ -162,7 +162,7 @@ const handleAddDrug = (drug: any) => {
         }
       );
 setTimeout(() => {
-            toast.success("Patient proceed to pharmacy successfull!", {
+            toast.success("Patient proceed to pharmacy successfully!", {
               autoClose: 1000, // Show toast for 2 seconds
               onClose: () => {               
           router.push("/departments/consultation/patients");
@@ -222,8 +222,8 @@ setTimeout(() => {
           <TableHeader>
             <TableRow>
               <TableHead>Medication</TableHead>
-              <TableHead>Remaining</TableHead>
               <TableHead>Cost (Ksh)</TableHead>
+              <TableHead>Dosage</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
@@ -232,7 +232,6 @@ setTimeout(() => {
             {selectedDrugs.map((drug: any, index: number) => (
               <TableRow key={index}>
                 <TableCell>{drug.drug_name}</TableCell>
-                <TableCell>{drug.quantity}</TableCell>
                 <TableCell>{drug.cost}</TableCell>
                 <TableCell>
                         <Input

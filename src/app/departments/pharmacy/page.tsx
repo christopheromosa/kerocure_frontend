@@ -15,7 +15,7 @@ export default function PharmacyDashboard() {
 
   // Links for the dashboard cards (specific to the pharmacy department)
   const links = [
-    { label: "Patients", href: "/departments/pharmacy/patients", icon: Server },
+    { label: "Patients Queue", href: "/departments/pharmacy/patients", icon: Server },
     {
       label: "Drug Management",
       href: "/departments/pharmacy/drugManagement",

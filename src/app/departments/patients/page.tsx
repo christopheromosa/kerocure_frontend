@@ -69,7 +69,7 @@ export default function PatientList() {
   );
 
   return (
-    <div className="p-6 text-white">
+    <div className="p-6 dark:text-white">
       <Button
         onClick={() => router.back()}
         className="px-4 py-2 bg-blue-500 text-white rounded"

@@ -35,7 +35,7 @@ const TriageTable = () => {
   const [triageData, setTriageData] = useState<Triage[]>([]);
   const [expandedRows, setExpandedRows] = useState<number[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const itemsPerPage =5;
+  const itemsPerPage = 5;
   const { authState } = useAuth();
 
   useEffect(() => {
@@ -70,7 +70,7 @@ const TriageTable = () => {
     triage.patient_name.toString().includes(search)
   );
 
-   // Pagination logic
+  // Pagination logic
   const totalPages = Math.ceil(filteredTriage.length / itemsPerPage);
   const displayedTriage = filteredTriage.slice(
     (currentPage - 1) * itemsPerPage,
@@ -105,8 +105,7 @@ const TriageTable = () => {
         <Table>
           <TableHeader className="">
             <TableRow>
-              <TableHead className="w-1/6">Triage ID</TableHead>
-              <TableHead>Visit ID</TableHead>
+              <TableHead>Patient Name</TableHead>
               <TableHead>Vital Signs</TableHead>
               <TableHead>Recorded By</TableHead>
               <TableHead>Recorded At</TableHead>
@@ -117,7 +116,6 @@ const TriageTable = () => {
               displayedTriage.map((triage) => (
                 <React.Fragment key={triage.triage_id}>
                   <TableRow>
-                    <TableCell>{triage.triage_id}</TableCell>
                     <TableCell>{triage.patient_name}</TableCell>
                     <TableCell>
                       <Button

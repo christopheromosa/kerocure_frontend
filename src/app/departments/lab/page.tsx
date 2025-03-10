@@ -21,7 +21,7 @@ export default function LabDashboard() {
 
   // Links for the dashboard cards (specific to the lab department)
   const links = [
-    { label: "Patients", href: "/departments/lab/patients", icon: Microscope },
+    { label: "Patients Queue", href: "/departments/lab/patients", icon: Microscope },
     {
       label: "Lab Tests",
       href: "/departments/lab/labTestManagement",

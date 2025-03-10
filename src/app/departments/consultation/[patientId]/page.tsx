@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle} from "@/components/ui/card";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useParams, useRouter } from "next/navigation";
@@ -17,7 +17,6 @@ import { TestRequestTab } from "@/components/tabs/TestRequestTab";
 import { PrescriptionsTab } from "@/components/tabs/PrescriptionsTab";
 import { LabResultsTab } from "@/components/tabs/LabResultsTab";
 
-
 const PatientManagementPage = () => {
   const { patientId } = useParams();
   const router = useRouter();
@@ -29,7 +28,6 @@ const PatientManagementPage = () => {
   const [allVisits, setAllVisits] = useState<any[]>([]);
   const { authState } = useAuth();
   const [refresh, setRefresh] = useState(false);
-
 
   // Fetch visit data for the current patient
   useEffect(() => {
@@ -54,7 +52,7 @@ const PatientManagementPage = () => {
 
       fetchAllVisits();
     }
-  }, [fetchVisitData, patientId,authState.token]);
+  }, [fetchVisitData, patientId, authState.token]);
 
   // Set diagnosis if it exists in visit data
   useEffect(() => {
@@ -72,7 +70,7 @@ const PatientManagementPage = () => {
         const res = await axios.post(
           `${process.env.NEXT_PUBLIC_API_URL}/consultation/`,
           {
-            total_cost:200.00,
+            total_cost: 200.0,
             diagnosis,
             prescription: [],
             lab_tests_ordered: [],
@@ -87,9 +85,12 @@ const PatientManagementPage = () => {
           }
         );
         setIsDiagnosisSaved(true);
-        toast.success("Diagnosis saved successfully!", { autoClose: 1000, onClose: () => {               
-                window.location.reload(); // Refresh after the toast disappears
-              }, });
+        toast.success("Diagnosis saved successfully!", {
+          autoClose: 1000,
+          onClose: () => {
+            window.location.reload(); // Refresh after the toast disappears
+          },
+        });
         setRefresh(!refresh); // Trigger refresh
       } else {
         // Update an existing diagnosis
@@ -119,7 +120,6 @@ const PatientManagementPage = () => {
   // Handle saving test requests
   const handleSaveTestRequests = async () => {
     console.log(testRequests);
-
 
     try {
       // Update the visit state to "LABORATORY"
@@ -153,13 +153,11 @@ const PatientManagementPage = () => {
           },
         }
       );
-
-      toast.success("Test requests saved successfully!", { autoClose: 1000,onClose: () => {
-                  window.location.reload();
-                } });
-      router.push("/departments/consultation/patients");
-            setRefresh(!refresh); // Trigger refresh
-       
+      setTimeout(() => {
+        toast.success("test order saved successfully", {
+          autoClose: 5000, // Show toast for 5 seconds
+        });
+      }, 1000);
     } catch (error) {
       console.error("Failed to save test requests:", error);
       toast.error("Failed to save test requests. Please try again.", {
@@ -169,7 +167,7 @@ const PatientManagementPage = () => {
   };
   const handleSaveDrugPrescriptions = async () => {
     console.log(prescriptions);
-    
+
     try {
       // Update the visit state to "PHARMACY"
       await axios.put(
@@ -186,7 +184,6 @@ const PatientManagementPage = () => {
           },
         }
       );
-      
 
       // Save the test requests to the consultation
       await axios.put(
@@ -206,10 +203,10 @@ const PatientManagementPage = () => {
 
       setTimeout(() => {
         toast.success("Prescriptions saved successfully", {
-          autoClose: 1000, // Show toast for 2 seconds
-         });
+          autoClose: 5000, // Show toast for 2 seconds
+        });
       }, 1000);
-       //router.push("/departments/consultation/patients");
+      //router.push("/departments/consultation/patients");
       //setRefresh(!refresh); // Trigger refresh
     } catch (error) {
       console.error("Failed to save test requests:", error);

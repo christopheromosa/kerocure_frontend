@@ -23,7 +23,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogCancel
+  AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/context/AuthContext";
 import { useVisit } from "@/context/VisitContext";
@@ -33,11 +33,11 @@ import { useRouter } from "next/navigation";
 // Define the type for a prescription
 interface Prescription {
   id: number;
-  medication_name: string;
+  drug_name: string;
   quantity: string;
   cost: number;
   dispensed: boolean;
-  dosage:string;
+  dosage: string;
 }
 
 // Define the type for a drug
@@ -101,10 +101,10 @@ const PharmacyDetailsPage = () => {
       const initialPrescriptions = visitData.consultation_data.prescription.map(
         (prescription, index) => ({
           id: index,
-          medication_name: prescription.medication_name,
+          drug_name: prescription.drug_name,
           quantity: prescription.quantity,
           cost: prescription.cost,
-          dosage:prescription.dosage,
+          dosage: prescription.dosage,
           dispensed: false,
         })
       );
@@ -112,10 +112,14 @@ const PharmacyDetailsPage = () => {
     }
   }, [visitData]);
 
+  console.log(prescriptions);
+
   // Filter drugs locally based on search query
-  const filteredDrugs = searchQuery.trim()? drugs.filter((drug) =>
-    drug.drug_name.toLowerCase().includes(searchQuery.toLowerCase())
-  ):[];
+  const filteredDrugs = searchQuery.trim()
+    ? drugs.filter((drug) =>
+        drug.drug_name.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : [];
 
   // Open dispense dialog
   const openDispenseDialog = (prescription: Prescription) => {
@@ -141,60 +145,60 @@ const PharmacyDetailsPage = () => {
   };
 
   // Complete dispensing
-const handleCompleteDispensing = async () => {
-  if (selectedDrug && selectedPrescription) {
-    try {
-      // Calculate total cost
-      const totalCost = selectedDrug.cost * dispenseQuantity;
+  const handleCompleteDispensing = async () => {
+    if (selectedDrug && selectedPrescription) {
+      try {
+        // Calculate total cost
+        const totalCost = selectedDrug.cost * dispenseQuantity;
 
-      // Deduct the dispensed quantity from the drug's quantity in the database
-      const updatedQuantity = selectedDrug.quantity - dispenseQuantity;
+        // Deduct the dispensed quantity from the drug's quantity in the database
+        const updatedQuantity = selectedDrug.quantity - dispenseQuantity;
 
-      // Update the drug in the database
-      const response = await axios.put(
-        `${process.env.NEXT_PUBLIC_API_URL}/drugs/${selectedDrug.id}/`,
-        {
-          ...selectedDrug,
-          quantity: updatedQuantity,
-        },
-        {
-          headers: {
-            Authorization: `Token ${authState?.token}`,
+        // Update the drug in the database
+        const response = await axios.put(
+          `${process.env.NEXT_PUBLIC_API_URL}/drugs/${selectedDrug.id}/`,
+          {
+            ...selectedDrug,
+            quantity: updatedQuantity,
           },
-        }
-      );
-
-      if (response.status === 200) {
-        // Update the local drugs state
-        setDrugs((prev) =>
-          prev.map((drug) =>
-            drug.id === selectedDrug.id
-              ? { ...drug, quantity: updatedQuantity }
-              : drug
-          )
+          {
+            headers: {
+              Authorization: `Token ${authState?.token}`,
+            },
+          }
         );
 
-        // Add the dispensed drug to the dispensedDrugs list
-        const dispensedDrug = {
-          ...selectedPrescription,
-          medication_name: selectedDrug.drug_name,
-          quantity: dispenseQuantity.toString(),
-          cost: totalCost,
-          dispensed: true,
-        };
-        setDispensedDrugs((prev) => [...prev, dispensedDrug]);
+        if (response.status === 200) {
+          // Update the local drugs state
+          setDrugs((prev) =>
+            prev.map((drug) =>
+              drug.id === selectedDrug.id
+                ? { ...drug, quantity: updatedQuantity }
+                : drug
+            )
+          );
 
-        // Close the dispense dialog
-        setShowDispenseDialog(false);
-      } else {
-        throw new Error("Failed to update drug quantity");
+          // Add the dispensed drug to the dispensedDrugs list
+          const dispensedDrug = {
+            ...selectedPrescription,
+            medication_name: selectedDrug.drug_name,
+            quantity: dispenseQuantity.toString(),
+            cost: totalCost,
+            dispensed: true,
+          };
+          setDispensedDrugs((prev) => [...prev, dispensedDrug]);
+
+          // Close the dispense dialog
+          setShowDispenseDialog(false);
+        } else {
+          throw new Error("Failed to update drug quantity");
+        }
+      } catch (error) {
+        console.error("Error updating drug quantity:", error);
+        toast.error("Failed to update drug quantity. Please try again.");
       }
-    } catch (error) {
-      console.error("Error updating drug quantity:", error);
-      toast.error("Failed to update drug quantity. Please try again.");
     }
-  }
-};
+  };
 
   // Function to calculate total cost
   const calculateTotalCost = () => {
@@ -236,9 +240,6 @@ const handleCompleteDispensing = async () => {
         );
         toast.success("Prescriptions saved successfully", {
           autoClose: 1000,
-          onClose: () => {
-            router.push("/departments/pharmacy");
-                      },
         });
         setShowSuccessDialog(true);
       } else {
@@ -248,6 +249,11 @@ const handleCompleteDispensing = async () => {
       console.error("Error saving prescription details:", error);
       setShowErrorDialog(true);
     }
+  };
+  // Function to handle "OK" button click in the success dialog
+  const handleSuccessDialogClose = () => {
+    setShowSuccessDialog(false); // Close the dialog
+    router.push("/departments/pharmacy"); // Redirect to /departments/lab
   };
 
   if (!patientId) {
@@ -268,33 +274,19 @@ const handleCompleteDispensing = async () => {
             <TableHeader>
               <TableRow>
                 <TableHead>Medication</TableHead>
-                <TableHead>Quantity</TableHead>
                 <TableHead>Dosage</TableHead>
-                <TableHead>Dispensed</TableHead>
-                <TableHead>Cost</TableHead>
+                <TableHead>Quantity available</TableHead>
+                <TableHead>Cost per drug</TableHead>
+                <TableHead>Dispense the drug?</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {prescriptions.map((prescription) => (
                 <TableRow key={prescription.id}>
-                  <TableCell>{prescription.medication_name}</TableCell>
-                  <TableCell>{prescription.quantity}</TableCell>
+                  <TableCell>{prescription.drug_name}</TableCell>
                   <TableCell>{prescription.dosage}</TableCell>
-                  <TableCell>
-                    <Checkbox
-                      checked={prescription.dispensed}
-                      onCheckedChange={(checked) =>
-                        setPrescriptions((prev) =>
-                          prev.map((p) =>
-                            p.id === prescription.id
-                              ? { ...p, dispensed: checked as boolean }
-                              : p
-                          )
-                        )
-                      }
-                    />
-                  </TableCell>
+                  <TableCell>{prescription.quantity}</TableCell>
                   <TableCell>
                     <Input
                       type="number"
@@ -312,10 +304,29 @@ const handleCompleteDispensing = async () => {
                       placeholder="Enter cost"
                     />
                   </TableCell>
+
                   <TableCell>
-                    <Button onClick={() => openDispenseDialog(prescription)}>
-                      Dispense
-                    </Button>
+                    <Checkbox
+                      checked={prescription.dispensed}
+                      onCheckedChange={(checked) =>
+                        setPrescriptions((prev) =>
+                          prev.map((p) =>
+                            p.id === prescription.id
+                              ? { ...p, dispensed: checked as boolean }
+                              : p
+                          )
+                        )
+                      }
+                    />
+                  </TableCell>
+                  <TableCell>
+                    {parseInt(prescription.quantity) < 1 ? (
+                      <Button className="bg-gray-500">Out of Stock</Button>
+                    ) : (
+                      <Button onClick={() => openDispenseDialog(prescription)}>
+                        Dispense
+                      </Button>
+                    )}
                   </TableCell>
                 </TableRow>
               ))}
@@ -379,9 +390,8 @@ const handleCompleteDispensing = async () => {
             )}
           </div>
           <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-              </AlertDialogFooter>
-            
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+          </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
@@ -395,7 +405,9 @@ const handleCompleteDispensing = async () => {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogAction>OK</AlertDialogAction>
+            <AlertDialogAction onClick={handleSuccessDialogClose}>
+              OK
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

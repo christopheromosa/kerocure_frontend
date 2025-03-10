@@ -29,7 +29,7 @@ const PatientsTable = () => {
   const [patientsData, setPatientsData] = useState<Patient[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const itemsPerPage = 3;
-    const { authState } = useAuth();
+  const { authState } = useAuth();
 
   useEffect(() => {
     async function fetchPatientsData() {
@@ -90,7 +90,6 @@ const PatientsTable = () => {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-1/6">ID</TableHead>
               <TableHead>First Name</TableHead>
               <TableHead>Last Name</TableHead>
               <TableHead>DOB</TableHead>
@@ -101,7 +100,6 @@ const PatientsTable = () => {
             {displayedPatients.length > 0 ? (
               displayedPatients.map((patient) => (
                 <TableRow key={patient.id}>
-                  <TableCell>{patient.id}</TableCell>
                   <TableCell>{patient.first_name}</TableCell>
                   <TableCell>{patient.last_name}</TableCell>
                   <TableCell>{patient.dob}</TableCell>

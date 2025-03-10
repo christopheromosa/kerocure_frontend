@@ -39,11 +39,9 @@ const BillingDetailsPage = () => {
     }
   }, [patientId, fetchVisitData]);
 
-
-
   // Calculate total cost
   const calculateTotalCost = () => {
-    const consultationCost = visitData?.total_cost || 0;
+    const consultationCost = visitData?.consultation_data?.total_cost || 0;
     const labCost = visitData?.lab_data?.total_cost || 0;
     const pharmacyCost = visitData?.pharmacy_data?.cost || 0;
     const total = consultationCost + labCost + pharmacyCost;
@@ -60,7 +58,7 @@ const BillingDetailsPage = () => {
           Authorization: `Token ${authState?.token}`,
         },
         body: JSON.stringify({
-          consultation_cost: visitData?.total_cost,
+          consultation_cost: visitData?.consultation_data?.total_cost,
           laboratory_cost: visitData?.lab_data?.total_cost,
           pharmacy_cost: visitData?.pharmacy_data?.cost,
           total_cost: totalCost,
@@ -76,7 +74,7 @@ const BillingDetailsPage = () => {
             patient: patientId,
             current_state: "BILLING",
             next_state: "COMPLETED",
-            visit_status:"completed"
+            visit_status: "completed",
           },
           {
             headers: {
@@ -89,11 +87,9 @@ const BillingDetailsPage = () => {
         setShowSuccessDialog(true);
         setTimeout(() => {
           toast.success("Saved billing details successfully!", {
-            autoClose: 1000,
-            
+            autoClose: 5000,
           });
         }, 1000);
-        
       } else {
         throw new Error("Failed to save billing details");
       }
@@ -188,13 +184,21 @@ const BillingDetailsPage = () => {
             <!-- Content -->
             <div class="content">
               <h2>Receipt</h2>
-              <p><strong>Patient Name:</strong> ${visitData?.patient_data?.first_name} ${
-      visitData?.patient_data?.last_name
-    }</p>
-              <p><strong>Consultation Fee:</strong> Ksh ${visitData?.total_cost || 0.0}</p>
-              <p><strong>Lab Cost:</strong> Ksh ${visitData?.lab_data?.total_cost || 0.0}</p>
-              <p><strong>Pharmacy Cost:</strong> Ksh ${visitData?.pharmacy_data?.cost || 0.0}</p>
-              <p class="total"><strong>Total Cost:</strong> Ksh ${totalCost.toFixed(2)}</p>
+              <p><strong>Patient Name:</strong> ${
+                visitData?.patient_data?.first_name
+              } ${visitData?.patient_data?.last_name}</p>
+              <p><strong>Consultation Fee:</strong> Ksh ${
+                visitData?.consultation_data?.total_cost || 0.0
+              }</p>
+              <p><strong>Lab Cost:</strong> Ksh ${
+                visitData?.lab_data?.total_cost || 0.0
+              }</p>
+              <p><strong>Pharmacy Cost:</strong> Ksh ${
+                visitData?.pharmacy_data?.cost || 0.0
+              }</p>
+              <p class="total"><strong>Total Cost:</strong> Ksh ${totalCost.toFixed(
+                2
+              )}</p>
             </div>
     
             <!-- Footer -->
@@ -240,7 +244,7 @@ const BillingDetailsPage = () => {
               <label className="font-medium">Consultation Cost(Ksh):</label>
               <Input
                 type="text"
-                value={visitData?.total_cost || 0.0}
+                value={visitData?.consultation_data?.total_cost || 0.0}
                 readOnly
                 className="border border-gray-300 p-2 rounded w-full"
               />

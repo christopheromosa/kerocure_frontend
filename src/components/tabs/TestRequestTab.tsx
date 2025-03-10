@@ -17,11 +17,14 @@ import {
   DialogClose,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { ToastContainer, toast } from "react-toastify";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import axios from "axios";
 import { Input } from "@/components/ui/input";
 import OrganizationInfo from "../OrganizationInfo";
 import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
+
 
 export const TestRequestTab = ({
   testRequests,
@@ -35,6 +38,7 @@ export const TestRequestTab = ({
   const [labTests, setLabTests] = useState<any[]>([]);
   const [selectedTests, setSelectedTests] = useState<any[]>(testRequests); // Initialize with existing test requests
   const { authState } = useAuth();
+  const router = useRouter();
 
   // Fetch lab tests on component mount
   useEffect(() => {
@@ -93,6 +97,15 @@ export const TestRequestTab = ({
   // Handle confirming payment
   const handleConfirmPayment = () => {
     console.log("Payment confirmed for tests:", selectedTests);
+    setTimeout(() => {
+      toast.success("Patient proceed to consultation successfully!", {
+        autoClose: 1000, // Show toast for 2 seconds
+        onClose: () => {
+          router.push("/departments/consultation/patients");
+        },
+      });
+    }, 1000);
+    window.location.reload();
     setIsConfirmationDialogOpen(false); // Close the confirmation dialog
   };
 
@@ -216,6 +229,7 @@ export const TestRequestTab = ({
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        <ToastContainer />
       </CardContent>
     </Card>
   );

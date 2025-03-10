@@ -32,7 +32,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       href: "/departments/pharmacy",
       icon: LayoutDashboard,
     },
-    { label: "patients", href: "/departments/pharmacy/patients", icon: Server },
+    { label: "patients Queue", href: "/departments/pharmacy/patients", icon: Server },
     {
       label: "Drug management",
       href: "/departments/pharmacy/drugManagement",

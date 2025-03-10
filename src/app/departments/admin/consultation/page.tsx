@@ -43,7 +43,7 @@ const PhysicianNotesTable = () => {
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [diseaseFilter, setDiseaseFilter] = useState("");
   const itemsPerPage = 3;
-    const { authState } = useAuth();
+  const { authState } = useAuth();
 
   useEffect(() => {
     async function fetchPatientsData() {
@@ -145,7 +145,6 @@ const PhysicianNotesTable = () => {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-1/6">Note ID</TableHead>
               <TableHead>Patient Name</TableHead>
               <TableHead>Disease</TableHead>
               <TableHead>Physician</TableHead>
@@ -159,7 +158,6 @@ const PhysicianNotesTable = () => {
               displayedNotes.map((note) => (
                 <React.Fragment key={note.note_id}>
                   <TableRow>
-                    <TableCell>{note.note_id}</TableCell>
                     <TableCell>{note.patient_name}</TableCell>
                     <TableCell>{note.disease}</TableCell>
                     <TableCell>{note.staff_name || "Unknown"}</TableCell>
@@ -198,7 +196,8 @@ const PhysicianNotesTable = () => {
                                 <ul className="list-disc list-inside ml-4">
                                   {note.prescription.map((item, index) => (
                                     <li key={index}>
-                                       {item.drug_name}: {item.status} : {item.quantity} : {item.cost}
+                                      {item.drug_name}: {item.status} :{" "}
+                                      {item.quantity} : {item.cost}
                                     </li>
                                   ))}
                                 </ul>
@@ -213,7 +212,10 @@ const PhysicianNotesTable = () => {
                                 </span>
                                 <ul className="list-disc list-inside ml-4">
                                   {note.lab_tests_ordered.map((test, index) => (
-                                    <li key={index}>{test.service} : {test.duration} : {test.cost}</li>
+                                    <li key={index}>
+                                      {test.service} : {test.duration} :{" "}
+                                      {test.cost}
+                                    </li>
                                   ))}
                                 </ul>
                               </div>

@@ -194,7 +194,6 @@ const VisitsTable = () => {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Visit ID</TableHead>
               <TableHead>Patient Name</TableHead>
               <TableHead>Visit Date</TableHead>
               <TableHead>Department</TableHead>
@@ -207,7 +206,6 @@ const VisitsTable = () => {
             {displayedVisits.length > 0 ? (
               displayedVisits.map((visit) => (
                 <TableRow key={visit.visit_id}>
-                  <TableCell>{visit.visit_id}</TableCell>
                   <TableCell>{visit.patient_name}</TableCell>
                   <TableCell>{visit.visit_date}</TableCell>
                   <TableCell>{visit.department}</TableCell>

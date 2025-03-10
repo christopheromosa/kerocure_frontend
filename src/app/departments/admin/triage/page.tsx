@@ -101,7 +101,6 @@ const TriageTable = () => {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-1/6">Triage ID</TableHead>
               <TableHead>Patient Name</TableHead>
               <TableHead>Vital Signs</TableHead>
               <TableHead>Recorded By</TableHead>
@@ -113,7 +112,6 @@ const TriageTable = () => {
               displayedTriage.map((triage) => (
                 <React.Fragment key={triage.triage_id}>
                   <TableRow>
-                    <TableCell>{triage.triage_id}</TableCell>
                     <TableCell>{triage.patient_name}</TableCell>
                     <TableCell>
                       <Button

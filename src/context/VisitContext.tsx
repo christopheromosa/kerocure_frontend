@@ -19,16 +19,16 @@ interface ConsultationData {
   diagnosis: string;
   prescription: {
     id: number;
-    medication_name: string;
+    drug_name: string;
     quantity: string;
-    dosage:string;
+    dosage: string;
     cost: number;
     dispensed: boolean;
   }[];
-  lab_test_ordered:  { service: string; duration: string; cost: number }[];
+  lab_test_ordered: { service: string; duration: string; cost: number }[];
   physician: number | null;
   recorded_at: string;
-  cost: number;
+  total_cost: number;
 }
 interface PatientData {
   id: number;
@@ -49,7 +49,7 @@ interface PharmacyData {
 
 interface VisitData {
   visit_id: number;
-  total_cost:number;
+  total_cost: number;
   triage_data: TriageData | null;
   consultation_data: ConsultationData | null;
   patient_data: PatientData | null;
@@ -77,8 +77,6 @@ export const VisitProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState<boolean>(false);
   const { authState } = useAuth();
   console.log(authState.token);
-
-
 
   const fetchVisitData = useCallback(
     async (patientId: string) => {
