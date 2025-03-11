@@ -31,7 +31,7 @@ const TriageTable = () => {
   const [triageData, setTriageData] = useState<Triage[]>([]);
   const [expandedRows, setExpandedRows] = useState<number[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const itemsPerPage = 3;
+  const itemsPerPage = 6;
   const { authState } = useAuth();
 
   useEffect(() => {
@@ -54,12 +54,13 @@ const TriageTable = () => {
         setTriageData(data);
       } catch (err) {
         alert("Failed to load triage records");
+        console.error(err);
       } finally {
         setIsLoading(false);
       }
     }
     fetchTriageData();
-  }, []);
+  }, [authState?.token]);
 
   // Filter triage records by Visit ID
   const filteredTriage = triageData?.filter((triage) =>

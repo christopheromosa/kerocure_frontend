@@ -71,12 +71,13 @@ const VisitsTable = () => {
         setVisitsData(data);
       } catch (err) {
         alert("Failed to load visit records");
+        console.error(err);
       } finally {
         setIsLoading(false);
       }
     }
     fetchVisitsData();
-  }, []);
+  }, [authState?.token]);
 
   // Filter visits based on search criteria
   const filteredVisits = visitsData.filter((visit) => {

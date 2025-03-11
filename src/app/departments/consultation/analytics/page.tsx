@@ -66,12 +66,13 @@ const PhysicianNotesTable = () => {
         setPhysicianNoteData(data);
       } catch (err) {
         alert("Failed to load consultation records");
+        console.error(err);
       } finally {
         setIsLoading(false);
       }
     }
     fetchPatientsData();
-  }, []);
+  }, [authState?.token]);
 
   // Filter records by Patient Name
   const filteredNotes = physicianNoteData.filter((note) =>

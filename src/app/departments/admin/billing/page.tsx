@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { useAuth } from "@/context/AuthContext";
+import LoadingPage from "@/components/loading_animation";
 
 // Example data structure for Billing records
 interface Billing {
@@ -60,12 +61,14 @@ export default function BillingTable() {
         setFilteredData(data); // Initialize filtered data with all records
       } catch (err) {
         alert("Failed to load billing records");
+        console.error(err);
+        
       } finally {
         setIsLoading(false);
       }
     }
     fetchBillingData();
-  }, []);
+  }, [authState?.token]);
 
   // Filter data based on date range and search query
   useEffect(() => {
@@ -111,6 +114,7 @@ export default function BillingTable() {
 
   return (
     <div className="p-6 shadow-md rounded-lg">
+      {isLoading && <LoadingPage />}
       <h2 className="text-xl font-semibold mb-4">Billing Records</h2>
 
       {/* Search and Date Range Filters */}

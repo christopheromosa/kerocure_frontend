@@ -31,7 +31,7 @@ export default function LabPage() {
       }
     }
     getLabPatientsData();
-  }, []);
+  }, [authState?.token]);
 
   return (
     <PageTransition>

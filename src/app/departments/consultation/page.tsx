@@ -21,7 +21,7 @@ export default function ConsultationDashboard() {
   // Links for the dashboard cards (specific to the consultion department)
   const links = [
     { label: "Patients Queue", href: "/departments/consultation/patients", icon: Server },
-    { label: "Lab", href: "/departments/consultation/lab", icon: Microscope },
+    { label: "Patients from Lab", href: "/departments/consultation/lab", icon: Microscope },
     {
       label: "Tasks Completed",
       href: "/departments/consultation/analytics",

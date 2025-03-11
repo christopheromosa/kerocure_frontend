@@ -1,11 +1,5 @@
 "use client";
-import {
-  LayoutDashboard,
-  Microscope,
-  Server,
-  ClipboardCheck,
-  Settings,
-} from "lucide-react";
+import { Microscope, Server, ClipboardCheck, Settings } from "lucide-react";
 import {
   Card,
   CardHeader,
@@ -21,7 +15,11 @@ export default function LabDashboard() {
 
   // Links for the dashboard cards (specific to the lab department)
   const links = [
-    { label: "Patients Queue", href: "/departments/lab/patients", icon: Microscope },
+    {
+      label: "Patients Queue",
+      href: "/departments/lab/patients",
+      icon: Microscope,
+    },
     {
       label: "Lab Tests",
       href: "/departments/lab/labTestManagement",

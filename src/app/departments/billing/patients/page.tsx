@@ -32,7 +32,7 @@ export default function LabPage() {
       }
     }
     getBillingPatientsData();
-  }, []);
+  }, [authState?.token]);
 
   return (
     <PageTransition>

@@ -48,6 +48,7 @@ export default function PatientPage() {
         setPatient(data);
       } catch (error) {
         toast.error("Failed to load patient data");
+        console.error(error);
       }
     };
     fetchPatient();
@@ -71,6 +72,7 @@ export default function PatientPage() {
         router.push("/departments/patients"); // Redirect to patient list
       } catch (error) {
         toast.error("Failed to delete patient");
+        console.error(error);
       }
     }
   };
@@ -97,6 +99,7 @@ export default function PatientPage() {
       setIsEditing(false);
     } catch (error) {
       toast.error("Failed to update patient");
+      console.error(error);
     }
   };
 

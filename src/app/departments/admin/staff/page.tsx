@@ -59,12 +59,13 @@ export default function StaffPage() {
         setStaffData(data);
       } catch (err) {
         alert("Failed to load staff records");
+        console.error(err);
       } finally {
         setIsLoading(false);
       }
     }
     fetchStaffData();
-  }, []);
+  }, [authState?.token]);
 
   // Handle form input changes
   const handleInputChange = (

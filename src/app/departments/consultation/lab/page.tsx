@@ -32,7 +32,7 @@ export default function ConsultationPage() {
       }
     }
     getTriagedPatientsData();
-  }, []);
+  }, [authState?.token]);
 
   return (
     <PageTransition>

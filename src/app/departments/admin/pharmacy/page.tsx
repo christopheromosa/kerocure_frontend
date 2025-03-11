@@ -54,12 +54,13 @@ export default function MedicationsTable() {
         setMedicationsData(data);
       } catch (err) {
         alert("Failed to load pharmacy records");
+        console.error(err);
       } finally {
         setIsLoading(false);
       }
     }
     fetchMedicationData();
-  }, []);
+  }, [authState?.token]);
 
   // Pagination logic
   const totalPages = Math.ceil(medicationsData.length / resultsPerPage);

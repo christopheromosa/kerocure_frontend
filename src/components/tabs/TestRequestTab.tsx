@@ -25,7 +25,6 @@ import OrganizationInfo from "../OrganizationInfo";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 
-
 export const TestRequestTab = ({
   testRequests,
   setTestRequests,
@@ -60,7 +59,7 @@ export const TestRequestTab = ({
     };
 
     fetchLabTests();
-  }, []);
+  }, [authState?.token]);
 
   // Sync selectedTests with parent's testRequests
   useEffect(() => {

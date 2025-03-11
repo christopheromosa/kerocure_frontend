@@ -38,7 +38,7 @@ const formSchema = z.object({
 
 export default function LoginForm() {
   const router = useRouter();
-  const { login, authState } = useAuth();
+  const { login } = useAuth();
   const [showRoleDialog, setShowRoleDialog] = useState<boolean>(false);
   const [availableRoles, setAvailableRoles] = useState<string[]>([]);
 
@@ -73,18 +73,18 @@ export default function LoginForm() {
       const data = await response.json();
       console.log(data);
 
-
-
       // Login the user
       login(
         data.token,
         data.roles,
         data.username,
+        data.first_name,
+        data.last_name,
         data.user_id,
         data.is_active
       );
 
-            // Check if the account is active
+      // Check if the account is active
       if (data.is_active === "false") {
         toast.error(
           "Your account is suspended. Please contact the administrator."
@@ -92,22 +92,18 @@ export default function LoginForm() {
         return;
       }
 
-      
-        const roles = data.roles.includes(",")
-          ? data.roles.split(",")
-          : [data.roles];
+      const roles = data.roles.includes(",")
+        ? data.roles.split(",")
+        : [data.roles];
       // Check if the user has multiple roles
       if (roles.length > 1) {
         setAvailableRoles(data.roles.split(",")); // Set available roles
         setShowRoleDialog(true); // Show role selection dialog
-        
       } else {
         // Redirect based on the single role
 
         redirectUser(roles[0]);
-        
       }
-      
     } catch (error) {
       // Show error toast
       toast.error(error instanceof Error ? error.message : "Login failed");
@@ -140,7 +136,7 @@ export default function LoginForm() {
         router.push("/");
     }
     // Show success toast
-            toast.success("Login successful!",{autoClose: 1000,});
+    toast.success("Login successful!", { autoClose: 1000 });
   };
 
   // Function to handle role selection
@@ -160,7 +156,7 @@ export default function LoginForm() {
       />
 
       <div className="">
-        <h1 className="text-xl">KEROCURE MEDICAL CENTER</h1>
+        <h1 className="text-xl">KEROCURE MEDICAL CENTRE</h1>
       </div>
 
       {/* Login Form */}

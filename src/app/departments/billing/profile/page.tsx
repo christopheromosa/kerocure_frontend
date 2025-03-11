@@ -10,7 +10,6 @@ import PageTransition from "@/components/PageTransition";
 import LoadingPage from "@/components/loading_animation";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Skeleton } from "@/components/ui/skeleton";
 
 interface StaffType {
   first_name?: string;

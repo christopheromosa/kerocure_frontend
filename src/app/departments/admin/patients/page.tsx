@@ -50,12 +50,13 @@ const PatientsTable = () => {
         setPatientsData(data);
       } catch (err) {
         alert("Failed to load billing records");
+        console.error(err);
       } finally {
         setIsLoading(false);
       }
     }
     fetchPatientsData();
-  }, []);
+  }, [authState?.token]);
 
   // Filter patients by search
   const filteredPatients = patientsData?.filter((patient) =>

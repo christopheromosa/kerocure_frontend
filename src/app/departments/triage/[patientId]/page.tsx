@@ -7,7 +7,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -34,7 +33,6 @@ import {
   DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog";
-
 
 const triageSchema = z.object({
   weight: z.coerce.string().min(1, "Weight is required"),
@@ -138,7 +136,7 @@ const Patient = () => {
       }
     };
     fetchDepartments();
-  }, []);
+  }, [authState?.token]);
 
   if (!patientId) return <Loading />;
 
@@ -183,11 +181,10 @@ const Patient = () => {
         const triagePayload = {
           visit: visit.visit_id,
           vital_signs: {
-            weight: triageData.weight,
-            height: triageData.height,
-            systolic: triageData.systolic,
-            diastolic: triageData.diastolic,
-            pulse: triageData.pulse,
+            weight: `${triageData.weight} kg`, // Include units
+            height: `${triageData.height} ft`,
+            blood_pressure: `${triageData.systolic}/${triageData.diastolic} mmHg`, // Concatenated BP
+            pulse: `${triageData.pulse} bpm`,
           },
           recorded_by: authState?.user_id,
         };
@@ -210,7 +207,7 @@ const Patient = () => {
           setTimeout(() => {
             toast.success("Patient proceed to consultation successfully!", {
               autoClose: 1000, // Show toast for 2 seconds
-              onClose: () => {               
+              onClose: () => {
                 window.location.reload(); // Refresh after the toast disappears
               },
             });
@@ -302,7 +299,7 @@ const Patient = () => {
             <CardContent className="grid gap-2">
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <Label htmlFor="weight">Weight</Label>
+                  <Label htmlFor="weight">Weight(Kg) </Label>
                   <Input id="weight" type="text" {...register("weight")} />
                   {errors.weight && (
                     <p className="text-red-500 text-sm">
@@ -311,7 +308,7 @@ const Patient = () => {
                   )}
                 </div>
                 <div>
-                  <Label htmlFor="height">Height</Label>
+                  <Label htmlFor="height">Height(ft)</Label>
                   <Input id="height" type="text" {...register("height")} />
                   {errors.height && (
                     <p className="text-red-500 text-sm">
@@ -322,7 +319,7 @@ const Patient = () => {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="systolic">Systolic</Label>
+                  <Label htmlFor="systolic">Systolic(mmHg)</Label>
                   <Input id="systolic" type="text" {...register("systolic")} />
                   {errors.systolic && (
                     <p className="text-red-500 text-sm">
@@ -331,21 +328,25 @@ const Patient = () => {
                   )}
                 </div>
                 <div>
-                  <Label htmlFor="pulse">Pulse / Min</Label>
-                  <Input id="pulse" type="text" {...register("pulse")} />
-                  {errors.pulse && (
+                  <Label htmlFor="diastolic">Diastolic(mmHg)</Label>
+                  <Input
+                    id="diastolic"
+                    type="text"
+                    {...register("diastolic")}
+                  />
+                  {errors.diastolic && (
                     <p className="text-red-500 text-sm">
-                      {errors.pulse.message as string}
+                      {errors.diastolic.message as string}
                     </p>
                   )}
                 </div>
               </div>
               <div>
-                <Label htmlFor="diastolic">Diastolic</Label>
-                <Input id="diastolic" type="text" {...register("diastolic")} />
-                {errors.diastolic && (
+                <Label htmlFor="pulse">Pulse / Min (bpm)</Label>
+                <Input id="pulse" type="text" {...register("pulse")} />
+                {errors.pulse && (
                   <p className="text-red-500 text-sm">
-                    {errors.diastolic.message as string}
+                    {errors.pulse.message as string}
                   </p>
                 )}
               </div>

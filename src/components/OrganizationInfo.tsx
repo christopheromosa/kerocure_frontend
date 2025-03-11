@@ -14,10 +14,10 @@ const OrganizationInfo = () => {
         />
       </div>
       <div className="text-right">
-        <h2 className="text-xl font-bold">KEROCURE MEDICAL CENTER</h2>
-        <p>PO BOX: 3172 - 4255, KISII</p>
+        <h2 className="text-xl font-bold">KEROCURE MEDICAL CENTRE</h2>
+        <p>PO BOX: 3192, KISII</p>
         <p>Email: Kerocure1@gmail.com</p>
-        <p>Tel: +254711111111</p>
+        <p>Tel: +254 725 808 100</p>
       </div>
     </div>
   );

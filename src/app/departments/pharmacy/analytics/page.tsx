@@ -18,12 +18,12 @@ import { useAuth } from "@/context/AuthContext";
 interface Medication {
   medication_id: number;
   visit_id: number;
-  patient_name:string;
+  patient_name: string;
   note_id: number;
   prescriptions: Record<string, any> | null;
   cost: number;
   dispensed_by: string | null;
-  staff_name:string;
+  staff_name: string;
   dispensed_at: string;
 }
 
@@ -54,6 +54,7 @@ export default function MedicationsTable() {
         setMedicationsData(data);
       } catch (err) {
         alert("Failed to load pharmacy records");
+        console.error(err);
       } finally {
         setIsLoading(false);
       }
@@ -85,7 +86,7 @@ export default function MedicationsTable() {
         <TableHeader>
           <TableRow>
             <TableHead className="w-1/6">Patient Name</TableHead>
-             <TableHead className="w-1/6">Prescriptions</TableHead>
+            <TableHead className="w-1/6">Prescriptions</TableHead>
             <TableHead className="w-1/6">Cost</TableHead>
             <TableHead className="w-1/6">Dispensed By</TableHead>
             <TableHead className="w-1/6">Dispensed At</TableHead>
@@ -96,7 +97,7 @@ export default function MedicationsTable() {
             <React.Fragment key={medication.medication_id}>
               <TableRow>
                 <TableCell>{medication.patient_name}</TableCell>
-                                <TableCell>
+                <TableCell>
                   <Button
                     variant="ghost"
                     onClick={() => toggleExpandRow(medication.medication_id)}

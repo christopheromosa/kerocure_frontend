@@ -9,7 +9,7 @@ import { useAuth } from "@/context/AuthContext";
 export default function PharmacyPage() {
   const [data, setData] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-    const { authState } = useAuth();
+  const { authState } = useAuth();
 
   useEffect(() => {
     async function getPharmacyPatientsData() {
@@ -32,7 +32,7 @@ export default function PharmacyPage() {
       }
     }
     getPharmacyPatientsData();
-  }, []);
+  }, [authState?.token]);
 
   return (
     <PageTransition>

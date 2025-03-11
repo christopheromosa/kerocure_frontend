@@ -65,6 +65,7 @@ export default function DrugManagement() {
   };
 
   useEffect(() => {
+
     fetchDrugs();
   }, []);
 

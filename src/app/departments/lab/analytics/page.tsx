@@ -51,12 +51,13 @@ export default function LabResultsTable() {
         setLabResultsData(data);
       } catch (err) {
         alert("Failed to load lab records");
+        console.error(err);
       } finally {
         setIsLoading(false);
       }
     }
     fetchPatientsData();
-  }, []);
+  }, [authState?.token]);
 
   console.log(labResultsData);
   // Pagination logic

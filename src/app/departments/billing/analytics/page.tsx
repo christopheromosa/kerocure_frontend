@@ -32,7 +32,7 @@ export default function BillingTable() {
   const [billingData, setBillingData] = useState<Billing[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const resultsPerPage = 5;
-    const { authState } = useAuth();
+  const { authState } = useAuth();
 
   useEffect(() => {
     async function fetchBillingData() {
@@ -53,12 +53,13 @@ export default function BillingTable() {
         setBillingData(data);
       } catch (err) {
         alert("Failed to load billing records");
+        console.error(err);
       } finally {
         setIsLoading(false);
       }
     }
     fetchBillingData();
-  }, []);
+  }, [authState?.token]);
 
   // Pagination logic
   const totalPages = Math.ceil(billingData.length / resultsPerPage);
@@ -69,6 +70,7 @@ export default function BillingTable() {
 
   return (
     <div className="p-6  shadow-md rounded-lg">
+      {isLoading && <LoadingPage />}
       <h2 className="text-xl font-semibold mb-4">Billing Records</h2>
       <Table>
         <TableHeader>

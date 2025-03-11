@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/table";
 import {
   Dialog,
-  DialogTrigger,
   DialogContent,
   DialogHeader,
   DialogTitle,
@@ -60,6 +59,7 @@ export default function DepartmentsPage() {
         setDepartments(data);
       } catch (err) {
         alert("Failed to load departments");
+        console.error(err);
       } finally {
         setIsLoading(false);
       }

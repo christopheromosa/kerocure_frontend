@@ -67,7 +67,7 @@ const PatientManagementPage = () => {
     try {
       if (!visitData?.consultation_data?.note_id) {
         // Create a new diagnosis
-        const res = await axios.post(
+        await axios.post(
           `${process.env.NEXT_PUBLIC_API_URL}/consultation/`,
           {
             total_cost: 200.0,
@@ -94,7 +94,7 @@ const PatientManagementPage = () => {
         setRefresh(!refresh); // Trigger refresh
       } else {
         // Update an existing diagnosis
-        const res = await axios.put(
+        await axios.put(
           `${process.env.NEXT_PUBLIC_API_URL}/consultation/${visitData?.consultation_data?.note_id}/`,
           {
             diagnosis,
@@ -296,7 +296,12 @@ const PatientManagementPage = () => {
 
           {/* Lab Results Tab */}
           <TabsContent value="labResults">
-            <LabResultsTab labResults={visitData?.lab_data?.result || []} />
+            <LabResultsTab
+              labResults={visitData?.lab_data?.result || []}
+              visitId={visitData?.visit_id}
+              authState={authState}
+              patientId={patientId}
+            />
           </TabsContent>
 
           {/* Prescriptions Tab */}

@@ -1,21 +1,19 @@
 "use client";
 
 import { createContext, useContext, ReactNode } from "react";
-import { useAuth } from "./AuthContext";
 import { useQuery } from "react-query";
 import LoadingPage from "@/components/loading_animation";
-
 
 type Billing = {
   id: number;
   totalCost: number;
   visit: number;
-  billed_by: number;
-  consultation_cost:number;
-  laboratory_cost:number;
-  pharmacy_cost:number;
-  total_cost:number;
-  recorded_at:string;
+  patient_name: string;
+  consultation_cost: number;
+  laboratory_cost: number;
+  pharmacy_cost: number;
+  total_cost: number;
+  recorded_at: string;
 };
 
 interface dashboard {
@@ -36,9 +34,7 @@ interface DashboardData {
 
 const DashboardContext = createContext<DashboardData | undefined>(undefined);
 
-
 const fetchDashboardData = async () => {
-  
   const [
     consultationQueueRes,
     labQueueRes,
@@ -80,7 +76,7 @@ const fetchDashboardData = async () => {
     labPatients: labQueueRes?.length ?? 0,
     pharmacyPatients: pharmacyQueueRes?.length ?? 0,
     billingPatients: billingQueueRes?.length ?? 0,
-    billingRecords: billingRecords?.slice(-5) ?? [],
+    billingRecords: billingRecords.slice(0, 5) ?? [],
     revenues: billingTotalCost ?? 0,
     totalPatients: patientsAll ?? 0,
     departments: departmentsRes ?? [],
@@ -96,7 +92,6 @@ export const useDashboardData = () => {
 };
 
 export const DashboardProvider = ({ children }: { children: ReactNode }) => {
-  const { authState } = useAuth();
   const { data, isLoading, isError, refetch } = useQuery(
     "dashboardData",
     fetchDashboardData,

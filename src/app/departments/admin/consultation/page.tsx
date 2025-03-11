@@ -64,12 +64,13 @@ const PhysicianNotesTable = () => {
         setPhysicianNoteData(data);
       } catch (err) {
         alert("Failed to load consultation records");
+        console.error(err);
       } finally {
         setIsLoading(false);
       }
     }
     fetchPatientsData();
-  }, []);
+  }, [authState?.token]);
 
   // Local filtering logic
   const filteredNotes = physicianNoteData.filter((note) => {

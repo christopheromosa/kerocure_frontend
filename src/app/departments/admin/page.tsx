@@ -33,8 +33,8 @@ import "react-datepicker/dist/react-datepicker.css";
 import { useAuth } from "@/context/AuthContext";
 
 const DashboardPage = () => {
-  const { data, isLoading, refetch } = useDashboardData();
-   const { authState } = useAuth();
+  const { data, isLoading } = useDashboardData();
+  const { authState } = useAuth();
 
   const [selectedDepartment, setSelectedDepartment] = useState<string | null>(
     null
@@ -68,7 +68,7 @@ const DashboardPage = () => {
       }
     };
     fetchDepartments();
-  }, []);
+  }, [authState?.token]);
 
   // Fetch department-specific patient count when a department is selected
   useEffect(() => {
@@ -94,7 +94,7 @@ const DashboardPage = () => {
       };
       fetchDepartmentPatients();
     }
-  }, [selectedDepartment,authState.token]);
+  }, [selectedDepartment, authState.token]);
 
   // Filter revenue data based on the selected date range
   useEffect(() => {
@@ -123,13 +123,20 @@ const DashboardPage = () => {
       day: "numeric",
     }), // Converts "2025-02-05" to "Feb 5"
   }));
+  // function to refresh the page
+  const handleRefresh = () => {
+    window.location.reload();
+  };
 
   return (
     <div className="p-6 space-y-6">
       {isLoading && <LoadingPage />}
-      <div className="flex justify-between">
-        <h1 className="text-2xl font-bold">Dashboard</h1>
-        <Button onClick={refetch}>Refresh data</Button>
+      {/* Welcome Message and Refresh Button */}
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold">
+          Welcome, {authState?.first_name} {authState?.last_name}
+        </h1>
+        <Button onClick={handleRefresh}>Refresh Page</Button>
       </div>
 
       {/* Patients in Queue */}
@@ -238,24 +245,24 @@ const DashboardPage = () => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Visit</TableHead>
+                <TableHead>Patient Name</TableHead>
                 <TableHead>Consultation</TableHead>
                 <TableHead>Laboratory</TableHead>
                 <TableHead>Pharmacy</TableHead>
                 <TableHead>Total</TableHead>
-                <TableHead>Billed By</TableHead>
                 <TableHead>Recorded at</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {data?.billingRecords.map((transaction, index) => (
                 <TableRow key={index}>
-                  <TableCell>{transaction.visit}</TableCell>
+                  <TableCell>{transaction.patient_name}</TableCell>
                   <TableCell>{transaction.consultation_cost}</TableCell>
                   <TableCell>Ksh {transaction.laboratory_cost}</TableCell>
                   <TableCell>{transaction.pharmacy_cost}</TableCell>
-                  <TableCell>{transaction.total_cost}</TableCell>
-                  <TableCell>{transaction.billed_by}</TableCell>
+                  <TableCell className="text-green-500">
+                    {transaction.total_cost}
+                  </TableCell>
                   <TableCell>{transaction.recorded_at}</TableCell>
                 </TableRow>
               ))}
