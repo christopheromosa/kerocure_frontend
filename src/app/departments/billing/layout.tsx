@@ -31,7 +31,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       href: "/departments/billing",
       icon: LayoutDashboard,
     },
-    { label: "patients", href: "/departments/billing/patients", icon: Server },
+    { label: "Patients in Queues", href: "/departments/billing/patients", icon: Server },
     {
       label: "reports",
       href: "/departments/billing/analytics",

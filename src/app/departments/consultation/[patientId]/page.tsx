@@ -209,8 +209,9 @@ const PatientManagementPage = () => {
           }
         });
       }, 1000);
+      router.push("/departments/consultation/patients");
 
-      window.location.reload();
+      
       
       //setRefresh(!refresh); // Trigger refresh
     } catch (error) {

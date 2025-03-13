@@ -16,7 +16,7 @@ export default function BillingDashboard() {
   // Links for the dashboard cards (specific to the pharmacy department)
   const links = [
     {
-      label: "Patients Queue",
+      label: "Patients in Queue",
       href: "/departments/billing/patients",
       icon: Server,
     },
