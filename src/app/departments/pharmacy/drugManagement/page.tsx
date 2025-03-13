@@ -265,7 +265,7 @@ export default function DrugManagement() {
                   <TableCell>{drug.status}</TableCell>
                   <TableCell>
                     <Button
-                      variant="ghost"
+                      className="bg-green-500 hover:bg-green-600 text-white"
                       onClick={() => {
                         setCurrentDrug(drug);
                         setIsDialogOpen(true);
@@ -275,6 +275,7 @@ export default function DrugManagement() {
                     </Button>
                     <Button
                       variant="destructive"
+                      className="bg-red-500 hover:bg-red-600 text-white"
                       onClick={() => {
                         setDrugToDelete(drug);
                         setIsDeleteDialogOpen(true);
@@ -322,7 +323,11 @@ export default function DrugManagement() {
               >
                 Cancel
               </Button>
-              <Button variant="destructive" onClick={handleDeleteDrug}>
+              <Button
+                variant="destructive"
+                className="bg-red-500 hover:bg-red-600 text-white"
+                onClick={handleDeleteDrug}
+              >
                 Delete
               </Button>
             </DialogFooter>

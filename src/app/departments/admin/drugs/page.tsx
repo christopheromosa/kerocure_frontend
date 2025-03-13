@@ -65,7 +65,6 @@ export default function DrugManagement() {
   };
 
   useEffect(() => {
-
     fetchDrugs();
   }, []);
 
@@ -197,7 +196,12 @@ export default function DrugManagement() {
           onChange={(e) => setSearchQuery(e.target.value)}
           className="w-1/3"
         />
-        <Button onClick={() => setIsDialogOpen(true)}>Add Drug</Button>
+        <Button
+          className="bg-blue-500 hover:bg-blue-600 text-white"
+          onClick={() => setIsDialogOpen(true)}
+        >
+          Add Drug
+        </Button>
       </div>
 
       {/* File Upload Section */}
@@ -266,7 +270,7 @@ export default function DrugManagement() {
                 <TableCell>{drug.status}</TableCell>
                 <TableCell>
                   <Button
-                    variant="ghost"
+                    className="bg-green-500 hover:bg-green-600 text-white"
                     onClick={() => {
                       setCurrentDrug(drug);
                       setIsDialogOpen(true);
@@ -275,7 +279,7 @@ export default function DrugManagement() {
                     Edit
                   </Button>
                   <Button
-                    variant="destructive"
+                    className="bg-red-500 hover:bg-red-600 text-white"
                     onClick={() => handleDeleteDrug(drug.id!)}
                   >
                     Delete

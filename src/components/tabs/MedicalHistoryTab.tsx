@@ -309,7 +309,7 @@ export const MedicalHistoryTab = ({ visits }: any) => {
                   {new Date(visit.visit_date).toLocaleDateString()}
                 </TableCell>
                 <TableCell>
-                  <Button onClick={() => handleViewVisit(visit.visit_id)}>
+                  <Button className="bg-yellow-500 hover:bg-yellow-600 text-white" onClick={() => handleViewVisit(visit.visit_id)}>
                     View
                   </Button>
                 </TableCell>

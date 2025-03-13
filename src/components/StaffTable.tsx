@@ -17,12 +17,14 @@ interface StaffTableProps {
   staffData: Staff[];
   onResetPassword: (staff: Staff) => void;
   onEditStaff: (staff: Staff) => void;
+  onDeleteStaff: (staff: Staff) => void;
 }
 
 export const StaffTable = ({
   staffData,
   onResetPassword,
   onEditStaff,
+  onDeleteStaff,
 }: StaffTableProps) => {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [filterRole, setFilterRole] = useState<string>("");
@@ -30,8 +32,13 @@ export const StaffTable = ({
   // Filter staff data based on search query and role
   const filteredStaff = staffData.filter((staffMember) => {
     const matchesSearch =
-      (staffMember.username?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false) ||
-      staffMember.first_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (staffMember.username
+        ?.toLowerCase()
+        .includes(searchQuery.toLowerCase()) ??
+        false) ||
+      staffMember.first_name
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase()) ||
       staffMember.last_name.toLowerCase().includes(searchQuery.toLowerCase());
 
     const matchesRole = filterRole
@@ -98,22 +105,32 @@ export const StaffTable = ({
               </TableCell>
               <TableCell>{staffMember.phone_number}</TableCell>
               <TableCell>
-                <Badge className={`${staffMember.is_active ? "bg-blue-700" : "bg-red-700"}`}>
+                <Badge
+                  className={`${
+                    staffMember.is_active ? "bg-blue-700" : "bg-red-700"
+                  }`}
+                >
                   {staffMember.is_active ? "Active" : "Inactive"}
                 </Badge>
               </TableCell>
               <TableCell className="space-x-2">
                 <Button
-                  variant="outline"
+                  className="bg-gray-500 hover:bg-gray-600 text-white"
                   onClick={() => onResetPassword(staffMember)}
                 >
                   Reset Password
                 </Button>
                 <Button
-                  variant="outline"
+                  className="bg-green-500 hover:bg-green-600 text-white"
                   onClick={() => onEditStaff(staffMember)}
                 >
                   Edit
+                </Button>
+                <Button
+                  className="bg-red-500 hover:bg-red-600 text-white" // Use a destructive style for delete
+                  onClick={() => onDeleteStaff(staffMember)} // Call the delete handler
+                >
+                  Delete
                 </Button>
               </TableCell>
             </TableRow>

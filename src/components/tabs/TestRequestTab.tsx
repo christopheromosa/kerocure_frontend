@@ -146,7 +146,10 @@ export const TestRequestTab = ({
                 <TableCell>{test.cost}</TableCell>
                 <TableCell>{test.duration}</TableCell>
                 <TableCell>
-                  <Button onClick={() => handleDeleteTest(index)}>
+                  <Button
+                    className="bg-red-500 hover:bg-red-600 text-white"
+                    onClick={() => handleDeleteTest(index)}
+                  >
                     Delete
                   </Button>
                 </TableCell>
@@ -156,7 +159,10 @@ export const TestRequestTab = ({
         </Table>
 
         {/* "Add Test" Button */}
-        <Button onClick={() => setIsDialogOpen(true)} className="mt-4">
+        <Button
+          onClick={() => setIsDialogOpen(true)}
+          className="mt-4 g-blue-500 hover:bg-blue-600 text-white "
+        >
           Add Test
         </Button>
 

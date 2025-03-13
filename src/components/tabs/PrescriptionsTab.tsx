@@ -234,18 +234,18 @@ setTimeout(() => {
                 <TableCell>{drug.drug_name}</TableCell>
                 <TableCell>{drug.cost}</TableCell>
                 <TableCell>
-                        <Input
-                          type="text"
-                          placeholder="Enter dosage"
-                          value={drug.dosage}
-                          onChange={(e) => {
-                            const updatedDrugs = [...selectedDrugs];
-                            updatedDrugs[index].dosage = e.target.value;
-                            setSelectedDrugs(updatedDrugs);
-                            setPrescriptions(updatedDrugs);
-                          }}
-                        />
-                      </TableCell>
+                  <Input
+                    type="text"
+                    placeholder="Enter dosage"
+                    value={drug.dosage}
+                    onChange={(e) => {
+                      const updatedDrugs = [...selectedDrugs];
+                      updatedDrugs[index].dosage = e.target.value;
+                      setSelectedDrugs(updatedDrugs);
+                      setPrescriptions(updatedDrugs);
+                    }}
+                  />
+                </TableCell>
                 <TableCell>{drug.status}</TableCell>
                 <TableCell>
                   <Button onClick={() => handleDeleteDrug(index)}>
@@ -313,7 +313,8 @@ setTimeout(() => {
             <DialogHeader>
               <DialogTitle>Confirm Payment</DialogTitle>
               <DialogDescription>
-                Please confirm the payment and select the disease affecting the patient.
+                Please confirm the payment and select the disease affecting the
+                patient.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
@@ -344,7 +345,7 @@ setTimeout(() => {
                 <div className="mt-2">
                   <p className="text-sm text-gray-600">No disease found.</p>
                   <Button
-                    className="mt-2"
+                    className="bg-blue-500 hover:bg-blue-600 mt-2"
                     onClick={() => setIsAddDiseaseDialogOpen(true)}
                   >
                     Add Disease
@@ -363,7 +364,7 @@ setTimeout(() => {
               <DialogClose asChild>
                 <Button variant="outline">Cancel</Button>
               </DialogClose>
-              <Button onClick={handleConfirmPayment}>
+              <Button className="bg-blue-500 hover:bg-blue-600" onClick={handleConfirmPayment}>
                 Confirm and Proceed
               </Button>
             </DialogFooter>
@@ -391,7 +392,12 @@ setTimeout(() => {
               >
                 Cancel
               </Button>
-              <Button onClick={handleAddDisease}>Add Disease</Button>
+              <Button
+                className="bg-blue-500 hover:bg-blue-600"
+                onClick={handleAddDisease}
+              >
+                Add Disease
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

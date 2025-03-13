@@ -26,6 +26,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 
 const formSchema = z.object({
   username: z.string().min(2, {
@@ -41,6 +42,7 @@ export default function LoginForm() {
   const { login } = useAuth();
   const [showRoleDialog, setShowRoleDialog] = useState<boolean>(false);
   const [availableRoles, setAvailableRoles] = useState<string[]>([]);
+   const [showPassword, setShowPassword] = useState<boolean>(false);
 
   // 1. Define your form.
   const form = useForm<z.infer<typeof formSchema>>({
@@ -183,16 +185,25 @@ export default function LoginForm() {
             name="password"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-red-400">Password</FormLabel>
-                <FormControl>
-                  <Input
-                    type="password"
-                    placeholder="Enter password"
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
+                              <FormLabel className="text-red-400">Password</FormLabel>
+                              <FormControl>
+                                <div className="relative">
+                                  <Input
+                                    type={showPassword ? "text" : "password"} // Toggle input type
+                                    placeholder="Enter password"
+                                    {...field}
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)} // Toggle visibility
+                                    className="absolute right-2 top-2.5 text-gray-500 hover:text-gray-700"
+                                  >
+                                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />} {/* Toggle icon */}
+                                  </button>
+                                </div>
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
             )}
           />
 

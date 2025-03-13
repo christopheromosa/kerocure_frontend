@@ -180,7 +180,12 @@ export default function DepartmentsPage() {
 
       {/* Add Department Button and Search Field */}
       <div className="flex justify-between items-center mb-6">
-        <Button onClick={() => setIsAddDialogOpen(true)}>Add Department</Button>
+        <Button
+          className="bg-blue-500 hover:bg-blue-600 text-white"
+          onClick={() => setIsAddDialogOpen(true)}
+        >
+          Add Department
+        </Button>
         <Input
           placeholder="Search departments..."
           value={searchQuery}
@@ -239,7 +244,10 @@ export default function DepartmentsPage() {
               }
               required
             />
-            <Button type="submit" className="w-full">
+            <Button
+              type="submit"
+              className="w-full bg-blue-500 hover:bg-blue-600 text-white"
+            >
               Add Department
             </Button>
           </form>
@@ -265,7 +273,10 @@ export default function DepartmentsPage() {
               }
               required
             />
-            <Button type="submit" className="w-full">
+            <Button
+              type="submit"
+              className="w-full bg-green-500 hover:bg-green-600 text-white"
+            >
               Save Changes
             </Button>
           </form>
@@ -291,6 +302,7 @@ export default function DepartmentsPage() {
             </Button>
             <Button
               variant="destructive"
+              className="bg-red-500 hover:bg-red-600 text-white"
               onClick={() =>
                 selectedDepartment?.id && handleDelete(selectedDepartment.id!)
               }

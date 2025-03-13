@@ -249,7 +249,7 @@ export default function LabTestManagement() {
                 <TableCell>{labTest.duration}</TableCell>
                 <TableCell>
                   <Button
-                    variant="ghost"
+                    className="bg-green-500 hover:bg-green-600 text-white"
                     onClick={() => {
                       setCurrentLabTest(labTest);
                       setIsDialogOpen(true);
@@ -258,7 +258,7 @@ export default function LabTestManagement() {
                     Edit
                   </Button>
                   <Button
-                    variant="destructive"
+                    className="bg-red-500 hover:bg-red-600 text-white"
                     onClick={() => {
                       setLabTestToDelete(labTest);
                       setIsDeleteDialogOpen(true);
@@ -305,7 +305,10 @@ export default function LabTestManagement() {
               >
                 Cancel
               </Button>
-              <Button variant="destructive" onClick={handleDeleteLabTest}>
+              <Button
+                className="bg-red-500 hover:bg-red-600 text-white"
+                onClick={handleDeleteLabTest}
+              >
                 Delete
               </Button>
             </DialogFooter>

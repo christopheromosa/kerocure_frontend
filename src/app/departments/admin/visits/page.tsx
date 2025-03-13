@@ -217,6 +217,7 @@ const VisitsTable = () => {
                   <TableCell>
                     <Button
                       variant="outline"
+                      className="bg-yellow-500 hover:bg-yellow-600 text-white"
                       onClick={() => handleViewDetails(visit)}
                     >
                       View

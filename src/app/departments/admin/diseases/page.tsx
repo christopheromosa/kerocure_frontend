@@ -130,7 +130,12 @@ export default function DiseaseManagement() {
           onChange={(e) => setSearchQuery(e.target.value)}
           className="w-1/3"
         />
-        <Button onClick={() => setIsDialogOpen(true)}>Add Disease</Button>
+        <Button
+          className="bg-blue-500 hover:bg-blue-600 text-white"
+          onClick={() => setIsDialogOpen(true)}
+        >
+          Add Disease
+        </Button>
       </div>
 
       {/* Loading State */}
@@ -151,7 +156,7 @@ export default function DiseaseManagement() {
                 <TableCell>{disease.name}</TableCell>
                 <TableCell className="flex gap-2">
                   <Button
-                    variant="secondary"
+                    className="bg-green-500 hover:bg-green-600 text-white"
                     onClick={() => {
                       setCurrentDisease(disease);
                       setIsDialogOpen(true);
@@ -160,7 +165,7 @@ export default function DiseaseManagement() {
                     Edit
                   </Button>
                   <Button
-                    variant="destructive"
+                    className="bg-red-500 hover:bg-red-600 text-white"
                     onClick={() => handleDeleteDisease(disease.id!)}
                   >
                     Delete

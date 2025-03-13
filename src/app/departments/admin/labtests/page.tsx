@@ -203,7 +203,12 @@ export default function LabTestManagement() {
           onChange={(e) => setSearchQuery(e.target.value)}
           className="w-1/3"
         />
-        <Button onClick={() => setIsDialogOpen(true)}>Add Lab Test</Button>
+        <Button
+          className="bg-blue-500 hover:bg-blue-600 text-white"
+          onClick={() => setIsDialogOpen(true)}
+        >
+          Add Lab Test
+        </Button>
       </div>
 
       {/* File Upload Section */}
@@ -271,6 +276,7 @@ export default function LabTestManagement() {
                 <TableCell className="flex gap-2">
                   <Button
                     variant="secondary"
+                    className="bg-green-500 hover:bg-green-600 text-white"
                     onClick={() => {
                       setCurrentLabTest(labTest);
                       setIsDialogOpen(true);
@@ -280,6 +286,7 @@ export default function LabTestManagement() {
                   </Button>
                   <Button
                     variant="destructive"
+                    className="bg-red-500 hover:bg-red-600 text-white"
                     onClick={() => handleDeleteLabTest(labTest.id!)}
                   >
                     Delete

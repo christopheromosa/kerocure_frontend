@@ -77,7 +77,10 @@ export default function ResetPasswordDialog({
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="outline" className="mt-4">
+        <Button
+          variant="outline"
+          className="mt-4 bg-gray-500 hover:bg-gray-600 text-white"
+        >
           Reset Password
         </Button>
       </DialogTrigger>
@@ -105,7 +108,7 @@ export default function ResetPasswordDialog({
           <Button
             onClick={handlePasswordReset}
             disabled={loading}
-            className="w-full"
+            className="w-full bg-gray-500 hover:bg-gray-600 text-white"
           >
             {loading ? "Resetting..." : "Confirm Reset"}
           </Button>

@@ -104,7 +104,12 @@ export const LabResultsTab = ({
               >
                 Cancel
               </Button>
-              <Button onClick={handleCheckout}>Confirm</Button>
+              <Button
+                className="bg-blue-500 hover:bg-blue-600 text-white"
+                onClick={handleCheckout}
+              >
+                Confirm
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

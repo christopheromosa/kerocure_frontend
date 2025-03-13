@@ -7,6 +7,16 @@ import { ResetPasswordDialog } from "@/components/ResetPasswordDIalogAdmin";
 import { EditStaffDialog } from "@/components/EditStaffDialog";
 import ResponsePopup from "@/components/ResponsePopup";
 import { useAuth } from "@/context/AuthContext";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export interface Staff {
   id?: number;
@@ -40,6 +50,8 @@ export default function StaffPage() {
     username: string;
     password: string;
   } | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [staffToDelete, setStaffToDelete] = useState<Staff | null>(null);
 
   // Fetch staff data
   useEffect(() => {
@@ -97,6 +109,16 @@ export default function StaffPage() {
       );
       if (!response.ok) throw new Error("Failed to create staff account");
       const data = await response.json();
+      // Update local state immediately
+          setStaffData((prev) => [
+            ...prev,
+            {
+              ...data,
+              roles: formData.roles,
+              is_staff: formData.is_staff,
+              is_active: formData.is_active,
+            },
+          ]);
       setResponseData({ username: data.username, password: "00000000" });
       setIsDialogOpen(false);
       setFormData({
@@ -108,16 +130,7 @@ export default function StaffPage() {
         is_active: true,
       });
       // Refresh the staff list
-      const updatedResponse = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/accounts/`,
-        {
-          headers: {
-            Authorization: `Token ${authState?.token}`,
-          },
-        }
-      );
-      const updatedData = await updatedResponse.json();
-      setStaffData(updatedData);
+      
     } catch (error) {
       console.error("Error creating staff account:", error);
       alert("Failed to create staff account. Please try again.");
@@ -191,6 +204,43 @@ export default function StaffPage() {
     }
   };
 
+
+  // Handle delete confirmation
+    const handleDeleteStaff = async () => {
+      if (!staffToDelete) return;
+      setIsLoading(true);
+      try {
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/accounts/${staffToDelete.id}/`,
+          {
+            method: "DELETE",
+            headers: {
+              Authorization: `Token ${authState?.token}`,
+            },
+          }
+        );
+        if (!response.ok) throw new Error("Failed to delete staff account");
+        setIsDeleteDialogOpen(false);
+        alert("Staff account deleted successfully");
+        // Refresh the staff list
+        const updatedResponse = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/accounts/`,
+          {
+            headers: {
+              Authorization: `Token ${authState?.token}`,
+            },
+          }
+        );
+        const updatedData = await updatedResponse.json();
+        setStaffData(updatedData);
+      } catch (error) {
+        console.error("Error deleting staff account:", error);
+        alert("Failed to delete staff account. Please try again.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
   // Open edit dialog and populate form with selected staff data
   const openEditDialog = (staff: Staff) => {
     setSelectedStaff(staff);
@@ -209,6 +259,21 @@ export default function StaffPage() {
   return (
     <div className="p-6">
       {isLoading && <LoadingPage />}
+      {/* Delete Confirmation Dialog */}
+            <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This action will delete the staff member related records. This cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleDeleteStaff}>Delete</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
       <h1 className="text-2xl font-bold mb-6">Staff List</h1>
 
       {/* Staff Table */}
@@ -219,6 +284,10 @@ export default function StaffPage() {
           setIsResetDialogOpen(true);
         }}
         onEditStaff={(staff) => openEditDialog(staff)}
+        onDeleteStaff={(staff) => {
+                  setStaffToDelete(staff); // Set the staff to delete
+                  setIsDeleteDialogOpen(true); // Open the confirmation dialog
+                }}
       />
 
       {/* Add Staff Dialog */}

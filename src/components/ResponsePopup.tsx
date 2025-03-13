@@ -1,3 +1,5 @@
+import { toast,ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import {
   Dialog,
   DialogContent,
@@ -8,23 +10,30 @@ import {
 import { Button } from "@/components/ui/button";
 import { Copy } from "lucide-react"; // Import a copy icon for copying credentials
 
-interface ResponsePopupProps {
-  responseData: { username: string; password: string };
-  onClose: () => void;
-}
-
 const ResponsePopup = ({ responseData, onClose }: ResponsePopupProps) => {
   // Function to copy credentials to clipboard
   const copyCredentials = () => {
     const credentials = `Username: ${responseData.username}\nPassword: ${responseData.password}`;
     navigator.clipboard.writeText(credentials).then(() => {
-      alert("Credentials copied to clipboard!");
+      toast.success("Credentials copied to clipboard!", {
+        position: "top-right",
+        autoClose: 2000,
+      });
+    });
+  };
+
+  const copyText = (text: string) => {
+    navigator.clipboard.writeText(text).then(() => {
+      toast.success("Copied to clipboard!", {
+        position: "top-right",
+        autoClose: 2000,
+      });
     });
   };
 
   return (
     <Dialog open={!!responseData} onOpenChange={onClose}>
-      <DialogContent>
+      <DialogContent className="fade-in">
         <DialogHeader>
           <DialogTitle>Account Created Successfully</DialogTitle>
           <DialogDescription>
@@ -41,9 +50,7 @@ const ResponsePopup = ({ responseData, onClose }: ResponsePopupProps) => {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() =>
-                  navigator.clipboard.writeText(responseData.username)
-                }
+                onClick={() => copyText(responseData.username)}
               >
                 <Copy className="h-4 w-4" />
               </Button>
@@ -57,9 +64,7 @@ const ResponsePopup = ({ responseData, onClose }: ResponsePopupProps) => {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() =>
-                  navigator.clipboard.writeText(responseData.password)
-                }
+                onClick={() => copyText(responseData.password)}
               >
                 <Copy className="h-4 w-4" />
               </Button>
@@ -78,8 +83,8 @@ const ResponsePopup = ({ responseData, onClose }: ResponsePopupProps) => {
           Close
         </Button>
       </DialogContent>
+      <ToastContainer/>
     </Dialog>
   );
 };
-
 export default ResponsePopup;
