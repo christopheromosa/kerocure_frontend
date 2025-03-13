@@ -274,7 +274,7 @@ const BillingDetailsPage = () => {
 
             {/* Calculate Total Button */}
             <Button
-              className="bg-gray-500 hover:bg-gray-600 text-white mt-4"
+              className="bg-gray-500 hover:bg-gray-600 dark:bg-gray-500 dark:hover:bg-gray-600 text-white mt-4"
               onClick={calculateTotalCost}
             >
               Generate Total Cost
@@ -288,10 +288,7 @@ const BillingDetailsPage = () => {
             </div>
 
             {/* Save Billing Button */}
-            <Button
-              className=" bg-blue-500 hover:bg-blue-600 text-white mt-4"
-              onClick={handleSaveBilling}
-            >
+            <Button className="mt-4" onClick={handleSaveBilling}>
               Save Billing Details
             </Button>
 

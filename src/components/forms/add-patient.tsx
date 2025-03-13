@@ -125,7 +125,9 @@ export function AddPatientDialog() {
         }}
       >
         <DialogTrigger asChild>
-          <Button variant="outline">Add New Patient</Button>
+          <Button className="bg-blue-500 hover:bg-blue-600 dark:bg-blue-500 dark:hover:bg-blue-600 text-white">
+            Add New Patient
+          </Button>
         </DialogTrigger>
         <DialogContent className="sm:max-w-[625px]">
           <DialogHeader>

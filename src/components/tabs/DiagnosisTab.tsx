@@ -29,7 +29,7 @@ export const DiagnosisTab = ({
 
         {/* Save diagnosis button */}
         <Button
-          className="bg-blue-500 hover:bg-blue-600 text-white mt-4"
+          className="bg-blue-500 hover:bg-blue-600 dark:bg-blue-500 dark:hover:bg-blue-600 text-white mt-4"
           onClick={handleSaveDiagnosis}
           disabled={isDiagnosisSaved}
         >

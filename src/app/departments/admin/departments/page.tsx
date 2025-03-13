@@ -246,7 +246,7 @@ export default function DepartmentsPage() {
             />
             <Button
               type="submit"
-              className="w-full bg-blue-500 hover:bg-blue-600 text-white"
+              className="w-full bg-blue-500 hover:bg-blue-600 dark:bg-blue-500 dark:hover:bg-blue-600 text-white"
             >
               Add Department
             </Button>
@@ -275,7 +275,7 @@ export default function DepartmentsPage() {
             />
             <Button
               type="submit"
-              className="w-full bg-green-500 hover:bg-green-600 text-white"
+              className="w-full bg-green-500 hover:bg-green-600 dark:bg-green-500 dark:hover:bg-green-600 text-white"
             >
               Save Changes
             </Button>
@@ -302,7 +302,7 @@ export default function DepartmentsPage() {
             </Button>
             <Button
               variant="destructive"
-              className="bg-red-500 hover:bg-red-600 text-white"
+              className="bg-red-500 hover:bg-red-600 dark:bg-red-500 dark:hover:bg-red-600 text-white"
               onClick={() =>
                 selectedDepartment?.id && handleDelete(selectedDepartment.id!)
               }

@@ -105,7 +105,7 @@ export const LabResultsTab = ({
                 Cancel
               </Button>
               <Button
-                className="bg-blue-500 hover:bg-blue-600 text-white"
+                className="bg-blue-500 hover:bg-blue-600 dark:bg-blue-500 dark:hover:bg-blue-600 text-white"
                 onClick={handleCheckout}
               >
                 Confirm

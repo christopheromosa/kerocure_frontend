@@ -54,7 +54,7 @@ export default function ResetPasswordDialog({
 
       const data = await response.json();
       console.log(data);
-      
+
       if (response.ok) {
         toast.success("Password reset successful ", {
           autoClose: 5000, // Show toast for 2 seconds
@@ -69,7 +69,6 @@ export default function ResetPasswordDialog({
     } catch (error) {
       toast.error("Something went wrong");
       console.error(error);
-      
     }
     setLoading(false);
   };
@@ -79,7 +78,7 @@ export default function ResetPasswordDialog({
       <DialogTrigger asChild>
         <Button
           variant="outline"
-          className="mt-4 bg-gray-500 hover:bg-gray-600 text-white"
+          className="mt-4 bg-gray-500 hover:bg-gray-600 dark:bg-gray-500 dark:hover:bg-gray-600 text-white"
         >
           Reset Password
         </Button>
@@ -108,7 +107,7 @@ export default function ResetPasswordDialog({
           <Button
             onClick={handlePasswordReset}
             disabled={loading}
-            className="w-full bg-gray-500 hover:bg-gray-600 text-white"
+            className="w-full bg-gray-500 hover:bg-gray-600 dark:bg-gray-500 dark:hover:bg-gray-600 text-white"
           >
             {loading ? "Resetting..." : "Confirm Reset"}
           </Button>

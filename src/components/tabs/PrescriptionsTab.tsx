@@ -32,7 +32,7 @@ export const PrescriptionsTab = ({
   handleSaveDrugPrescriptions,
   note_id,
   diagnosis,
-  visit
+  visit,
 }: any) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isConfirmationDialogOpen, setIsConfirmationDialogOpen] =
@@ -49,7 +49,7 @@ export const PrescriptionsTab = ({
   const router = useRouter();
   const { authState } = useAuth();
 
-  console.log(note_id,diagnosis,visit);
+  console.log(note_id, diagnosis, visit);
 
   // Fetch drugs and diseases on component mount
   useEffect(() => {
@@ -117,12 +117,12 @@ export const PrescriptionsTab = ({
   };
 
   // Handle adding a drug to the selected list
-const handleAddDrug = (drug: any) => {
-  const updatedDrugs = [...selectedDrugs, { ...drug, dosage: "" }];
-  setSelectedDrugs(updatedDrugs);
-  setPrescriptions(updatedDrugs);
-  setSearchTerm("");
-};
+  const handleAddDrug = (drug: any) => {
+    const updatedDrugs = [...selectedDrugs, { ...drug, dosage: "" }];
+    setSelectedDrugs(updatedDrugs);
+    setPrescriptions(updatedDrugs);
+    setSearchTerm("");
+  };
 
   // Handle deleting a drug from the selected list
   const handleDeleteDrug = (index: number) => {
@@ -144,15 +144,15 @@ const handleAddDrug = (drug: any) => {
 
   // Handle confirming payment and saving disease
   const handleConfirmPayment = async () => {
-  console.log(selectedDisease)
+    console.log(selectedDisease);
     try {
       // Update the consultation with the selected disease
       await axios.put(
         `${process.env.NEXT_PUBLIC_API_URL}/consultation/${note_id}/`,
         {
           disease: selectedDisease,
-          diagnosis:diagnosis,
-          visit:visit
+          diagnosis: diagnosis,
+          visit: visit,
         },
         {
           headers: {
@@ -161,16 +161,16 @@ const handleAddDrug = (drug: any) => {
           },
         }
       );
-setTimeout(() => {
-            toast.success("Patient proceed to pharmacy successfully!", {
-              autoClose: 1000, // Show toast for 2 seconds
-              onClose: () => {               
-          router.push("/departments/consultation/patients");
-              },
-            });
-          }, 1000);
-                window.location.reload(); // Refresh after the toast disappears
-            setIsConfirmationDialogOpen(false); // Close the confirmation dialog
+      setTimeout(() => {
+        toast.success("Patient proceed to pharmacy successfully!", {
+          autoClose: 1000, // Show toast for 2 seconds
+          onClose: () => {
+            router.push("/departments/consultation/patients");
+          },
+        });
+      }, 1000);
+      window.location.reload(); // Refresh after the toast disappears
+      setIsConfirmationDialogOpen(false); // Close the confirmation dialog
       // Optionally, you can trigger a page reload or navigation here if needed
     } catch (error) {
       console.error("Failed to save disease:", error);
@@ -345,7 +345,7 @@ setTimeout(() => {
                 <div className="mt-2">
                   <p className="text-sm text-gray-600">No disease found.</p>
                   <Button
-                    className="bg-blue-500 hover:bg-blue-600 mt-2"
+                    className="bg-blue-500 hover:bg-blue-600 dark:bg-blue-500 dark:hover:bg-blue-600 mt-2"
                     onClick={() => setIsAddDiseaseDialogOpen(true)}
                   >
                     Add Disease
@@ -364,7 +364,10 @@ setTimeout(() => {
               <DialogClose asChild>
                 <Button variant="outline">Cancel</Button>
               </DialogClose>
-              <Button className="bg-blue-500 hover:bg-blue-600" onClick={handleConfirmPayment}>
+              <Button
+                className="bg-blue-500 hover:bg-blue-600 dark:bg-blue-500 dark:hover:bg-blue-600"
+                onClick={handleConfirmPayment}
+              >
                 Confirm and Proceed
               </Button>
             </DialogFooter>
@@ -393,7 +396,7 @@ setTimeout(() => {
                 Cancel
               </Button>
               <Button
-                className="bg-blue-500 hover:bg-blue-600"
+                className="bg-blue-500 hover:bg-blue-600 dark:bg-blue-500 dark:hover:bg-blue-600"
                 onClick={handleAddDisease}
               >
                 Add Disease

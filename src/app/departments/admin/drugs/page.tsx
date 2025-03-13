@@ -197,7 +197,7 @@ export default function DrugManagement() {
           className="w-1/3"
         />
         <Button
-          className="bg-blue-500 hover:bg-blue-600 text-white"
+          className="bg-blue-500 hover:bg-blue-600 dark:bg-blue-500 dark:hover:bg-blue-600 text-white"
           onClick={() => setIsDialogOpen(true)}
         >
           Add Drug
@@ -270,7 +270,7 @@ export default function DrugManagement() {
                 <TableCell>{drug.status}</TableCell>
                 <TableCell>
                   <Button
-                    className="bg-green-500 hover:bg-green-600 text-white"
+                    className="bg-green-500 hover:bg-green-600 text-white dark:bg-green-500 dark:hover:bg-green-600"
                     onClick={() => {
                       setCurrentDrug(drug);
                       setIsDialogOpen(true);
@@ -279,7 +279,7 @@ export default function DrugManagement() {
                     Edit
                   </Button>
                   <Button
-                    className="bg-red-500 hover:bg-red-600 text-white"
+                    className="bg-red-500 hover:bg-red-600 dark:bg-red-500 dark:hover:bg-red-600 text-white"
                     onClick={() => handleDeleteDrug(drug.id!)}
                   >
                     Delete

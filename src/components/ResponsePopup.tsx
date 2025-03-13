@@ -10,6 +10,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { Copy } from "lucide-react"; // Import a copy icon for copying credentials
 
+interface ResponsePopupProps {
+  responseData: { username: string; password: string };
+  onClose: () => void;
+}
+
 const ResponsePopup = ({ responseData, onClose }: ResponsePopupProps) => {
   // Function to copy credentials to clipboard
   const copyCredentials = () => {

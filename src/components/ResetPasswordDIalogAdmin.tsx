@@ -41,7 +41,10 @@ export const ResetPasswordDialog = ({
           value={newPassword}
           onChange={(e) => setNewPassword(e.target.value)}
         />
-        <Button onClick={() => onResetPassword(newPassword)}>
+        <Button
+          className="bg-gray-500 hover:bg-gray-600 dark:bg-gray-500 dark:hover:bg-gray-600 text-white"
+          onClick={() => onResetPassword(newPassword)}
+        >
           Reset Password
         </Button>
       </DialogContent>

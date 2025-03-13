@@ -135,7 +135,7 @@ export const EditStaffDialog = ({
                   <button
                     type="button"
                     onClick={() => handleRemoveRole(role)}
-                    className="text-sm text-red-500 hover:text-red-700"
+                    className="text-sm text-red-500 hover:text-red-700 dark:text-red-500 dark:hover:text-red-700"
                   >
                     ×
                   </button>
@@ -155,20 +155,20 @@ export const EditStaffDialog = ({
 
           {/* Is Staff Checkbox */}
           <div className="flex items-center space-x-4">
-          {/* Is Active Checkbox */}
-                      <label className="flex items-center space-x-2">
-                        <input
-                          type="checkbox"
-                          name="is_active"
-                          checked={formData.is_active}
-                          onChange={(e) =>
-                            onInputChange({ name: "is_active", value: e.target.checked })
-                          }
-                          className="form-checkbox h-4 w-4 text-indigo-600 transition duration-150 ease-in-out"
-                        />
-                        <span>Is Active</span>
-                      </label>
-          
+            {/* Is Active Checkbox */}
+            <label className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                name="is_active"
+                checked={formData.is_active}
+                onChange={(e) =>
+                  onInputChange({ name: "is_active", value: e.target.checked })
+                }
+                className="form-checkbox h-4 w-4 text-indigo-600 transition duration-150 ease-in-out"
+              />
+              <span>Is Active</span>
+            </label>
+
             <label className="flex items-center space-x-2">
               <input
                 type="checkbox"
@@ -181,8 +181,7 @@ export const EditStaffDialog = ({
               />
               <span>Set as Admin</span>
             </label>
-
-                      </div>
+          </div>
 
           {/* Save Changes Button */}
           <Button type="submit" className="w-full">

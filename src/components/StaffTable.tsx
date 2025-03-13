@@ -107,7 +107,9 @@ export const StaffTable = ({
               <TableCell>
                 <Badge
                   className={`${
-                    staffMember.is_active ? "bg-blue-700" : "bg-red-700"
+                    staffMember.is_active
+                      ? "bg-blue-700 dark:bg-blue-700"
+                      : "bg-red-700 dark:bg-red-700"
                   }`}
                 >
                   {staffMember.is_active ? "Active" : "Inactive"}
@@ -115,19 +117,19 @@ export const StaffTable = ({
               </TableCell>
               <TableCell className="space-x-2">
                 <Button
-                  className="bg-gray-500 hover:bg-gray-600 text-white"
+                  className="bg-gray-500 hover:bg-gray-600 dark:bg-gray-500 dark:hover:bg-gray-600 text-white"
                   onClick={() => onResetPassword(staffMember)}
                 >
                   Reset Password
                 </Button>
                 <Button
-                  className="bg-green-500 hover:bg-green-600 text-white"
+                  className="bg-green-500 hover:bg-green-600 text-white dark:bg-green-500 dark:hover:bg-green-600"
                   onClick={() => onEditStaff(staffMember)}
                 >
                   Edit
                 </Button>
                 <Button
-                  className="bg-red-500 hover:bg-red-600 text-white" // Use a destructive style for delete
+                  className="bg-red-500 hover:bg-red-600 dark:bg-red-500 dark:hover:bg-red-600 text-white" // Use a destructive style for delete
                   onClick={() => onDeleteStaff(staffMember)} // Call the delete handler
                 >
                   Delete

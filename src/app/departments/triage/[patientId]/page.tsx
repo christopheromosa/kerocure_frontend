@@ -302,7 +302,7 @@ const Patient = () => {
                   <Label htmlFor="weight">Weight(Kg) </Label>
                   <Input id="weight" type="text" {...register("weight")} />
                   {errors.weight && (
-                    <p className="text-red-500 text-sm">
+                    <p className="text-red-500 dark:text-red-500 text-sm">
                       {errors.weight?.message as string}
                     </p>
                   )}
@@ -311,7 +311,7 @@ const Patient = () => {
                   <Label htmlFor="height">Height(ft)</Label>
                   <Input id="height" type="text" {...register("height")} />
                   {errors.height && (
-                    <p className="text-red-500 text-sm">
+                    <p className="text-red-500 dark:text-red-500 text-sm">
                       {errors.height?.message as string}
                     </p>
                   )}
@@ -322,7 +322,7 @@ const Patient = () => {
                   <Label htmlFor="systolic">Systolic(mmHg)</Label>
                   <Input id="systolic" type="text" {...register("systolic")} />
                   {errors.systolic && (
-                    <p className="text-red-500 text-sm">
+                    <p className="text-red-500 dark:text-red-500 text-sm">
                       {errors.systolic.message as string}
                     </p>
                   )}
@@ -335,7 +335,7 @@ const Patient = () => {
                     {...register("diastolic")}
                   />
                   {errors.diastolic && (
-                    <p className="text-red-500 text-sm">
+                    <p className="text-red-500 dark:text-red-500 text-sm">
                       {errors.diastolic.message as string}
                     </p>
                   )}
@@ -345,7 +345,7 @@ const Patient = () => {
                 <Label htmlFor="pulse">Pulse / Min (bpm)</Label>
                 <Input id="pulse" type="text" {...register("pulse")} />
                 {errors.pulse && (
-                  <p className="text-red-500 text-sm">
+                  <p className="text-red-500 dark:text-red-500 text-sm">
                     {errors.pulse.message as string}
                   </p>
                 )}
@@ -368,10 +368,16 @@ const Patient = () => {
               </div>
             </CardContent>
             <CardFooter className="flex justify-between">
-              <Button type="submit" className="bg-blue-500 text-white">
+              <Button
+                type="submit"
+                className="bg-blue-500 dark:bg-blue-500 text-white"
+              >
                 Save
               </Button>
-              <Button type="button" className="bg-gray-400 text-white">
+              <Button
+                type="button"
+                className="bg-gray-400 dark:bg-gray-400 text-white"
+              >
                 Cancel
               </Button>
             </CardFooter>
