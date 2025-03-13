@@ -41,6 +41,10 @@ export default function DepartmentsPage() {
     name: "",
   });
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5; // Number of items per page
+
   // Fetch departments
   useEffect(() => {
     async function fetchDepartments() {
@@ -70,6 +74,13 @@ export default function DepartmentsPage() {
   // Handle search
   const filteredDepartments = departments.filter((department) =>
     department.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // Paginate results
+  const totalPages = Math.ceil(filteredDepartments.length / itemsPerPage);
+  const displayedDepartments = filteredDepartments.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
   );
 
   // Handle add department
@@ -201,13 +212,13 @@ export default function DepartmentsPage() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {filteredDepartments.map((department) => (
+          {displayedDepartments.map((department) => (
             <TableRow key={department.id}>
               <TableCell>{department.name}</TableCell>
               <TableCell className="space-x-2">
                 <Button
                   variant="outline"
-                  className=" bg-green-500 hover:bg-green-600 dark:bg-green-500 dark:hover:bg-green-600 text-white dark:text-white"
+                  className="bg-green-500 hover:bg-green-600 dark:bg-green-500 dark:hover:bg-green-600 text-white dark:text-white"
                   onClick={() => openEditDialog(department)}
                 >
                   Edit
@@ -224,14 +235,39 @@ export default function DepartmentsPage() {
           ))}
         </TableBody>
       </Table>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex justify-between items-center mt-4">
+          <Button
+            variant="outline"
+            disabled={currentPage === 1}
+            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+          >
+            Previous
+          </Button>
+          <span>
+            Page {currentPage} of {totalPages}
+          </span>
+          <Button
+            variant="outline"
+            disabled={currentPage === totalPages}
+            onClick={() =>
+              setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+            }
+          >
+            Next
+          </Button>
+        </div>
+      )}
+
       {/* Add Department Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Add Department</DialogTitle>
             <DialogDescription>
-              bg-red-500 hover:bg-red-600 dark:bg-red-500 dark:hover:bg-red-600
-              text-white Enter the details of the new department.
+              Enter the details of the new department.
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleAdd} className="space-y-4">
@@ -253,7 +289,7 @@ export default function DepartmentsPage() {
           </form>
         </DialogContent>
       </Dialog>
-      
+
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent>
@@ -282,6 +318,7 @@ export default function DepartmentsPage() {
           </form>
         </DialogContent>
       </Dialog>
+
       {/* Delete Confirmation Dialog */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent>

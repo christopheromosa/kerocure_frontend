@@ -23,6 +23,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { LabTestForm } from "@/components/forms/lab-test-form";
 import { CircularProgress } from "@mui/material";
 import { useAuth } from "@/context/AuthContext";
+import { Input } from "@/components/ui/input";
 
 export default function LabTestManagement() {
   const [labTests, setLabTests] = useState<any[]>([]);
@@ -33,6 +34,13 @@ export default function LabTestManagement() {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const { authState } = useAuth();
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5; // Number of items per page
+
+  // Search state
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Fetch lab tests from the backend
   const fetchLabTests = async () => {
@@ -56,6 +64,18 @@ export default function LabTestManagement() {
   useEffect(() => {
     fetchLabTests();
   }, []);
+
+  // Filter lab tests based on search query
+  const filteredLabTests = labTests.filter((labTest) =>
+    labTest.service.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // Paginate results
+  const totalPages = Math.ceil(filteredLabTests.length / itemsPerPage);
+  const displayedLabTests = filteredLabTests.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   // Handle adding or editing a lab test
   const handleSaveLabTest = async (labTest: any) => {
@@ -180,16 +200,145 @@ export default function LabTestManagement() {
     }
   };
 
+  // Handle printing the lab test list
+  const handlePrintLabTestList = () => {
+    const printContent = `
+      <html>
+        <head>
+          <title>Lab Test List</title>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              margin: 0;
+              padding: 20px;
+              background-color: #f9f9f9;
+            }
+            .container {
+              max-width: 800px;
+              margin: 0 auto;
+              background-color: #fff;
+              padding: 20px;
+              border: 1px solid #ddd;
+              border-radius: 8px;
+              box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            }
+            .header {
+              text-align: center;
+              border-bottom: 2px solid #000;
+              padding-bottom: 20px;
+              margin-bottom: 20px;
+            }
+            .header img {
+              width: 100px;
+              height: auto;
+              margin-bottom: 10px;
+            }
+            .header h1 {
+              margin: 0;
+              font-size: 24px;
+              color: #333;
+            }
+            .header p {
+              margin: 5px 0;
+              font-size: 14px;
+              color: #666;
+            }
+            .table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-top: 20px;
+            }
+            .table th, .table td {
+              border: 1px solid #ddd;
+              padding: 8px;
+              text-align: left;
+            }
+            .table th {
+              background-color: #f2f2f2;
+            }
+            .footer {
+              margin-top: 30px;
+              text-align: center;
+              font-size: 14px;
+              color: #777;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <!-- Header -->
+            <div class="header">
+              <img src="/kerocureLogo-removebg-preview.png" alt="Organization Logo" />
+              <h1>KEROCURE MEDICAL CENTER</h1>
+              <p>PO BOX: 3192, KISII</p>
+              <p>Email: Kerocure1@gmail.com | Tel: +254 725 808 100</p>
+            </div>
+
+            <!-- Lab Test Table -->
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Service</th>
+                  <th>Cost</th>
+                  <th>Duration</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${filteredLabTests
+                  .map(
+                    (labTest) => `
+                  <tr>
+                    <td>${labTest.service}</td>
+                    <td>KSH ${labTest.cost}</td>
+                    <td>${labTest.duration}</td>
+                  </tr>
+                `
+                  )
+                  .join("")}
+              </tbody>
+            </table>
+
+            <!-- Footer -->
+            <div class="footer">
+              <p>Thank you for choosing KEROCURE MEDICAL CENTER!</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `;
+
+    const printWindow = window.open("", "_blank");
+    printWindow?.document.write(printContent);
+    printWindow?.document.close();
+    printWindow?.print();
+  };
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>Lab Test Management</CardTitle>
       </CardHeader>
       <CardContent>
+        {/* Search and Print Section */}
+        <div className="flex justify-between items-center mb-4">
+          <Input
+            placeholder="Search lab tests..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-1/3"
+          />
+          <Button
+            className="bg-gray-500 hover:bg-gray-600 text-white dark:bg-gray-500 dark:hover:bg-gray-600 dark:text-white"
+            onClick={handlePrintLabTestList}
+          >
+            Print Lab Test List
+          </Button>
+        </div>
+
         {/* Add File Upload Input */}
         <div className="mb-4">
           <label className="block font-semibold text-gray-700 mb-2">
-            Upload Laboratory price list File
+            Upload Laboratory Price List File
           </label>
           <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
             <p className="text-sm text-gray-500 mb-4">
@@ -207,7 +356,7 @@ export default function LabTestManagement() {
             />
             <label
               htmlFor="file-upload"
-              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white  rounded-lg cursor-pointer hover:bg-blue-700"
+              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg cursor-pointer hover:bg-blue-700"
             >
               <span>Choose File</span>
             </label>
@@ -242,7 +391,7 @@ export default function LabTestManagement() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {labTests.map((labTest) => (
+            {displayedLabTests.map((labTest) => (
               <TableRow key={labTest.id}>
                 <TableCell>{labTest.service}</TableCell>
                 <TableCell>Ksh {labTest.cost}</TableCell>
@@ -271,6 +420,31 @@ export default function LabTestManagement() {
             ))}
           </TableBody>
         </Table>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex justify-between items-center mt-4">
+            <Button
+              variant="outline"
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            >
+              Previous
+            </Button>
+            <span>
+              Page {currentPage} of {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              disabled={currentPage === totalPages}
+              onClick={() =>
+                setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+              }
+            >
+              Next
+            </Button>
+          </div>
+        )}
 
         {/* Add/Edit Lab Test Dialog */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>

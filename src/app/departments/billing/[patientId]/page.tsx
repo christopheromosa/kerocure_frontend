@@ -177,8 +177,8 @@ const BillingDetailsPage = () => {
             <div class="header">
               <img src="/kerocureLogo-removebg-preview.png" alt="Organization Logo" />
               <h1>KEROCURE MEDICAL CENTER</h1>
-              <p>PO BOX: 3172 - 4255, KISII</p>
-              <p>Email: Kerocure1@gmail.com | Tel: +254711111111</p>
+              <p>PO BOX: 3192, KISII</p>
+              <p>Email: Kerocure1@gmail.com | Tel: +254 725 808 100</p>
             </div>
     
             <!-- Content -->
@@ -220,8 +220,8 @@ const BillingDetailsPage = () => {
       toast.success("Saved billing details successfully!", {
         autoClose: 1000,
         onClose: () => {
-          router.push("/departments/billing");
           window.location.reload();
+          router.push("/departments/billing");
         },
       });
     }, 1000);

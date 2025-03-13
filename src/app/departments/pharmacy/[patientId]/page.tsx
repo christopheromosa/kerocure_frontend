@@ -154,18 +154,12 @@ const PharmacyDetailsPage = () => {
     setShowConfirmationDialog(false);
     if (selectedDrug && selectedPrescription) {
       try {
-        // Calculate total cost
-        const totalCost = selectedDrug.cost * dispenseQuantity;
-  
-        // Deduct the dispensed quantity from the drug's quantity in the database
-        const updatedQuantity = selectedDrug.quantity - dispenseQuantity;
-  
-        // Update the drug in the database
-        const response = await axios.put(
-          `${process.env.NEXT_PUBLIC_API_URL}/drugs/${selectedDrug.id}/`,
+        // Call the dispense-drug/ endpoint
+        const response = await axios.post(
+          `${process.env.NEXT_PUBLIC_API_URL}/dispense-drug/`,
           {
-            ...selectedDrug,
-            quantity: updatedQuantity,
+            drug_id: selectedDrug.id,
+            quantity_dispensed: dispenseQuantity,
           },
           {
             headers: {
@@ -175,12 +169,11 @@ const PharmacyDetailsPage = () => {
         );
   
         if (response.status === 200) {
-          // Update the local drugs state
+          // Update the local drugs state with the new quantity and status
+          const updatedDrug = response.data; // Assuming the backend returns the updated drug
           setDrugs((prev) =>
             prev.map((drug) =>
-              drug.id === selectedDrug.id
-                ? { ...drug, quantity: updatedQuantity }
-                : drug
+              drug.id === updatedDrug.id ? updatedDrug : drug
             )
           );
   
@@ -189,7 +182,7 @@ const PharmacyDetailsPage = () => {
             ...selectedPrescription,
             medication_name: selectedDrug.drug_name,
             quantity: dispenseQuantity.toString(),
-            cost: totalCost,
+            cost: selectedDrug.cost * dispenseQuantity,
             dispensed: true,
           };
           setDispensedDrugs((prev) => [...prev, dispensedDrug]);
@@ -197,11 +190,11 @@ const PharmacyDetailsPage = () => {
           // Close the dispense dialog
           setShowDispenseDialog(false);
         } else {
-          throw new Error("Failed to update drug quantity");
+          throw new Error("Failed to dispense drug");
         }
       } catch (error) {
-        console.error("Error updating drug quantity:", error);
-        toast.error("Failed to update drug quantity. Please try again.");
+        console.error("Error dispensing drug:", error);
+        toast.error("Failed to dispense drug. Please try again.");
       }
     }
   };

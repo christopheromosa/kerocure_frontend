@@ -204,9 +204,14 @@ const PatientManagementPage = () => {
       setTimeout(() => {
         toast.success("Prescriptions saved successfully", {
           autoClose: 5000, // Show toast for 2 seconds
+          onClose: () => {
+          	router.push("/departments/consultation/patients");
+          }
         });
       }, 1000);
-      //router.push("/departments/consultation/patients");
+
+      window.location.reload();
+      
       //setRefresh(!refresh); // Trigger refresh
     } catch (error) {
       console.error("Failed to save test requests:", error);

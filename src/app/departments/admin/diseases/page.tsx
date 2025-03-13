@@ -34,6 +34,11 @@ export default function DiseaseManagement() {
   const [isLoading, setIsLoading] = useState(false);
   const { authState } = useAuth();
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5; // Number of items per page
+
+  // Fetch all diseases on page load
   const fetchDiseases = async () => {
     setIsLoading(true);
     try {
@@ -55,7 +60,7 @@ export default function DiseaseManagement() {
       setIsLoading(false);
     }
   };
-  // Fetch all diseases on page load
+
   useEffect(() => {
     fetchDiseases();
   }, []);
@@ -63,6 +68,13 @@ export default function DiseaseManagement() {
   // Filter diseases based on search query
   const filteredDiseases = diseases.filter((disease) =>
     disease.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // Paginate results
+  const totalPages = Math.ceil(filteredDiseases.length / itemsPerPage);
+  const displayedDiseases = filteredDiseases.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
   );
 
   // Handle adding or editing a disease
@@ -143,38 +155,65 @@ export default function DiseaseManagement() {
 
       {/* Disease Table */}
       {!isLoading && (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Disease Name</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredDiseases.map((disease) => (
-              <TableRow key={disease.id}>
-                <TableCell>{disease.name}</TableCell>
-                <TableCell className="flex gap-2">
-                  <Button
-                    className="bg-green-500 hover:bg-green-600 dark:bg-green-500 dark:hover:bg-green-600 text-white dark:text-white"
-                    onClick={() => {
-                      setCurrentDisease(disease);
-                      setIsDialogOpen(true);
-                    }}
-                  >
-                    Edit
-                  </Button>
-                  <Button
-                    className="bg-red-500 hover:bg-red-600 dark:bg-red-500 dark:hover:bg-red-600 text-white dark:text-white"
-                    onClick={() => handleDeleteDisease(disease.id!)}
-                  >
-                    Delete
-                  </Button>
-                </TableCell>
+        <>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Disease Name</TableHead>
+                <TableHead>Actions</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {displayedDiseases.map((disease) => (
+                <TableRow key={disease.id}>
+                  <TableCell>{disease.name}</TableCell>
+                  <TableCell className="flex gap-2">
+                    <Button
+                      className="bg-green-500 hover:bg-green-600 dark:bg-green-500 dark:hover:bg-green-600 text-white dark:text-white"
+                      onClick={() => {
+                        setCurrentDisease(disease);
+                        setIsDialogOpen(true);
+                      }}
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      className="bg-red-500 hover:bg-red-600 dark:bg-red-500 dark:hover:bg-red-600 text-white dark:text-white"
+                      onClick={() => handleDeleteDisease(disease.id!)}
+                    >
+                      Delete
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex justify-between items-center mt-4">
+              <Button
+                variant="outline"
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              >
+                Previous
+              </Button>
+              <span>
+                Page {currentPage} of {totalPages}
+              </span>
+              <Button
+                variant="outline"
+                disabled={currentPage === totalPages}
+                onClick={() =>
+                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                }
+              >
+                Next
+              </Button>
+            </div>
+          )}
+        </>
       )}
 
       {/* Add/Edit Disease Dialog */}
