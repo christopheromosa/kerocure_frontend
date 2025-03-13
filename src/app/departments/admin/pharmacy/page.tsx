@@ -100,6 +100,7 @@ export default function MedicationsTable() {
                 <TableCell>
                   <Button
                     variant="ghost"
+                    className="bg-yellow-500 hover:bg-yellow-500 text-white dark:bg-yellow-500 dark:hover:bg-yellow-500 dark:text-white"
                     onClick={() => toggleExpandRow(medication.medication_id)}
                   >
                     {expandedRows.includes(medication.medication_id)

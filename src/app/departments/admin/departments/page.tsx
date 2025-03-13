@@ -177,11 +177,10 @@ export default function DepartmentsPage() {
     <div className="p-6">
       {isLoading && <LoadingPage />}
       <h1 className="text-2xl font-bold mb-6">Departments</h1>
-
       {/* Add Department Button and Search Field */}
       <div className="flex justify-between items-center mb-6">
         <Button
-          className="bg-blue-500 hover:bg-blue-600 text-white"
+          className="bg-blue-500 hover:bg-blue-600 dark:bg-blue-500 dark:hover:bg-blue-600 text-white dark:text-white"
           onClick={() => setIsAddDialogOpen(true)}
         >
           Add Department
@@ -193,7 +192,6 @@ export default function DepartmentsPage() {
           className="w-1/3"
         />
       </div>
-
       {/* Departments Table */}
       <Table>
         <TableHeader>
@@ -209,12 +207,14 @@ export default function DepartmentsPage() {
               <TableCell className="space-x-2">
                 <Button
                   variant="outline"
+                  className=" bg-green-500 hover:bg-green-600 dark:bg-green-500 dark:hover:bg-green-600 text-white dark:text-white"
                   onClick={() => openEditDialog(department)}
                 >
                   Edit
                 </Button>
                 <Button
                   variant="destructive"
+                  className="bg-red-500 hover:bg-red-600 dark:bg-red-500 dark:hover:bg-red-600 text-white dark:text-white"
                   onClick={() => openDeleteDialog(department)}
                 >
                   Delete
@@ -224,14 +224,14 @@ export default function DepartmentsPage() {
           ))}
         </TableBody>
       </Table>
-
       {/* Add Department Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Add Department</DialogTitle>
             <DialogDescription>
-              Enter the details of the new department.
+              bg-red-500 hover:bg-red-600 dark:bg-red-500 dark:hover:bg-red-600
+              text-white Enter the details of the new department.
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleAdd} className="space-y-4">
@@ -246,14 +246,14 @@ export default function DepartmentsPage() {
             />
             <Button
               type="submit"
-              className="w-full bg-blue-500 hover:bg-blue-600 dark:bg-blue-500 dark:hover:bg-blue-600 text-white"
+              className="w-full bg-blue-500 hover:bg-blue-600 dark:bg-blue-500 dark:hover:bg-blue-600 dark:text-white text-white"
             >
               Add Department
             </Button>
           </form>
         </DialogContent>
       </Dialog>
-
+      
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent>
@@ -275,14 +275,13 @@ export default function DepartmentsPage() {
             />
             <Button
               type="submit"
-              className="w-full bg-green-500 hover:bg-green-600 dark:bg-green-500 dark:hover:bg-green-600 text-white"
+              className="w-full bg-green-500 hover:bg-green-600 dark:bg-green-500 dark:hover:bg-green-600 text-white dark:text-white"
             >
               Save Changes
             </Button>
           </form>
         </DialogContent>
       </Dialog>
-
       {/* Delete Confirmation Dialog */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent>
@@ -302,7 +301,7 @@ export default function DepartmentsPage() {
             </Button>
             <Button
               variant="destructive"
-              className="bg-red-500 hover:bg-red-600 dark:bg-red-500 dark:hover:bg-red-600 text-white"
+              className="bg-red-500 hover:bg-red-600 dark:bg-red-500 dark:hover:bg-red-600 text-white dark:text-white"
               onClick={() =>
                 selectedDepartment?.id && handleDelete(selectedDepartment.id!)
               }

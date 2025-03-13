@@ -142,7 +142,7 @@ const TriageTable = () => {
                           {Object.entries(triage.vital_signs).map(
                             ([key, value]) => (
                               <li key={key}>
-                                <span className="font-medium bg-green capitalize">
+                                <span className="font-medium text-green-500 capitalize">
                                   {key}:
                                 </span>{" "}
                                 {value}
@@ -195,37 +195,4 @@ const TriageTable = () => {
 };
 
 export default TriageTable;
-// import { useEffect, useState } from "react";
-// const fetchTriageRecords = async () => {
-//   const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/triage/`);
-//   return response.json();
-// };
 
-// const triageColumns = [
-//   { field: "triage_id", headerName: "Triage ID", width: 90 },
-//   { field: "visit", headerName: "Visit ID", width: 150 },
-//   { field: "patient_name", headerName: "Patient Name", width: 150 },
-//   { field: "vital_signs", headerName: "Vital signs", width: 150 },
-//   { field: "recorded_by", headerName: "Recorded By", width: 150 },
-//   { field: "recorded_at", headerName: "Recorded At", width: 180 },
-// ];
-
-// export default function TriageTable() {
-//   const [triageData, setTriageData] = useState([]);
-//   useEffect(() => {
-//     async function getRecords() {
-//       const data = await fetchTriageRecords();
-//       setTriageData(data);
-//     }
-//     getRecords();
-//   }, []);
-
-//   return (
-//     <DataTable
-//       columns={triageColumns}
-//       data={triageData}
-//       title="Triage Records"
-//       dateField="recorded_at"
-//     />
-//   );
-// }

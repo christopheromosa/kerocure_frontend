@@ -160,7 +160,7 @@ const PhysicianNotesTable = () => {
                 <React.Fragment key={note.note_id}>
                   <TableRow>
                     <TableCell>{note.patient_name}</TableCell>
-                    <TableCell>{note.disease}</TableCell>
+                    <TableCell>{note.disease || "Unknown"}</TableCell>
                     <TableCell>{note.staff_name || "Unknown"}</TableCell>
                     <TableCell>
                       Ksh {parseFloat(note.total_cost.toString()).toFixed(2)}

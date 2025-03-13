@@ -16,6 +16,7 @@ type PatientType = {
   patientId: number;
   first_name: string;
   last_name: string;
+  
   dob: Date;
   residence: string;
   contact_number: string;
@@ -235,7 +236,7 @@ export default function PatientPage() {
               <p>
                 <strong>Last Name:</strong> {patient.last_name}
               </p>
-              <p>
+               <p>
                 <strong>Date of Birth:</strong>{" "}
                 {new Date(patient.dob).toLocaleDateString()}
               </p>

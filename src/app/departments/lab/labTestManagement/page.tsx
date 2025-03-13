@@ -207,7 +207,7 @@ export default function LabTestManagement() {
             />
             <label
               htmlFor="file-upload"
-              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg cursor-pointer hover:bg-blue-700"
+              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white  rounded-lg cursor-pointer hover:bg-blue-700"
             >
               <span>Choose File</span>
             </label>
@@ -249,7 +249,7 @@ export default function LabTestManagement() {
                 <TableCell>{labTest.duration}</TableCell>
                 <TableCell>
                   <Button
-                    className="bg-green-500 hover:bg-green-600 text-white"
+                    className="bg-green-500 hover:bg-green-600 text-white dark:bg-green-500 dark:hover:bg-green-600 dark:text-white"
                     onClick={() => {
                       setCurrentLabTest(labTest);
                       setIsDialogOpen(true);
@@ -258,7 +258,7 @@ export default function LabTestManagement() {
                     Edit
                   </Button>
                   <Button
-                    className="bg-red-500 hover:bg-red-600 text-white"
+                    className="bg-red-500 hover:bg-red-600 text-white dark:bg-red-500 dark:hover:bg-red-600 dark:text-white"
                     onClick={() => {
                       setLabTestToDelete(labTest);
                       setIsDeleteDialogOpen(true);
@@ -306,7 +306,7 @@ export default function LabTestManagement() {
                 Cancel
               </Button>
               <Button
-                className="bg-red-500 hover:bg-red-600 text-white"
+                className="bg-red-500 hover:bg-red-600 text-white dark:bg-red-500 dark:hover:bg-red-600 dark:text-white"
                 onClick={handleDeleteLabTest}
               >
                 Delete

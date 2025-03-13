@@ -121,7 +121,10 @@ export default function PatientList() {
               <TableCell>{patient.next_of_kin_name}</TableCell>
               <TableCell className="space-x-2">
                 <Link href={`patients/${patient.id}`}>
-                  <Button size="sm" className="bg-green-500">
+                  <Button
+                    size="sm"
+                    className="bg-yellow-500 hover:bg-yellow-600 text-white dark:bg-yellow-500 dark:hover:bg-yellow-600 dark:text-white"
+                  >
                     View
                   </Button>
                 </Link>

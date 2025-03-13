@@ -310,7 +310,7 @@ export const MedicalHistoryTab = ({ visits }: any) => {
                 </TableCell>
                 <TableCell>
                   <Button
-                    className="bg-yellow-500 hover:bg-yellow-600 dark:bg-yellow-500 dark:hover:bg-yellow-600 text-white"
+                    className="bg-yellow-500 hover:bg-yellow-600 dark:bg-yellow-500 dark:hover:bg-yellow-600 text-white dark:text-white"
                     onClick={() => handleViewVisit(visit.visit_id)}
                   >
                     View

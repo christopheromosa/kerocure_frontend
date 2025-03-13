@@ -131,7 +131,7 @@ export default function DiseaseManagement() {
           className="w-1/3"
         />
         <Button
-          className="bg-blue-500 hover:bg-blue-600 dark:bg-blue-500 dark:hover:bg-blue-600 text-white"
+          className="bg-blue-500 hover:bg-blue-600 dark:bg-blue-500 dark:hover:bg-blue-600 text-white dark:text-white"
           onClick={() => setIsDialogOpen(true)}
         >
           Add Disease
@@ -156,7 +156,7 @@ export default function DiseaseManagement() {
                 <TableCell>{disease.name}</TableCell>
                 <TableCell className="flex gap-2">
                   <Button
-                    className="bg-green-500 hover:bg-green-600 dark:bg-green-500 dark:hover:bg-green-600 text-white"
+                    className="bg-green-500 hover:bg-green-600 dark:bg-green-500 dark:hover:bg-green-600 text-white dark:text-white"
                     onClick={() => {
                       setCurrentDisease(disease);
                       setIsDialogOpen(true);
@@ -165,7 +165,7 @@ export default function DiseaseManagement() {
                     Edit
                   </Button>
                   <Button
-                    className="bg-red-500 hover:bg-red-600 dark:bg-red-500 dark:hover:bg-red-600 text-white"
+                    className="bg-red-500 hover:bg-red-600 dark:bg-red-500 dark:hover:bg-red-600 text-white dark:text-white"
                     onClick={() => handleDeleteDisease(disease.id!)}
                   >
                     Delete

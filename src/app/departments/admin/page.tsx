@@ -183,7 +183,7 @@ const DashboardPage = () => {
             ))}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Total Amount</CardTitle>
+                <CardTitle className="text-lg">Latest Total Amount</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-2xl font-bold">
@@ -275,3 +275,4 @@ const DashboardPage = () => {
 };
 
 export default DashboardPage;
+

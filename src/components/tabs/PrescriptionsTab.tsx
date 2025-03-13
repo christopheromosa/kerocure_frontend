@@ -258,7 +258,7 @@ export const PrescriptionsTab = ({
         </Table>
 
         {/* "Add Prescription" Button */}
-        <Button onClick={() => setIsDialogOpen(true)} className="mt-4">
+        <Button className="mt-4 bg-blue-500 hover:bg-blue-600 text-white dark:bg-blue-500 dark:hover:bg-blue-600 dark:text-white" onClick={() => setIsDialogOpen(true)}>
           Add Prescription
         </Button>
 
@@ -345,7 +345,7 @@ export const PrescriptionsTab = ({
                 <div className="mt-2">
                   <p className="text-sm text-gray-600">No disease found.</p>
                   <Button
-                    className="bg-blue-500 hover:bg-blue-600 dark:bg-blue-500 dark:hover:bg-blue-600 mt-2"
+                    className="bg-blue-500 hover:bg-blue-600 dark:bg-blue-500 dark:hover:bg-blue-600 text-white dark:text-white mt-2"
                     onClick={() => setIsAddDiseaseDialogOpen(true)}
                   >
                     Add Disease
@@ -365,7 +365,7 @@ export const PrescriptionsTab = ({
                 <Button variant="outline">Cancel</Button>
               </DialogClose>
               <Button
-                className="bg-blue-500 hover:bg-blue-600 dark:bg-blue-500 dark:hover:bg-blue-600"
+                className="bg-blue-500 hover:bg-blue-600 dark:bg-blue-500 dark:hover:bg-blue-600 text-white dark:text-white"
                 onClick={handleConfirmPayment}
               >
                 Confirm and Proceed
@@ -396,7 +396,7 @@ export const PrescriptionsTab = ({
                 Cancel
               </Button>
               <Button
-                className="bg-blue-500 hover:bg-blue-600 dark:bg-blue-500 dark:hover:bg-blue-600"
+                className="bg-blue-500 hover:bg-blue-600 dark:bg-blue-500 dark:hover:bg-blue-600 text-white dark:text-white"
                 onClick={handleAddDisease}
               >
                 Add Disease

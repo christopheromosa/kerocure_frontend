@@ -204,7 +204,7 @@ export default function LabTestManagement() {
           className="w-1/3"
         />
         <Button
-          className="bg-blue-500 hover:bg-blue-600 dark:bg-blue-500 dark:hover:bg-blue-600 text-white"
+          className="bg-blue-500 hover:bg-blue-600 dark:bg-blue-500 dark:hover:bg-blue-600 text-white dark:text-white"
           onClick={() => setIsDialogOpen(true)}
         >
           Add Lab Test
@@ -276,7 +276,7 @@ export default function LabTestManagement() {
                 <TableCell className="flex gap-2">
                   <Button
                     variant="secondary"
-                    className="bg-green-500 hover:bg-green-600 dark:bg-green-500 dark:hover:bg-green-600 text-white"
+                    className="bg-green-500 hover:bg-green-600 dark:bg-green-500 dark:hover:bg-green-600 text-white dark:text-white"
                     onClick={() => {
                       setCurrentLabTest(labTest);
                       setIsDialogOpen(true);
@@ -286,7 +286,7 @@ export default function LabTestManagement() {
                   </Button>
                   <Button
                     variant="destructive"
-                    className="bg-red-500 hover:bg-red-600 dark:bg-red-500 dark:hover:bg-red-600 text-white"
+                    className="bg-red-500 hover:bg-red-600 dark:bg-red-500 dark:hover:bg-red-600 text-white dark:text-white"
                     onClick={() => handleDeleteLabTest(labTest.id!)}
                   >
                     Delete

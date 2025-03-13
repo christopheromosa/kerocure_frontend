@@ -138,7 +138,7 @@ const TriageTable = () => {
                           {Object.entries(triage.vital_signs).map(
                             ([key, value]) => (
                               <li key={key}>
-                                <span className="font-medium capitalize bg-green">
+                                <span className="font-medium capitalize text-green-500">
                                   {key}:
                                 </span>{" "}
                                 {value}

@@ -78,7 +78,7 @@ export default function ResetPasswordDialog({
       <DialogTrigger asChild>
         <Button
           variant="outline"
-          className="mt-4 bg-gray-500 hover:bg-gray-600 dark:bg-gray-500 dark:hover:bg-gray-600 text-white"
+          className="mt-4 bg-gray-500 hover:bg-gray-600 dark:bg-gray-500 dark:hover:bg-gray-600 text-white dark:text-white"
         >
           Reset Password
         </Button>
@@ -95,19 +95,21 @@ export default function ResetPasswordDialog({
             id="new-password"
             type="password"
             value={newPassword}
+            placeholder="Enter six characters"
             onChange={(e) => setNewPassword(e.target.value)}
           />
           <Label htmlFor="confirm-password">Confirm Password</Label>
           <Input
             id="confirm-password"
             type="password"
+            placeholder="password should be the same"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
           />
           <Button
             onClick={handlePasswordReset}
             disabled={loading}
-            className="w-full bg-gray-500 hover:bg-gray-600 dark:bg-gray-500 dark:hover:bg-gray-600 text-white"
+            className="w-full bg-gray-500 hover:bg-gray-600 dark:bg-gray-500 dark:hover:bg-gray-600 text-white dark:text-white"
           >
             {loading ? "Resetting..." : "Confirm Reset"}
           </Button>

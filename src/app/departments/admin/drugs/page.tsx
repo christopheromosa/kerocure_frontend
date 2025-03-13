@@ -268,9 +268,9 @@ export default function DrugManagement() {
                 <TableCell>KSH {drug.cost}</TableCell>
                 <TableCell>{drug.quantity}</TableCell>
                 <TableCell>{drug.status}</TableCell>
-                <TableCell>
+                <TableCell className="space-x-2">
                   <Button
-                    className="bg-green-500 hover:bg-green-600 text-white dark:bg-green-500 dark:hover:bg-green-600"
+                    className="bg-green-500 hover:bg-green-600 text-white dark:bg-green-500 dark:hover:bg-green-600 dark:text-white"
                     onClick={() => {
                       setCurrentDrug(drug);
                       setIsDialogOpen(true);
@@ -279,7 +279,7 @@ export default function DrugManagement() {
                     Edit
                   </Button>
                   <Button
-                    className="bg-red-500 hover:bg-red-600 dark:bg-red-500 dark:hover:bg-red-600 text-white"
+                    className="bg-red-500 hover:bg-red-600 dark:bg-red-500 dark:hover:bg-red-600 text-white dark:text-white"
                     onClick={() => handleDeleteDrug(drug.id!)}
                   >
                     Delete

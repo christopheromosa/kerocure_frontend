@@ -130,13 +130,13 @@ export default function BillingTable() {
           selected={startDate}
           onChange={(date: Date | null) => setStartDate(date)} // Explicitly define the type
           placeholderText="Start Date"
-          className="w-full md:w-1/3"
+          className="w-40 p-2 border rounded"
         />
         <DatePicker
           selected={endDate}
           onChange={(date: Date | null) => setEndDate(date)} // Explicitly define the type
           placeholderText="End Date"
-          className="w-full md:w-1/3"
+          className="w-40 p-2 border rounded"
         />
       </div>
 
