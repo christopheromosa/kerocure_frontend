@@ -16,22 +16,21 @@ import { MedicalHistoryTab } from "@/components/tabs/MedicalHistoryTab";
 import { TestRequestTab } from "@/components/tabs/TestRequestTab";
 import { PrescriptionsTab } from "@/components/tabs/PrescriptionsTab";
 import { LabResultsTab } from "@/components/tabs/LabResultsTab";
+import TransferPatientTab from "@/components/tabs/TransferPatientTab";
 
 const PatientManagementPage = () => {
   const { patientId } = useParams();
   const router = useRouter();
   const { visitData, fetchVisitData, loading } = useVisit();
-  const [diagnosis, setDiagnosis] = useState<string>("");
   const [testRequests, setTestRequests] = useState<any[]>([]);
   const [prescriptions, setPrescriptions] = useState<any[]>([]);
-  const [isDiagnosisSaved, setIsDiagnosisSaved] = useState<boolean>(false);
   const [allVisits, setAllVisits] = useState<any[]>([]);
   const { authState } = useAuth();
-  const [refresh, setRefresh] = useState(false);
+  // const [refresh, setRefresh] = useState(false);
 
   // Fetch visit data for the current patient
   useEffect(() => {
-    if (patientId) {
+    if (patientId && authState?.token) {
       fetchVisitData(patientId as string);
       const fetchAllVisits = async () => {
         try {
@@ -54,73 +53,10 @@ const PatientManagementPage = () => {
     }
   }, [fetchVisitData, patientId, authState.token]);
 
-  // Set diagnosis if it exists in visit data
-  useEffect(() => {
-    if (visitData?.consultation_data?.diagnosis) {
-      setDiagnosis(visitData.consultation_data.diagnosis);
-    }
-  }, [visitData]);
-
-  // Handle saving diagnosis
-
-  const handleSaveDiagnosis = async () => {
-    try {
-      if (!visitData?.consultation_data?.note_id) {
-        // Create a new diagnosis
-        await axios.post(
-          `${process.env.NEXT_PUBLIC_API_URL}/consultation/`,
-          {
-            total_cost: 200.0,
-            diagnosis,
-            prescription: [],
-            lab_tests_ordered: [],
-            physician: authState?.user_id,
-            visit: visitData?.visit_id,
-            triage: visitData?.triage_data?.triage_id,
-          },
-          {
-            headers: {
-              Authorization: `Token ${authState?.token}`,
-            },
-          }
-        );
-        setIsDiagnosisSaved(true);
-        toast.success("Diagnosis saved successfully!", {
-          autoClose: 1000,
-          onClose: () => {
-            window.location.reload(); // Refresh after the toast disappears
-          },
-        });
-        setRefresh(!refresh); // Trigger refresh
-      } else {
-        // Update an existing diagnosis
-        await axios.put(
-          `${process.env.NEXT_PUBLIC_API_URL}/consultation/${visitData?.consultation_data?.note_id}/`,
-          {
-            diagnosis,
-            visit: visitData?.visit_id,
-          },
-          {
-            headers: {
-              Authorization: `Token ${authState?.token}`,
-            },
-          }
-        );
-        setIsDiagnosisSaved(true);
-        toast.success("Diagnosis updated successfully!", { autoClose: 1000 });
-        setRefresh(!refresh); // Trigger refresh
-      }
-    } catch (error) {
-      console.error("Failed to save diagnosis:", error);
-      toast.error("Failed to save diagnosis. Please try again.", {
-        autoClose: 1000,
-      });
-    }
-  };
   // Handle saving test requests
   const handleSaveTestRequests = async () => {
     console.log(testRequests);
-
+  
     try {
       // Update the visit state to "LABORATORY"
       await axios.put(
@@ -137,14 +73,20 @@ const PatientManagementPage = () => {
           },
         }
       );
-
-      // Save the test requests to the consultation
+  
+      // Append new test requests to existing ones
+      const updatedTestRequests = [
+        ...(visitData?.consultation_data?.lab_test_ordered || []),
+        ...testRequests,
+      ];
+  
+      // Save the updated test requests to the consultation
       await axios.put(
         `${process.env.NEXT_PUBLIC_API_URL}/consultation/${visitData?.consultation_data?.note_id}/`,
         {
-          lab_tests_ordered: testRequests,
+          lab_tests_ordered: updatedTestRequests,
           visit: visitData?.visit_id,
-          diagnosis: diagnosis,
+          physician: authState?.user_id,
         },
         {
           headers: {
@@ -153,8 +95,9 @@ const PatientManagementPage = () => {
           },
         }
       );
+  
       setTimeout(() => {
-        toast.success("test order saved successfully", {
+        toast.success("Test order saved successfully", {
           autoClose: 5000, // Show toast for 5 seconds
         });
       }, 1000);
@@ -165,9 +108,11 @@ const PatientManagementPage = () => {
       });
     }
   };
-  const handleSaveDrugPrescriptions = async () => {
-    console.log(prescriptions);
 
+  // Handle saving drug prescriptions
+ const handleSaveDrugPrescriptions = async () => {
+    console.log(prescriptions);
+  
     try {
       // Update the visit state to "PHARMACY"
       await axios.put(
@@ -184,14 +129,19 @@ const PatientManagementPage = () => {
           },
         }
       );
-
-      // Save the test requests to the consultation
+  
+      // Append new prescriptions to existing ones
+      const updatedPrescriptions = [
+        ...(visitData?.consultation_data?.prescription || []),
+        ...prescriptions,
+      ];
+  
+      // Save the updated prescriptions to the consultation
       await axios.put(
         `${process.env.NEXT_PUBLIC_API_URL}/consultation/${visitData?.consultation_data?.note_id}/`,
         {
-          prescription: prescriptions,
+          prescription: updatedPrescriptions,
           visit: visitData?.visit_id,
-          diagnosis: diagnosis,
         },
         {
           headers: {
@@ -200,28 +150,19 @@ const PatientManagementPage = () => {
           },
         }
       );
-
+  
       setTimeout(() => {
         toast.success("Prescriptions saved successfully", {
-          autoClose: 5000, // Show toast for 2 seconds
-          onClose: () => {
-          	router.push("/departments/consultation/patients");
-          }
+          autoClose: 5000, // Show toast for 5 seconds
         });
       }, 1000);
-      router.push("/departments/consultation/patients");
-
-      
-      
-      //setRefresh(!refresh); // Trigger refresh
     } catch (error) {
-      console.error("Failed to save test requests:", error);
-      toast.error("Failed to save test requests. Please try again.", {
+      console.error("Failed to save prescriptions:", error);
+      toast.error("Failed to save prescriptions. Please try again.", {
         autoClose: 1000,
       });
     }
   };
-  console.log(visitData);
 
   return (
     <PageTransition>
@@ -266,29 +207,24 @@ const PatientManagementPage = () => {
         </Card>
 
         {/* Dynamic Tabs */}
-        <Tabs defaultValue="diagnosis" className="w-full">
+        <Tabs defaultValue="medicalHistory" className="w-full">
           <TabsList>
-            <TabsTrigger value="diagnosis">Diagnosis</TabsTrigger>
             <TabsTrigger value="medicalHistory">Medical History</TabsTrigger>
+            <TabsTrigger value="diagnosis">Diagnosis</TabsTrigger>
             <TabsTrigger value="testRequests">Test Requests</TabsTrigger>
             <TabsTrigger value="labResults">Lab Results</TabsTrigger>
             <TabsTrigger value="prescriptions">Prescriptions</TabsTrigger>
+            <TabsTrigger value="transferPatient">Transfer Patient</TabsTrigger>
           </TabsList>
-
-          {/* Diagnosis Tab */}
-          <TabsContent value="diagnosis">
-            <DiagnosisTab
-              diagnosis={diagnosis}
-              setDiagnosis={setDiagnosis}
-              handleSaveDiagnosis={handleSaveDiagnosis}
-              isDiagnosisSaved={isDiagnosisSaved}
-              setIsDiagnosisSaved={setIsDiagnosisSaved}
-            />
-          </TabsContent>
 
           {/* Medical History Tab */}
           <TabsContent value="medicalHistory">
-            <MedicalHistoryTab visits={allVisits || []} />
+            <MedicalHistoryTab visitData={visitData} />
+          </TabsContent>
+
+          {/* Diagnosis Tab */}
+          <TabsContent value="diagnosis">
+            <DiagnosisTab visitData={visitData} />
           </TabsContent>
 
           {/* Test Requests Tab */}
@@ -297,6 +233,7 @@ const PatientManagementPage = () => {
               testRequests={testRequests}
               setTestRequests={setTestRequests}
               handleSaveTestRequests={handleSaveTestRequests}
+              visitData={visitData}
             />
           </TabsContent>
 
@@ -317,8 +254,22 @@ const PatientManagementPage = () => {
               setPrescriptions={setPrescriptions}
               handleSaveDrugPrescriptions={handleSaveDrugPrescriptions}
               note_id={visitData?.consultation_data?.note_id}
-              diagnosis={diagnosis}
               visit={visitData?.visit_id}
+              visitData={visitData}
+              patientId={patientId}
+            />
+          </TabsContent>
+
+          {/* Transfer Patient Tab */}
+          <TabsContent value="transferPatient">
+            <TransferPatientTab
+              visitId={visitData?.visit_id}
+              authState={authState}
+              onTransferSuccess={() => {
+                toast.success("Patient transferred successfully!");
+                router.push("/departments/consultation/patients"); // Redirect after transfer
+              }}
+              visitData={visitData}
             />
           </TabsContent>
         </Tabs>

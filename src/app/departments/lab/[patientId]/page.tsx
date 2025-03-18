@@ -29,22 +29,6 @@ import PageTransition from "@/components/PageTransition";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 
-type LabTestOrder = {
-  service: string;
-  duration: string;
-  cost: number;
-};
-
-type ConsultationData = {
-  lab_test_ordered: LabTestOrder[];
-  // Add other properties as needed
-};
-
-type VisitData = {
-  consultation_data: ConsultationData;
-  // Add other properties as needed
-};
-
 const LabResultsPage = () => {
   const params = useParams();
   const router = useRouter();
@@ -56,20 +40,20 @@ const LabResultsPage = () => {
   const [showErrorDialog, setShowErrorDialog] = useState<boolean>(false);
   const [totalCost, setTotalCost] = useState<number>(0);
 
-  // Extract test names, duration, and cost from lab_test_ordered
-  const orders: { service: string; duration: string; cost: number }[] =
-    visitData?.consultation_data?.lab_test_ordered?.map((test) => ({
-      service: test.service,
-      duration: test.duration,
-      cost: test.cost,
-    })) ?? [];
+  // Filter test orders to display only those with administered: false
+  const orders =
+    visitData?.consultation_data?.lab_test_ordered
+      ?.filter((test) => !test.administered)
+      .map((test) => ({
+        service: test.service,
+        duration: test.duration,
+        cost: test.cost,
+        administered: test.administered,
+      })) ?? [];
 
   // Calculate total cost whenever orders change
   useEffect(() => {
-    const calculatedTotalCost = orders.reduce(
-      (sum, test) => sum + test.cost,
-      0
-    );
+    const calculatedTotalCost = orders.reduce((sum, test) => sum + test.cost, 0);
     setTotalCost(calculatedTotalCost);
   }, [orders]);
 
@@ -91,6 +75,31 @@ const LabResultsPage = () => {
     }));
   };
 
+  // Function to check if a lab record exists for the patient
+  const checkLabRecordExists = async (visitId:any) => {
+    try {
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_API_URL}/check-lab-record/${visitId}/`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Token ${authState?.token}`,
+          },
+        }
+      );
+  
+      // If the response contains data, return it
+      if (response.data) {
+        return response.data;
+      } else {
+        return null; // No lab record found
+      }
+    } catch (error) {
+      console.error("Error checking lab record:", error);
+      return null;
+    }
+  };
+
   // Function to submit test results
   const handleSubmitResults = async () => {
     // Format results for submission
@@ -101,29 +110,31 @@ const LabResultsPage = () => {
     }));
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/lab/`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Token ${authState?.token}`,
-        },
-        body: JSON.stringify({
-          result: formattedResults, // Send all results as an array
-          visit: visitData?.visit_id,
-          note: visitData?.consultation_data?.note_id,
-          recorded_by: authState?.user_id,
-          total_cost: totalCost, // Use the calculated total cost
-        }),
-      });
+      // Check if a lab record exists for the patient
+      const existingLabRecord = await checkLabRecordExists(visitData?.visit_id);
+      
 
-      if (res.ok) {
-        // Update visit state
+      if (existingLabRecord) {
+      console.log("Existing lab record:", existingLabRecord);;
+        // Append new results to the existing lab record
+        const updatedResults = [
+          ...existingLabRecord.result,
+          ...formattedResults,
+        ];
+        const updatedTotalCost =
+          parseInt(existingLabRecord.total_cost) + totalCost;
+          console.log(totalCost)
+          console.log(parseInt(existingLabRecord.total_cost))
+          console.log(updatedTotalCost)
+
+        // Update the existing lab record
         await axios.put(
-          `http://localhost:8000/visits/${visitData?.visit_id}/`,
+          `${process.env.NEXT_PUBLIC_API_URL}/lab/${existingLabRecord.result_id}/`,
           {
-            patient: patientId,
-            current_state: "LABORATORY",
-            next_state: "CONSULTATION",
+            visit: visitData?.visit_id,
+            note: visitData?.consultation_data?.note_id,
+            result: updatedResults,
+            total_cost: updatedTotalCost,
           },
           {
             headers: {
@@ -132,14 +143,74 @@ const LabResultsPage = () => {
             },
           }
         );
-        toast.success("Submitted test results successfully!", {
-          autoClose: 1000,
-        });
-        // Show success dialog
-        setShowSuccessDialog(true);
       } else {
-        throw new Error("Failed to submit test results");
+        // Create a new lab record
+        await axios.post(
+          `${process.env.NEXT_PUBLIC_API_URL}/lab/`,
+          {
+            result: formattedResults,
+            visit: visitData?.visit_id,
+            note: visitData?.consultation_data?.note_id,
+            recorded_by: authState?.user_id,
+            total_cost: totalCost,
+          },
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Token ${authState?.token}`,
+            },
+          }
+        );
       }
+
+      // Prepare payload for updating lab_test_ordered
+          const payload = {
+            visit: visitData?.visit_id,
+            lab_tests_ordered: visitData?.consultation_data?.lab_test_ordered.map(
+              (test) => ({
+                ...test,
+                administered: orders.some((order) => order.service === test.service)
+                  ? true
+                  : test.administered,
+              })
+            ),
+          };
+      
+          console.log("Payload for updating lab_test_ordered:", payload);
+      
+          // Update the administered field to true for the submitted test orders
+          const response = await axios.put(
+            `${process.env.NEXT_PUBLIC_API_URL}/consultation/${visitData?.consultation_data?.note_id}/`,
+            payload,
+            {
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Token ${authState?.token}`,
+              },
+            }
+          );
+      
+
+      // Update visit state
+      await axios.put(
+        `${process.env.NEXT_PUBLIC_API_URL}/visits/${visitData?.visit_id}/`,
+        {
+          patient: patientId,
+          current_state: "LABORATORY",
+          next_state: "CONSULTATION",
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Token ${authState?.token}`,
+          },
+        }
+      );
+
+      toast.success("Submitted test results successfully!", {
+        autoClose: 1000,
+      });
+      setShowSuccessDialog(true);
     } catch (error) {
       console.error("Error submitting test results:", error);
       setShowErrorDialog(true);

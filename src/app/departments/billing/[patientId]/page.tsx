@@ -29,6 +29,9 @@ const BillingDetailsPage = () => {
   const router = useRouter();
   const { fetchVisitData, visitData } = useVisit();
   const [totalCost, setTotalCost] = useState<number>(0);
+  const [discountPercentage, setDiscountPercentage] = useState<number>(0); // State for discount percentage
+  const [discountAmount, setDiscountAmount] = useState<number>(0); // State for discount amount
+  const [finalCost, setFinalCost] = useState<number>(0); // State for final cost after discount
   const [showSuccessDialog, setShowSuccessDialog] = useState<boolean>(false);
   const [showErrorDialog, setShowErrorDialog] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -39,13 +42,29 @@ const BillingDetailsPage = () => {
     }
   }, [patientId, fetchVisitData]);
 
-  // Calculate total cost
+  // Calculate total cost and apply discount
   const calculateTotalCost = () => {
     const consultationCost = visitData?.consultation_data?.total_cost || 0;
     const labCost = visitData?.lab_data?.total_cost || 0;
     const pharmacyCost = visitData?.pharmacy_data?.cost || 0;
+
+    // Calculate total cost
     const total = consultationCost + labCost + pharmacyCost;
     setTotalCost(total);
+
+    // Calculate discount amount based on percentage
+    const discount = (total * discountPercentage) / 100;
+    setDiscountAmount(discount);
+
+    // Calculate final cost after discount
+    const final = total - discount;
+    setFinalCost(final);
+  };
+
+  // Handle discount percentage input change
+  const handleDiscountPercentageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const percentage = parseFloat(e.target.value);
+    setDiscountPercentage(percentage);
   };
 
   // Save billing details
@@ -62,6 +81,9 @@ const BillingDetailsPage = () => {
           laboratory_cost: visitData?.lab_data?.total_cost,
           pharmacy_cost: visitData?.pharmacy_data?.cost,
           total_cost: totalCost,
+          discount_percentage: discountPercentage, // Include discount percentage in the request
+          discount_amount: discountAmount, // Include discount amount in the request
+          final_cost: finalCost, // Include final cost in the request
           visit: visitData?.visit_id,
           billed_by: authState?.user_id,
         }),
@@ -99,7 +121,7 @@ const BillingDetailsPage = () => {
     }
   };
 
-  // Print receipt
+  // Print receipt (with discount percentage)
   const handlePrintReceipt = () => {
     const receiptContent = `
       <html>
@@ -196,7 +218,9 @@ const BillingDetailsPage = () => {
               <p><strong>Pharmacy Cost:</strong> Ksh ${
                 visitData?.pharmacy_data?.cost || 0.0
               }</p>
-              <p class="total"><strong>Total Cost:</strong> Ksh ${totalCost.toFixed(
+              <p><strong>Discount Percentage:</strong> ${discountPercentage}%</p>
+              <p><strong>Discount Amount:</strong> Ksh ${discountAmount.toFixed(2)}</p>
+              <p class="total"><strong>Final Cost:</strong> Ksh ${finalCost.toFixed(
                 2
               )}</p>
             </div>
@@ -204,7 +228,7 @@ const BillingDetailsPage = () => {
             <!-- Footer -->
             <div class="footer">
               <p>Thank you for choosing KEROCURE MEDICAL CENTER!</p>
-              <p>For inquiries, please contact us at +254711111111.</p>
+              <p>For inquiries, please contact us at +254 725 808 100.</p>
             </div>
           </div>
         </body>
@@ -241,7 +265,7 @@ const BillingDetailsPage = () => {
           <CardContent>
             {/* Consultation Fee */}
             <div className="mb-4">
-              <label className="font-medium">Consultation Cost(Ksh):</label>
+              <label className="font-medium">Consultation Cost (Ksh):</label>
               <Input
                 type="text"
                 value={visitData?.consultation_data?.total_cost || 0.0}
@@ -272,6 +296,17 @@ const BillingDetailsPage = () => {
               />
             </div>
 
+            {/* Discount Percentage Input */}
+            <div className="mb-4">
+              <label className="font-medium">Discount Percentage (%):</label>
+              <Input
+                type="number"
+                value={discountPercentage}
+                onChange={handleDiscountPercentageChange}
+                className="border border-gray-300 p-2 rounded w-full"
+              />
+            </div>
+
             {/* Calculate Total Button */}
             <Button
               className="bg-gray-500 hover:bg-gray-600 dark:bg-gray-500 dark:hover:bg-gray-600 text-white mt-4"
@@ -283,7 +318,13 @@ const BillingDetailsPage = () => {
             {/* Total Cost */}
             <div className="mt-4">
               <p className="font-medium">
-                Total Cost: Ksh{totalCost.toFixed(2)}
+                Total Cost: Ksh {totalCost.toFixed(2)}
+              </p>
+              <p className="font-medium">
+                Discount Amount: Ksh {discountAmount.toFixed(2)}
+              </p>
+              <p className="font-medium">
+                Final Cost (after discount): Ksh {finalCost.toFixed(2)}
               </p>
             </div>
 

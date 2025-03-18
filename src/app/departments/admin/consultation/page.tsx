@@ -17,32 +17,45 @@ import "react-datepicker/dist/react-datepicker.css";
 import { useAuth } from "@/context/AuthContext";
 
 type PhysicianNote = {
-  note_id: number;
-  visit: number;
   patient_name: string;
-  triage_id?: number | null;
-  diagnosis: string;
-  disease: string;
-  prescription: { [key: string]: string }[] | null;
-  lab_tests_ordered: { [key: string]: string }[] | null;
-  total_cost: number;
-  physician: string | null;
   staff_name: string;
+  medical_history: { title: string; content: string }[];
+  diagnosis: string; // JSON string containing diagnosis data
+  disease: string;
+  prescription: {
+    id: number;
+    cost: number;
+    root: string;
+    dosage: string;
+    status: string;
+    duration: string;
+    prescribed_quantity: number;
+    strength: string;
+    drug_name: string;
+    frequency: string;
+  }[];
+  lab_tests_ordered: {
+    id: number;
+    cost: number;
+    service: string;
+    duration: string;
+  }[];
+  total_cost: number;
   recorded_at: string;
+  visit: number;
+  physician: number | null;
 };
 
 const PhysicianNotesTable = () => {
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [expandedRows, setExpandedRows] = useState<number[]>([]);
-  const [physicianNoteData, setPhysicianNoteData] = useState<PhysicianNote[]>(
-    []
-  );
+  const [physicianNoteData, setPhysicianNoteData] = useState<PhysicianNote[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [diseaseFilter, setDiseaseFilter] = useState("");
-  const itemsPerPage = 3;
+  const itemsPerPage = 5;
   const { authState } = useAuth();
 
   useEffect(() => {
@@ -93,12 +106,22 @@ const PhysicianNotesTable = () => {
     currentPage * itemsPerPage
   );
 
-  const toggleExpandRow = (noteId: number) => {
+  const toggleExpandRow = (index: number) => {
     setExpandedRows((prev) =>
-      prev.includes(noteId)
-        ? prev.filter((id) => id !== noteId)
-        : [...prev, noteId]
+      prev.includes(index)
+        ? prev.filter((id) => id !== index)
+        : [...prev, index]
     );
+  };
+
+  // Parse diagnosis JSON string
+  const parseDiagnosis = (diagnosis: string) => {
+    try {
+      return JSON.parse(diagnosis);
+    } catch (error) {
+      console.error("Failed to parse diagnosis:", error);
+      return [];
+    }
   };
 
   return (
@@ -118,7 +141,7 @@ const PhysicianNotesTable = () => {
             onChange={(date: Date | null) => setStartDate(date)}
             selectsStart
             startDate={startDate}
-            endDate={endDate || undefined} // Ensure `undefined` is passed instead of `null`
+            endDate={endDate || undefined}
             placeholderText="Start Date"
             className="w-40 p-2 border rounded"
           />
@@ -128,7 +151,7 @@ const PhysicianNotesTable = () => {
             selectsEnd
             startDate={startDate}
             endDate={endDate}
-            minDate={startDate || undefined} // Ensure `undefined` is passed instead of `null`
+            minDate={startDate || undefined}
             placeholderText="End Date"
             className="w-40 p-2 border rounded"
           />
@@ -156,8 +179,8 @@ const PhysicianNotesTable = () => {
           </TableHeader>
           <TableBody>
             {displayedNotes.length > 0 ? (
-              displayedNotes.map((note) => (
-                <React.Fragment key={note.note_id}>
+              displayedNotes.map((note, index) => (
+                <React.Fragment key={index}>
                   <TableRow>
                     <TableCell>{note.patient_name}</TableCell>
                     <TableCell>{note.disease || "Unknown"}</TableCell>
@@ -169,9 +192,9 @@ const PhysicianNotesTable = () => {
                     <TableCell className="text-center">
                       <Button
                         variant="ghost"
-                        onClick={() => toggleExpandRow(note.note_id)}
+                        onClick={() => toggleExpandRow(index)}
                       >
-                        {expandedRows.includes(note.note_id) ? (
+                        {expandedRows.includes(index) ? (
                           <ChevronUp size={18} />
                         ) : (
                           <ChevronDown size={18} />
@@ -180,47 +203,68 @@ const PhysicianNotesTable = () => {
                     </TableCell>
                   </TableRow>
 
-                  {expandedRows.includes(note.note_id) && (
-                    <TableRow key={`details-${note.note_id}`}>
+                  {expandedRows.includes(index) && (
+                    <TableRow key={`details-${index}`}>
                       <TableCell colSpan={7} className="p-4">
                         <div className="space-y-3">
-                          <div>
-                            <span className="font-medium">Diagnosis:</span>{" "}
-                            {note.diagnosis}
-                          </div>
-                          {note.prescription &&
-                            note.prescription.length > 0 && (
-                              <div>
-                                <span className="font-medium">
-                                  Prescription:
-                                </span>
-                                <ul className="list-disc list-inside ml-4">
-                                  {note.prescription.map((item, index) => (
-                                    <li key={index}>
-                                      {item.drug_name}: {item.status} :{" "}
-                                      {item.quantity} : {item.cost}
-                                    </li>
-                                  ))}
-                                </ul>
-                              </div>
-                            )}
+                          {/* Medical History */}
+                          {note.medical_history && note.medical_history.length > 0 && (
+                            <div>
+                              <span className="font-medium">Medical History:</span>
+                              <ul className="list-disc list-inside ml-4">
+                                {note.medical_history.map((history, idx) => (
+                                  <li key={idx}>
+                                    <strong>{history.title}:</strong> {history.content}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
 
-                          {note.lab_tests_ordered &&
-                            note.lab_tests_ordered.length > 0 && (
-                              <div>
-                                <span className="font-medium">
-                                  Lab Tests Ordered:
-                                </span>
-                                <ul className="list-disc list-inside ml-4">
-                                  {note.lab_tests_ordered.map((test, index) => (
-                                    <li key={index}>
-                                      {test.service} : {test.duration} :{" "}
-                                      {test.cost}
+                          {/* Diagnosis */}
+                          {note.diagnosis && (
+                            <div>
+                              <span className="font-medium">Diagnosis:</span>
+                              <ul className="list-disc list-inside ml-4">
+                                {parseDiagnosis(note.diagnosis).map(
+                                  (diag: any, idx: number) => (
+                                    <li key={idx}>
+                                      <strong>{diag.title}:</strong> {diag.content}
                                     </li>
-                                  ))}
-                                </ul>
-                              </div>
-                            )}
+                                  )
+                                )}
+                              </ul>
+                            </div>
+                          )}
+
+                          {/* Prescription */}
+                          {note.prescription && note.prescription.length > 0 && (
+                            <div>
+                              <span className="font-medium">Prescription:</span>
+                              <ul className="list-disc list-inside ml-4">
+                                {note.prescription.map((item, idx) => (
+                                  <li key={idx}>
+                                    <strong>{item.drug_name}:</strong>{" "}
+                                      {item.prescribed_quantity} unit(s)- ({item.frequency})-{item.root} - {item.dosage}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+
+                          {/* Lab Tests Ordered */}
+                          {note.lab_tests_ordered && note.lab_tests_ordered.length > 0 && (
+                            <div>
+                              <span className="font-medium">Lab Tests Ordered:</span>
+                              <ul className="list-disc list-inside ml-4">
+                                {note.lab_tests_ordered.map((test, idx) => (
+                                  <li key={idx}>
+                                    <strong>{test.service}:</strong> {test.duration} - Ksh {test.cost}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>

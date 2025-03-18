@@ -1,12 +1,4 @@
 import { useState, useEffect } from "react";
-import {
-  Table,
-  TableHeader,
-  TableRow,
-  TableHead,
-  TableBody,
-  TableCell,
-} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -15,43 +7,41 @@ import {
   DialogTitle,
   DialogFooter,
   DialogClose,
-  DialogDescription,
 } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import OrganizationInfo from "../OrganizationInfo";
 import axios from "axios";
 import { Input } from "../ui/input";
-import { useRouter } from "next/navigation";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useAuth } from "@/context/AuthContext";
+import {
+  Table,
+  TableHeader,
+  TableRow,
+  TableHead,
+  TableBody,
+  TableCell,
+} from "@/components/ui/table";
 
 export const PrescriptionsTab = ({
   prescriptions,
   setPrescriptions,
   handleSaveDrugPrescriptions,
   note_id,
-  diagnosis,
   visit,
+  visitData,
+  patientId
 }: any) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isConfirmationDialogOpen, setIsConfirmationDialogOpen] =
-    useState(false);
+  const [isConfirmationDialogOpen, setIsConfirmationDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [drugs, setDrugs] = useState<any[]>([]);
   const [selectedDrugs, setSelectedDrugs] = useState<any[]>(prescriptions);
-  const [diseaseSearchTerm, setDiseaseSearchTerm] = useState("");
-  const [selectedDisease, setSelectedDisease] = useState("");
-  const [searchResults, setSearchResults] = useState<any[]>([]);
-  const [allDiseases, setAllDiseases] = useState<any[]>([]);
-  const [isAddDiseaseDialogOpen, setIsAddDiseaseDialogOpen] = useState(false);
-  const [newDiseaseName, setNewDiseaseName] = useState("");
-  const router = useRouter();
   const { authState } = useAuth();
 
-  console.log(note_id, diagnosis, visit);
-
-  // Fetch drugs and diseases on component mount
+  // Fetch drugs on component mount
   useEffect(() => {
     const fetchDrugs = async () => {
       try {
@@ -70,25 +60,7 @@ export const PrescriptionsTab = ({
       }
     };
 
-    const fetchDiseases = async () => {
-      try {
-        const response = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_URL}/diseases/`,
-          {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Token ${authState?.token}`,
-            },
-          }
-        );
-        setAllDiseases(response.data);
-      } catch (error) {
-        console.error("Failed to fetch diseases:", error);
-      }
-    };
-
     fetchDrugs();
-    fetchDiseases();
   }, [authState.token]);
 
   // Sync selectedDrugs with parent's prescriptions
@@ -101,24 +73,20 @@ export const PrescriptionsTab = ({
     setSearchTerm(e.target.value);
   };
 
-  // Handle disease search input
-  const handleDiseaseSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const term = e.target.value;
-    setDiseaseSearchTerm(term);
-
-    if (term.length > 2) {
-      const filteredDiseases = allDiseases.filter((disease) =>
-        disease.name.toLowerCase().includes(term.toLowerCase())
-      );
-      setSearchResults(filteredDiseases);
-    } else {
-      setSearchResults([]);
-    }
-  };
-
   // Handle adding a drug to the selected list
   const handleAddDrug = (drug: any) => {
-    const updatedDrugs = [...selectedDrugs, { ...drug, dosage: "" }];
+    const updatedDrugs = [
+      ...selectedDrugs,
+      {
+        ...drug,
+        dosage: "",
+        prescribed_quantity:"",
+        root: "",
+        strength: "",
+        frequency: "",
+        duration: "",
+      },
+    ];
     setSelectedDrugs(updatedDrugs);
     setPrescriptions(updatedDrugs);
     setSearchTerm("");
@@ -134,66 +102,41 @@ export const PrescriptionsTab = ({
   // Handle saving prescriptions
   const handleSavePrescriptions = async () => {
     try {
-      await handleSaveDrugPrescriptions(); // Save prescriptions
-      setIsDialogOpen(false); // Close the "Add Prescription" dialog
-      setIsConfirmationDialogOpen(true); // Open the "Confirm Payment" dialog
+      await handleSaveDrugPrescriptions();
+      setIsDialogOpen(false);
+      setIsConfirmationDialogOpen(true); // Open confirmation dialog
+      toast.success("Prescriptions saved successfully!", { autoClose: 1000 });
     } catch (error) {
       console.error("Failed to save prescriptions:", error);
+      toast.error("Failed to save prescriptions. Please try again.");
     }
   };
 
-  // Handle confirming payment and saving disease
+  // Handle confirming payment (without disease selection)
   const handleConfirmPayment = async () => {
-    console.log(selectedDisease);
     try {
-      // Update the consultation with the selected disease
       await axios.put(
-        `${process.env.NEXT_PUBLIC_API_URL}/consultation/${note_id}/`,
+        `${process.env.NEXT_PUBLIC_API_URL}/visits/${visitData?.visit_id}/`,
         {
-          disease: selectedDisease,
-          diagnosis: diagnosis,
-          visit: visit,
+          patient: patientId,
+          current_state: "CONSULTATION",
+          next_state: "PHARMACY",
         },
         {
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Token ${localStorage.getItem("token")}`,
+            Authorization: `Token ${authState?.token}`,
           },
         }
       );
-      setTimeout(() => {
-        toast.success("Patient proceed to pharmacy successfully!", {
-          autoClose: 1000, // Show toast for 2 seconds
-          onClose: () => {
-            router.push("/departments/consultation/patients");
-          },
-        });
-      }, 1000);
-      window.location.reload(); // Refresh after the toast disappears
-      setIsConfirmationDialogOpen(false); // Close the confirmation dialog
-      // Optionally, you can trigger a page reload or navigation here if needed
+      toast.success("Patient redirected to Pharmacy successfully!", {
+        autoClose: 1000,
+      });
+      window.location.reload()
+      setIsConfirmationDialogOpen(false); // Close confirmation dialog
     } catch (error) {
-      console.error("Failed to save disease:", error);
-    }
-  };
-
-  // Handle adding a new disease
-  const handleAddDisease = async () => {
-    if (!newDiseaseName) return;
-
-    try {
-      const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL}/diseases/`,
-        {
-          name: newDiseaseName,
-        }
-      );
-      setAllDiseases((prev) => [...prev, response.data]);
-      setSelectedDisease(newDiseaseName);
-      setIsAddDiseaseDialogOpen(false);
-      setNewDiseaseName("");
-    } catch (error) {
-      console.error("Failed to add disease:", error);
+      console.error("Failed to redirect to Pharmacy:", error);
+      toast.error("Failed to redirect to Pharmacy. Please try again.");
     }
   };
 
@@ -218,56 +161,175 @@ export const PrescriptionsTab = ({
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Medication</TableHead>
-              <TableHead>Cost (Ksh)</TableHead>
-              <TableHead>Dosage</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {selectedDrugs.map((drug: any, index: number) => (
-              <TableRow key={index}>
-                <TableCell>{drug.drug_name}</TableCell>
-                <TableCell>{drug.cost}</TableCell>
-                <TableCell>
-                  <Input
-                    type="text"
-                    placeholder="Enter dosage"
-                    value={drug.dosage}
-                    onChange={(e) => {
-                      const updatedDrugs = [...selectedDrugs];
-                      updatedDrugs[index].dosage = e.target.value;
-                      setSelectedDrugs(updatedDrugs);
-                      setPrescriptions(updatedDrugs);
-                    }}
-                  />
-                </TableCell>
-                <TableCell>{drug.status}</TableCell>
-                <TableCell>
-                  <Button onClick={() => handleDeleteDrug(index)}>
-                    Delete
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-
         {/* "Add Prescription" Button */}
-        <Button className="mt-4 bg-blue-500 hover:bg-blue-600 text-white dark:bg-blue-500 dark:hover:bg-blue-600 dark:text-white" onClick={() => setIsDialogOpen(true)}>
+        <Button
+          className="mt-4 bg-blue-500 hover:bg-blue-600 text-white dark:bg-blue-500 dark:hover:bg-blue-600 dark:text-white"
+          onClick={() => setIsDialogOpen(true)}
+        >
           Add Prescription
         </Button>
 
+        {/* Card-based layout for selected drugs */}
+        <div className="mt-6 space-y-4">
+          {selectedDrugs.map((drug: any, index: number) => (
+            <Card key={index} className="p-4">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h3 className="font-semibold">{drug.drug_name}</h3>
+                  <p className="text-sm text-gray-600">Cost: Ksh {drug.cost}</p>
+                </div>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => handleDeleteDrug(index)}
+                >
+                  Delete
+                </Button>
+              </div>
+              <div className="mt-4 grid grid-cols-2 gap-4">
+                
+                <Input
+                  type="text"
+                  placeholder="Root"
+                  value={drug.root}
+                  onChange={(e) => {
+                    const updatedDrugs = [...selectedDrugs];
+                    updatedDrugs[index].root = e.target.value;
+                    setSelectedDrugs(updatedDrugs);
+                    setPrescriptions(updatedDrugs);
+                  }}
+                />
+                <Input
+                  type="text"
+                  placeholder="Strength"
+                  value={drug.strength}
+                  onChange={(e) => {
+                    const updatedDrugs = [...selectedDrugs];
+                    updatedDrugs[index].strength = e.target.value;
+                    setSelectedDrugs(updatedDrugs);
+                    setPrescriptions(updatedDrugs);
+                  }}
+                />
+                <Input
+                  type="text"
+                  placeholder="Frequency"
+                  value={drug.frequency}
+                  onChange={(e) => {
+                    const updatedDrugs = [...selectedDrugs];
+                    updatedDrugs[index].frequency = e.target.value;
+                    setSelectedDrugs(updatedDrugs);
+                    setPrescriptions(updatedDrugs);
+                  }}
+                />
+                <Input
+                  type="text"
+	               placeholder="Quantity"
+                   value={drug.prescribed_quantity}
+                   onChange={(e) => {
+                     const updatedDrugs = [...selectedDrugs];
+                     updatedDrugs[index].prescribed_quantity = e.target.value;
+                     setSelectedDrugs(updatedDrugs);
+                     setPrescriptions(updatedDrugs);
+                   }}
+                  />
+                <Input
+                  type="text"
+                  placeholder="Duration"
+                  value={drug.duration}
+                  onChange={(e) => {
+                    const updatedDrugs = [...selectedDrugs];
+                    updatedDrugs[index].duration = e.target.value;
+                    setSelectedDrugs(updatedDrugs);
+                    setPrescriptions(updatedDrugs);
+                  }}
+                />
+                
+                <Textarea
+                  placeholder="Other details"
+                  value={drug.dosage}
+                  onChange={(e) => {
+                    const updatedDrugs = [...selectedDrugs];
+                    updatedDrugs[index].dosage = e.target.value;
+                    setSelectedDrugs(updatedDrugs);
+                    setPrescriptions(updatedDrugs);
+                  }}
+                  className="col-span-2" // Span across two columns
+                />
+              </div>
+            </Card>
+          ))}
+        </div>
+
         {/* "Save Prescriptions" Button */}
         {selectedDrugs.length > 0 && (
-          <Button onClick={handleSavePrescriptions} className="mt-4 ml-4">
+          <Button onClick={handleSavePrescriptions} className="mt-4 mr-4">
             Save Drug Prescriptions
           </Button>
         )}
+
+        {/* Table for existing prescriptions (read-only) */}
+        {visitData?.consultation_data?.prescription?.length > 0 && (
+          <div className="mt-8">
+            <h3 className="text-lg font-bold mb-4">Previously Prescribed Drugs</h3>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Medication</TableHead>
+                  <TableHead>Cost (Ksh)</TableHead>
+                  <TableHead>Dosage</TableHead>
+                  <TableHead>Root</TableHead>
+                  <TableHead>Strength</TableHead>
+                  <TableHead>Frequency</TableHead>
+                  <TableHead>Quantity</TableHead>
+                  <TableHead>Duration</TableHead>
+                  <TableHead>Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {visitData.consultation_data.prescription.map(
+                  (drug: any, index: number) => (
+                    <TableRow key={index}>
+                      <TableCell>{drug.drug_name}</TableCell>
+                      <TableCell>{drug.cost}</TableCell>
+                      <TableCell>{drug.dosage}</TableCell>
+                      <TableCell>{drug.root}</TableCell>
+                      <TableCell>{drug.strength}</TableCell>
+                      <TableCell>{drug.frequency}</TableCell>
+                      <TableCell>{drug.prescribed_quantity}</TableCell>
+                      <TableCell>{drug.duration}</TableCell>
+                      <TableCell>{drug.status}</TableCell>
+                    </TableRow>
+                  )
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+
+        {/* Confirmation Dialog */}
+        <Dialog
+          open={isConfirmationDialogOpen}
+          onOpenChange={setIsConfirmationDialogOpen}
+        >
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Confirm Payment</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <p>
+                <strong>Total Amount to Pay:</strong> Ksh {totalCost}
+              </p>
+            </div>
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button variant="outline">Cancel</Button>
+              </DialogClose>
+              <Button onClick={handleConfirmPayment}>
+                Confirm and Proceed
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {/* Add Prescription Dialog */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -300,107 +362,6 @@ export const PrescriptionsTab = ({
             )}
             <DialogFooter>
               <Button onClick={() => setIsDialogOpen(false)}>Cancel</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        {/* Confirmation Dialog with Disease Selection */}
-        <Dialog
-          open={isConfirmationDialogOpen}
-          onOpenChange={setIsConfirmationDialogOpen}
-        >
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Confirm Payment</DialogTitle>
-              <DialogDescription>
-                Please confirm the payment and select the disease affecting the
-                patient.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <p>
-                <strong>Total Amount to Pay:</strong> Ksh {totalCost}
-              </p>
-
-              {/* Disease Search and Selection */}
-              <Input
-                placeholder="Search diseases..."
-                value={diseaseSearchTerm}
-                onChange={handleDiseaseSearch}
-              />
-              {searchResults.length > 0 && (
-                <ul className="mt-2 border rounded-lg p-2 max-h-40 overflow-y-auto">
-                  {searchResults.map((disease: any, index) => (
-                    <li
-                      key={index}
-                      className="p-2 hover:bg-gray-700 cursor-pointer"
-                      onClick={() => setSelectedDisease(disease.name)}
-                    >
-                      {disease.name}
-                    </li>
-                  ))}
-                </ul>
-              )}
-              {diseaseSearchTerm.length > 2 && searchResults.length === 0 && (
-                <div className="mt-2">
-                  <p className="text-sm text-gray-600">No disease found.</p>
-                  <Button
-                    className="bg-blue-500 hover:bg-blue-600 dark:bg-blue-500 dark:hover:bg-blue-600 text-white dark:text-white mt-2"
-                    onClick={() => setIsAddDiseaseDialogOpen(true)}
-                  >
-                    Add Disease
-                  </Button>
-                </div>
-              )}
-
-              {/* Selected Disease */}
-              <Input
-                placeholder="Selected Disease"
-                value={selectedDisease}
-                readOnly
-              />
-            </div>
-            <DialogFooter>
-              <DialogClose asChild>
-                <Button variant="outline">Cancel</Button>
-              </DialogClose>
-              <Button
-                className="bg-blue-500 hover:bg-blue-600 dark:bg-blue-500 dark:hover:bg-blue-600 text-white dark:text-white"
-                onClick={handleConfirmPayment}
-              >
-                Confirm and Proceed
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        {/* Add Disease Dialog */}
-        <Dialog
-          open={isAddDiseaseDialogOpen}
-          onOpenChange={setIsAddDiseaseDialogOpen}
-        >
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Add New Disease</DialogTitle>
-            </DialogHeader>
-            <Input
-              placeholder="Enter disease name"
-              value={newDiseaseName}
-              onChange={(e) => setNewDiseaseName(e.target.value)}
-            />
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => setIsAddDiseaseDialogOpen(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                className="bg-blue-500 hover:bg-blue-600 dark:bg-blue-500 dark:hover:bg-blue-600 text-white dark:text-white"
-                onClick={handleAddDisease}
-              >
-                Add Disease
-              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

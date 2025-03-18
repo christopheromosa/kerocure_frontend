@@ -10,7 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
-  DialogContent,
+  DialogContent, 
   DialogHeader,
   DialogTitle,
   DialogFooter,
@@ -29,6 +29,7 @@ export const TestRequestTab = ({
   testRequests,
   setTestRequests,
   handleSaveTestRequests,
+  visitData
 }: any) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isConfirmationDialogOpen, setIsConfirmationDialogOpen] =
@@ -71,12 +72,20 @@ export const TestRequestTab = ({
     setSearchTerm(e.target.value);
   };
 
-  // Handle adding a test to the selected list
+ // Handle adding a test to the selected list
   const handleAddTest = (test: any) => {
-    const updatedTests = [...selectedTests, test];
+    // Add the administered field with a default value of false
+    const testWithAdministered = { ...test, administered: false };
+    
+    // Update the selectedTests array with the new test object
+    const updatedTests = [...selectedTests, testWithAdministered];
+    
+    // Update the state with the new array
     setSelectedTests(updatedTests);
     setTestRequests(updatedTests); // Update parent's state
-    setSearchTerm(""); // Clear the search term
+    
+    // Clear the search term
+    setSearchTerm("");
   };
 
   // Handle deleting a test from the selected list
@@ -121,6 +130,7 @@ export const TestRequestTab = ({
     0
   );
 
+console.log(visitData?.consultation_data.lab_test_ordered)
   return (
     <Card>
       <CardHeader className="mt-0 pt-0">
@@ -129,6 +139,13 @@ export const TestRequestTab = ({
         </CardTitle>
       </CardHeader>
       <CardContent>
+       {/* "Add Test" Button */}
+        <Button
+          onClick={() => setIsDialogOpen(true)}
+          className="mt-4 bg-blue-500 hover:bg-blue-600 dark:bg-blue-500 dark:hover:bg-blue-600 text-white dark:text-white"
+        >
+          Add Test
+        </Button>
         {/* Table to display selected tests */}
         <Table>
           <TableHeader>
@@ -158,21 +175,43 @@ export const TestRequestTab = ({
           </TableBody>
         </Table>
 
-        {/* "Add Test" Button */}
-        <Button
-          onClick={() => setIsDialogOpen(true)}
-          className="mt-4 bg-blue-500 hover:bg-blue-600 dark:bg-blue-500 dark:hover:bg-blue-600 text-white dark:text-white"
-        >
-          Add Test
-        </Button>
+       
 
         {/* "Save Test Requests" Button */}
         {selectedTests.length > 0 && (
           <Button onClick={handleSaveTests} className="mt-4 ml-4">
             Save Test Requests
           </Button>
+          
         )}
 
+{/* Table for existing lab tests (read-only) */}
+        {visitData?.consultation_data?.lab_test_ordered?.length > 0 && (
+          <div className="mt-8">
+            <h3 className="text-lg font-bold mb-4">Previously Ordered Tests</h3>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Test Name</TableHead>
+                  <TableHead>Cost (Ksh)</TableHead>
+                  <TableHead>Duration</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {visitData.consultation_data.lab_test_ordered.map(
+                  (test: any, index: number) => (
+                    <TableRow key={index}>
+                      <TableCell>{test.service}</TableCell>
+                      <TableCell>{test.cost}</TableCell>
+                      <TableCell>{test.duration}</TableCell>
+                    </TableRow>
+                  )
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+        
         {/* "Add Test" Dialog */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogContent>

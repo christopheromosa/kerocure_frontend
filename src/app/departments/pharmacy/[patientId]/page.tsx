@@ -8,14 +8,6 @@ import { Input } from "@/components/ui/input";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import {
-  Table,
-  TableHeader,
-  TableRow,
-  TableHead,
-  TableBody,
-  TableCell,
-} from "@/components/ui/table";
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogContent,
@@ -29,15 +21,26 @@ import { useAuth } from "@/context/AuthContext";
 import { useVisit } from "@/context/VisitContext";
 import axios from "axios";
 import { useRouter } from "next/navigation";
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from "@/components/ui/accordion"; // Import Accordion components
 
 // Define the type for a prescription
 interface Prescription {
   id: number;
   drug_name: string;
   quantity: string;
+  prescribed_quantity:string;
   cost: number;
   dispensed: boolean;
   dosage: string;
+  root: string; // New field
+  strength: string; // New field
+  frequency: string; // New field
+  duration: string; // New field
 }
 
 // Define the type for a drug
@@ -66,7 +69,8 @@ const PharmacyDetailsPage = () => {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedDrug, setSelectedDrug] = useState<Drug | null>(null);
   const [dispenseQuantity, setDispenseQuantity] = useState<number>(1);
-  const [showConfirmationDialog, setShowConfirmationDialog] = useState<boolean>(false);
+  const [showConfirmationDialog, setShowConfirmationDialog] =
+    useState<boolean>(false);
 
   // Fetch patient details and prescriptions on page load
   useEffect(() => {
@@ -103,17 +107,20 @@ const PharmacyDetailsPage = () => {
         (prescription, index) => ({
           id: index,
           drug_name: prescription.drug_name,
-          quantity: prescription.quantity,
+          quantity:prescription.quantity,
+          prescribed_quantity: prescription.prescribed_quantity,
           cost: prescription.cost,
           dosage: prescription.dosage,
+          root: prescription.root, // New field
+          strength: prescription.strength, // New field
+          frequency: prescription.frequency, // New field
+          duration: prescription.duration, // New field
           dispensed: false,
         })
       );
       setPrescriptions(initialPrescriptions);
     }
   }, [visitData]);
-
-  console.log(prescriptions);
 
   // Filter drugs locally based on search query
   const filteredDrugs = searchQuery.trim()
@@ -146,10 +153,10 @@ const PharmacyDetailsPage = () => {
   };
 
   // Complete dispensing
- const handleCompleteDispensing = async () => {
+  const handleCompleteDispensing = async () => {
     setShowConfirmationDialog(true);
   };
-  
+
   const confirmDispensing = async () => {
     setShowConfirmationDialog(false);
     if (selectedDrug && selectedPrescription) {
@@ -167,7 +174,7 @@ const PharmacyDetailsPage = () => {
             },
           }
         );
-  
+
         if (response.status === 200) {
           // Update the local drugs state with the new quantity and status
           const updatedDrug = response.data; // Assuming the backend returns the updated drug
@@ -176,7 +183,7 @@ const PharmacyDetailsPage = () => {
               drug.id === updatedDrug.id ? updatedDrug : drug
             )
           );
-  
+
           // Add the dispensed drug to the dispensedDrugs list
           const dispensedDrug = {
             ...selectedPrescription,
@@ -186,7 +193,7 @@ const PharmacyDetailsPage = () => {
             dispensed: true,
           };
           setDispensedDrugs((prev) => [...prev, dispensedDrug]);
-  
+
           // Close the dispense dialog
           setShowDispenseDialog(false);
         } else {
@@ -204,17 +211,86 @@ const PharmacyDetailsPage = () => {
     return dispensedDrugs.reduce((total, drug) => total + drug.cost, 0);
   };
 
+  // Function to check for existing medication records
+  const checkExistingMedication = async (visitId:any) => {
+    try {
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_API_URL}/check-existing-medication/${visitId}/`,
+        {
+          headers: {
+            Authorization: `Token ${authState?.token}`,
+          },
+        }
+      );
+      return response.data; // Returns the existing medication record or a message
+    } catch (error:any) {
+      if (error.response?.status === 404) {
+        // No medication record found
+        return null;
+      }
+      console.error("Error checking existing medication:", error);
+      throw error;
+    }
+  };
+
   // Function to save prescription details
   const handleSavePrescription = async () => {
     try {
-      const res = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL}/pharmacy/`,
+      // Check if a medication record exists for this visit
+      const existingMedication = await checkExistingMedication(visitData?.visit_id);
+
+      let updatedPrescriptions = [];
+      let updatedTotalCost = calculateTotalCost();
+
+      if (existingMedication) {
+        // If a record exists, append the new prescriptions
+        updatedPrescriptions = [
+          ...existingMedication.prescriptions,
+          ...dispensedDrugs,
+        ];
+        updatedTotalCost += existingMedication.cost; // Add the existing cost to the new total cost
+
+        // Update the existing medication record
+        await axios.put(
+          `${process.env.NEXT_PUBLIC_API_URL}/pharmacy/${existingMedication.medication_id}/`,
+          {
+            prescriptions: updatedPrescriptions,
+            cost: updatedTotalCost,
+          },
+          {
+            headers: {
+              Authorization: `Token ${authState?.token}`,
+            },
+          }
+        );
+      } else {
+        // If no record exists, create a new medication record
+        updatedPrescriptions = dispensedDrugs;
+
+        await axios.post(
+          `${process.env.NEXT_PUBLIC_API_URL}/pharmacy/`,
+          {
+            visit: visitData?.visit_id,
+            note: visitData?.consultation_data?.note_id,
+            prescriptions: updatedPrescriptions,
+            cost: updatedTotalCost,
+            dispensed_by: authState?.user_id,
+          },
+          {
+            headers: {
+              Authorization: `Token ${authState?.token}`,
+            },
+          }
+        );
+      }
+
+      // Update the visit state to "BILLING"
+      await axios.put(
+        `${process.env.NEXT_PUBLIC_API_URL}/visits/${visitData?.visit_id}/`,
         {
-          visit: visitData?.visit_id,
-          note: visitData?.consultation_data?.note_id,
-          prescriptions: dispensedDrugs,
-          cost: calculateTotalCost(),
-          dispensed_by: authState?.user_id,
+          patient: patientId,
+          current_state: "PHARMACY",
+          next_state: "BILLING",
         },
         {
           headers: {
@@ -223,36 +299,20 @@ const PharmacyDetailsPage = () => {
         }
       );
 
-      if (res.status === 201) {
-        await axios.put(
-          `${process.env.NEXT_PUBLIC_API_URL}/visits/${visitData?.visit_id}/`,
-          {
-            patient: patientId,
-            current_state: "PHARMACY",
-            next_state: "BILLING",
-          },
-          {
-            headers: {
-              Authorization: `Token ${authState?.token}`,
-            },
-          }
-        );
-        toast.success("Prescriptions saved successfully", {
-          autoClose: 1000,
-        });
-        setShowSuccessDialog(true);
-      } else {
-        throw new Error("Failed to save prescription details");
-      }
+      toast.success("Prescriptions saved successfully", {
+        autoClose: 1000,
+      });
+      setShowSuccessDialog(true);
     } catch (error) {
       console.error("Error saving prescription details:", error);
       setShowErrorDialog(true);
     }
   };
+
   // Function to handle "OK" button click in the success dialog
   const handleSuccessDialogClose = () => {
     setShowSuccessDialog(false); // Close the dialog
-    router.push("/departments/pharmacy"); // Redirect to /departments/lab
+    router.push("/departments/pharmacy"); // Redirect to /departments/pharmacy
   };
 
   if (!patientId) {
@@ -269,56 +329,42 @@ const PharmacyDetailsPage = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Medication</TableHead>
-                <TableHead>Dosage</TableHead>
-                <TableHead>Quantity available</TableHead>
-                <TableHead>Cost per drug</TableHead>
-                <TableHead>Dispense the drug?</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {prescriptions.map((prescription) => (
-                <TableRow key={prescription.id}>
-                  <TableCell>{prescription.drug_name}</TableCell>
-                  <TableCell>{prescription.dosage}</TableCell>
-                  <TableCell>{prescription.quantity}</TableCell>
-                  <TableCell>
-                    <Input
-                      type="number"
-                      value={prescription.cost}
-                      onChange={(e) =>
-                        setPrescriptions((prev) =>
-                          prev.map((p) =>
-                            p.id === prescription.id
-                              ? { ...p, cost: parseFloat(e.target.value) }
-                              : p
+          {/* Replace Table with Accordion */}
+          <Accordion type="single" collapsible>
+            {prescriptions.map((prescription) => (
+              <AccordionItem key={prescription.id} value={`item-${prescription.id}`}>
+                <AccordionTrigger>
+                  <div className="flex items-center justify-between w-full">
+                    <span>{prescription.drug_name}</span>
+                    <span className="text-sm text-gray-500">
+                      {prescription.dispensed ? "Dispensed" : "Pending"}
+                    </span>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent>
+                  <div className="space-y-2">
+                    <p>Dosage: {prescription.dosage}</p>
+                    <p>Root: {prescription.root}</p>
+                    <p>Strength: {prescription.strength}</p>
+                    <p>Frequency: {prescription.frequency}</p>
+                    <p>Duration: {prescription.duration}</p>
+                    <p>Prescribed Quantity: {prescription.prescribed_quantity}</p>
+                    <p>Cost: Ksh {prescription.cost}</p>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        checked={prescription.dispensed}
+                        onCheckedChange={(checked) =>
+                          setPrescriptions((prev) =>
+                            prev.map((p) =>
+                              p.id === prescription.id
+                                ? { ...p, dispensed: checked as boolean }
+                                : p
+                            )
                           )
-                        )
-                      }
-                      disabled
-                      placeholder="Enter cost"
-                    />
-                  </TableCell>
-
-                  <TableCell>
-                    <Checkbox
-                      checked={prescription.dispensed}
-                      onCheckedChange={(checked) =>
-                        setPrescriptions((prev) =>
-                          prev.map((p) =>
-                            p.id === prescription.id
-                              ? { ...p, dispensed: checked as boolean }
-                              : p
-                          )
-                        )
-                      }
-                    />
-                  </TableCell>
-                  <TableCell>
+                        }
+                      />
+                      <label>Dispensed</label>
+                    </div>
                     {parseInt(prescription.quantity) < 1 ? (
                       <Button className="bg-gray-500">Out of Stock</Button>
                     ) : (
@@ -326,11 +372,12 @@ const PharmacyDetailsPage = () => {
                         Dispense
                       </Button>
                     )}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+
           <div className="mt-4">
             <p className="font-medium">
               Total Cost: Ksh {calculateTotalCost().toFixed(2)}
@@ -394,18 +441,24 @@ const PharmacyDetailsPage = () => {
         </AlertDialogContent>
       </AlertDialog>
 
-{/* Confirmation Dialog */}
-      <AlertDialog open={showConfirmationDialog} onOpenChange={setShowConfirmationDialog}>
+      {/* Confirmation Dialog */}
+      <AlertDialog
+        open={showConfirmationDialog}
+        onOpenChange={setShowConfirmationDialog}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Confirm Dispensing</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to dispense this drug? This action cannot be undone and will directly modify the database.
+              Are you sure you want to dispense this drug? This action cannot be
+              undone and will directly modify the database.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDispensing}>Confirm</AlertDialogAction>
+            <AlertDialogAction onClick={confirmDispensing}>
+              Confirm
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

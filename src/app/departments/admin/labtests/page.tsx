@@ -17,7 +17,7 @@ import {
   TableBody,
   TableCell,
 } from "@/components/ui/table";
-import { toast } from "react-toastify";
+import { toast,ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { CircularProgress } from "@mui/material";
 import axios from "axios";
@@ -48,6 +48,8 @@ export default function LabTestManagement() {
   const fetchLabTests = async () => {
     setIsLoading(true);
     try {
+    
+        	
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/labtests/`,
         {
@@ -59,6 +61,9 @@ export default function LabTestManagement() {
       );
       const data = await response.json();
       setLabTests(data);
+    
+    
+    
     } catch (error) {
       console.error("Failed to fetch lab tests:", error);
       toast.error("Failed to fetch lab tests.");
@@ -495,6 +500,7 @@ export default function LabTestManagement() {
           </form>
         </DialogContent>
       </Dialog>
+      <ToastContainer/>
     </div>
   );
 }

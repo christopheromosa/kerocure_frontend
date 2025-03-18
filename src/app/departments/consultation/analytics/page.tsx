@@ -1,7 +1,5 @@
 "use client";
-
-import React from "react";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -14,37 +12,50 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import LoadingPage from "@/components/loading_animation";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 import { useAuth } from "@/context/AuthContext";
 
-type LabTest = {
-  service: string;
-  duration: string;
-  cost: number;
-};
-
 type PhysicianNote = {
-  note_id: number;
-  visit: number;
   patient_name: string;
-  triage_id?: number | null;
-  diagnosis: string;
-  prescription: { [key: string]: string }[] | null;
-  lab_tests_ordered: LabTest[] | null; // Updated to include service, duration, and cost
-  total_cost: number;
   staff_name: string;
-  physician: string | null;
+  medical_history: { title: string; content: string }[];
+  diagnosis: string; // JSON string containing diagnosis data
+  disease: string;
+  prescription: {
+    id: number;
+    cost: number;
+    root: string;
+    dosage: string;
+    status: string;
+    duration: string;
+    prescribed_quantity: number;
+    strength: string;
+    drug_name: string;
+    frequency: string;
+  }[];
+  lab_tests_ordered: {
+    id: number;
+    cost: number;
+    service: string;
+    duration: string;
+  }[];
+  total_cost: number;
   recorded_at: string;
+  visit: number;
+  physician: number | null;
 };
 
 const PhysicianNotesTable = () => {
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [expandedRows, setExpandedRows] = useState<number[]>([]);
-  const [physicianNoteData, setPhysicianNoteData] = useState<PhysicianNote[]>(
-    []
-  );
+  const [physicianNoteData, setPhysicianNoteData] = useState<PhysicianNote[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const itemsPerPage = 3;
+  const [startDate, setStartDate] = useState<Date | null>(null);
+  const [endDate, setEndDate] = useState<Date | null>(null);
+  const [diseaseFilter, setDiseaseFilter] = useState("");
+  const itemsPerPage = 5;
   const { authState } = useAuth();
 
   useEffect(() => {
@@ -74,47 +85,92 @@ const PhysicianNotesTable = () => {
     fetchPatientsData();
   }, [authState?.token]);
 
-  // Filter records by Patient Name
-  const filteredNotes = physicianNoteData.filter((note) =>
-    note.patient_name.toString().includes(search)
-  );
+  // Local filtering logic
+  const filteredNotes = physicianNoteData.filter((note) => {
+    const matchesSearch = note.patient_name
+      .toLowerCase()
+      .includes(search.toLowerCase());
+    const matchesDisease = note.disease
+      .toLowerCase()
+      .includes(diseaseFilter.toLowerCase());
+    const matchesDateRange =
+      (!startDate || new Date(note.recorded_at) >= startDate) &&
+      (!endDate || new Date(note.recorded_at) <= endDate);
 
-  // Pagination logic
+    return matchesSearch && matchesDisease && matchesDateRange;
+  });
+
   const totalPages = Math.ceil(filteredNotes.length / itemsPerPage);
   const displayedNotes = filteredNotes.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
 
-  // Toggle expand/collapse for rows
-  const toggleExpandRow = (noteId: number) => {
+  const toggleExpandRow = (index: number) => {
     setExpandedRows((prev) =>
-      prev.includes(noteId)
-        ? prev.filter((id) => id !== noteId)
-        : [...prev, noteId]
+      prev.includes(index)
+        ? prev.filter((id) => id !== index)
+        : [...prev, index]
     );
+  };
+
+  // Parse diagnosis JSON string
+  const parseDiagnosis = (diagnosis: string) => {
+    try {
+      return JSON.parse(diagnosis);
+    } catch (error) {
+      console.error("Failed to parse diagnosis:", error);
+      return [];
+    }
   };
 
   return (
     <div className="p-6 rounded-lg shadow-md">
       {isLoading && <LoadingPage />}
-      {/* Header Section */}
       <div className="flex justify-between items-center mb-4">
         <Input
           type="text"
-          placeholder="Search by Patient Name..."
+          placeholder="Search by Patient name..."
           className="w-1/3"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
+        <div className="flex gap-2">
+          <DatePicker
+            selected={startDate}
+            onChange={(date: Date | null) => setStartDate(date)}
+            selectsStart
+            startDate={startDate}
+            endDate={endDate || undefined}
+            placeholderText="Start Date"
+            className="w-40 p-2 border rounded"
+          />
+          <DatePicker
+            selected={endDate}
+            onChange={(date: Date | null) => setEndDate(date)}
+            selectsEnd
+            startDate={startDate}
+            endDate={endDate}
+            minDate={startDate || undefined}
+            placeholderText="End Date"
+            className="w-40 p-2 border rounded"
+          />
+        </div>
+        <Input
+          type="text"
+          placeholder="Filter by Disease..."
+          className="w-1/3"
+          value={diseaseFilter}
+          onChange={(e) => setDiseaseFilter(e.target.value)}
+        />
       </div>
 
-      {/* Table */}
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Patient Name</TableHead>
+              <TableHead>Disease</TableHead>
               <TableHead>Physician</TableHead>
               <TableHead>Total Cost</TableHead>
               <TableHead>Recorded At</TableHead>
@@ -123,10 +179,11 @@ const PhysicianNotesTable = () => {
           </TableHeader>
           <TableBody>
             {displayedNotes.length > 0 ? (
-              displayedNotes.map((note) => (
-                <React.Fragment key={note.note_id}>
+              displayedNotes.map((note, index) => (
+                <React.Fragment key={index}>
                   <TableRow>
                     <TableCell>{note.patient_name}</TableCell>
+                    <TableCell>{note.disease || "Unknown"}</TableCell>
                     <TableCell>{note.staff_name || "Unknown"}</TableCell>
                     <TableCell>
                       Ksh {parseFloat(note.total_cost.toString()).toFixed(2)}
@@ -135,9 +192,9 @@ const PhysicianNotesTable = () => {
                     <TableCell className="text-center">
                       <Button
                         variant="ghost"
-                        onClick={() => toggleExpandRow(note.note_id)}
+                        onClick={() => toggleExpandRow(index)}
                       >
-                        {expandedRows.includes(note.note_id) ? (
+                        {expandedRows.includes(index) ? (
                           <ChevronUp size={18} />
                         ) : (
                           <ChevronDown size={18} />
@@ -146,48 +203,68 @@ const PhysicianNotesTable = () => {
                     </TableCell>
                   </TableRow>
 
-                  {/* Expandable Row */}
-                  {expandedRows.includes(note.note_id) && (
-                    <TableRow key={`details-${note.note_id}`}>
-                      <TableCell colSpan={6} className="p-4 ">
+                  {expandedRows.includes(index) && (
+                    <TableRow key={`details-${index}`}>
+                      <TableCell colSpan={7} className="p-4">
                         <div className="space-y-3">
-                          <div>
-                            <span className="font-medium">Diagnosis:</span>{" "}
-                            {note.diagnosis}
-                          </div>
-                          {note.prescription &&
-                            note.prescription.length > 0 && (
-                              <div>
-                                <span className="font-medium">
-                                  Prescription:
-                                </span>
-                                <ul className="list-disc list-inside ml-4">
-                                  {note.prescription.map((item, index) => (
-                                    <li key={index}>
-                                      {item.drug_name}: {item.status} :{" "}
-                                      {item.quantity} : {item.cost}
-                                    </li>
-                                  ))}
-                                </ul>
-                              </div>
-                            )}
+                          {/* Medical History */}
+                          {note.medical_history && note.medical_history.length > 0 && (
+                            <div>
+                              <span className="font-medium">Medical History:</span>
+                              <ul className="list-disc list-inside ml-4">
+                                {note.medical_history.map((history, idx) => (
+                                  <li key={idx}>
+                                    <strong>{history.title}:</strong> {history.content}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
 
-                          {note.lab_tests_ordered &&
-                            note.lab_tests_ordered.length > 0 && (
-                              <div>
-                                <span className="font-medium">
-                                  Lab Tests Ordered:
-                                </span>
-                                <ul className="list-disc list-inside ml-4">
-                                  {note.lab_tests_ordered.map((test, index) => (
-                                    <li key={index}>
-                                      {test.service} : {test.duration} :{" "}
-                                      {test.cost}
+                          {/* Diagnosis */}
+                          {note.diagnosis && (
+                            <div>
+                              <span className="font-medium">Diagnosis:</span>
+                              <ul className="list-disc list-inside ml-4">
+                                {parseDiagnosis(note.diagnosis).map(
+                                  (diag: any, idx: number) => (
+                                    <li key={idx}>
+                                      <strong>{diag.title}:</strong> {diag.content}
                                     </li>
-                                  ))}
-                                </ul>
-                              </div>
-                            )}
+                                  )
+                                )}
+                              </ul>
+                            </div>
+                          )}
+
+                          {/* Prescription */}
+                          {note.prescription && note.prescription.length > 0 && (
+                            <div>
+                              <span className="font-medium">Prescription:</span>
+                              <ul className="list-disc list-inside ml-4">
+                                {note.prescription.map((item, idx) => (
+                                  <li key={idx}>
+                                    <strong>{item.drug_name}:</strong>{" "}
+                                      {item.prescribed_quantity} unit(s)- ({item.frequency})-{item.root} - {item.dosage}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+
+                          {/* Lab Tests Ordered */}
+                          {note.lab_tests_ordered && note.lab_tests_ordered.length > 0 && (
+                            <div>
+                              <span className="font-medium">Lab Tests Ordered:</span>
+                              <ul className="list-disc list-inside ml-4">
+                                {note.lab_tests_ordered.map((test, idx) => (
+                                  <li key={idx}>
+                                    <strong>{test.service}:</strong> {test.duration} - Ksh {test.cost}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>
@@ -196,7 +273,7 @@ const PhysicianNotesTable = () => {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={6} className="text-center">
+                <TableCell colSpan={7} className="text-center">
                   No physician notes found
                 </TableCell>
               </TableRow>
@@ -205,7 +282,6 @@ const PhysicianNotesTable = () => {
         </Table>
       </div>
 
-      {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex justify-between items-center mt-4">
           <Button
@@ -216,7 +292,8 @@ const PhysicianNotesTable = () => {
             Prev
           </Button>
           <span>
-            Page {currentPage} of {totalPages}
+            Page {currentPage} of {totalPages} (Total Records:{" "}
+            {filteredNotes.length})
           </span>
           <Button
             variant="outline"

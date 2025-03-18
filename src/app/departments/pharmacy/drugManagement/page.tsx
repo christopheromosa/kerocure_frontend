@@ -19,7 +19,7 @@ import {
   TableBody,
   TableCell,
 } from "@/components/ui/table";
-import { toast } from "react-toastify";
+import { toast,ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { DrugForm } from "@/components/forms/drug-form";
 import { CircularProgress } from "@mui/material";
@@ -185,7 +185,7 @@ export default function DrugManagement() {
       fetchDrugs();
     } catch (error) {
       console.error("Failed to upload file:", error);
-      toast.error("Failed to upload file.");
+      toast.error("Failed to upload file check format");
     } finally {
       setTimeout(() => {
         setIsUploading(false);
@@ -411,7 +411,7 @@ export default function DrugManagement() {
                       </Button>
                       <Button
                         variant="destructive"
-                        className="bg-red-500 hover:bg-red-600 dark:bg-red-500 dark:hover:bg-red-600 text-white dark:text-white"
+                        className="ml-2 bg-red-500 hover:bg-red-600 dark:bg-red-500 dark:hover:bg-red-600 text-white dark:text-white"
                         onClick={() => {
                           setDrugToDelete(drug);
                           setIsDeleteDialogOpen(true);
@@ -495,6 +495,7 @@ export default function DrugManagement() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        <ToastContainer/>
       </CardContent>
     </Card>
   );

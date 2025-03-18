@@ -15,9 +15,7 @@ import OrganizationInfo from "@/components/OrganizationInfo";
 type PatientType = {
   patientId: number;
   first_name: string;
-  last_name: string;
-  
-  dob: Date;
+  last_name: string;  
   residence: string;
   contact_number: string;
   next_of_kin_name: string;
@@ -151,16 +149,6 @@ export default function PatientPage() {
               />
             </div>
             <div>
-              <Label>Date of Birth</Label>
-              <Input
-                type="date"
-                value={new Date(patient.dob).toISOString().split("T")[0]}
-                onChange={(e) =>
-                  setPatient({ ...patient, dob: new Date(e.target.value) })
-                }
-              />
-            </div>
-            <div>
               <Label>Residence</Label>
               <Input
                 value={patient.residence}
@@ -235,11 +223,7 @@ export default function PatientPage() {
               </p>
               <p>
                 <strong>Last Name:</strong> {patient.last_name}
-              </p>
-               <p>
-                <strong>Date of Birth:</strong>{" "}
-                {new Date(patient.dob).toLocaleDateString()}
-              </p>
+              </p>               
               <p>
                 <strong>Gender:</strong> {patient.gender}
               </p>

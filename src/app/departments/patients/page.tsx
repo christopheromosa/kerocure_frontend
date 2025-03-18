@@ -22,7 +22,6 @@ type PatientType = {
   id: number;
   first_name: string;
   last_name: string;
-  dob: Date;
   residence: string;
   contact_number: string;
   next_of_kin_name: string;
@@ -101,7 +100,6 @@ export default function PatientList() {
           <TableRow>
             <TableHead>First Name</TableHead>
             <TableHead>Last Name</TableHead>
-            <TableHead>Date of Birth</TableHead>
             <TableHead>Residence</TableHead>
             <TableHead>Contact Number</TableHead>
             <TableHead>Next of Kin</TableHead>
@@ -113,9 +111,6 @@ export default function PatientList() {
             <TableRow key={patient.id} className="hover:bg-gray-50">
               <TableCell>{patient.first_name}</TableCell>
               <TableCell>{patient.last_name}</TableCell>
-              <TableCell>
-                {new Date(patient.dob).toLocaleDateString()}
-              </TableCell>
               <TableCell>{patient.residence}</TableCell>
               <TableCell>{patient.contact_number}</TableCell>
               <TableCell>{patient.next_of_kin_name}</TableCell>

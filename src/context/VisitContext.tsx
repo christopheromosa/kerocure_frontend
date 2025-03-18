@@ -14,6 +14,13 @@ interface TriageData {
   recorded_by: number | null;
   recorded_at: string;
 }
+interface TransferHistory {
+  from_department: string;
+  to_department: string;
+  reason: string;
+  transferred_by: string;
+  transferred_at: string;
+}
 interface ConsultationData {
   note_id: number;
   diagnosis: string;
@@ -21,11 +28,16 @@ interface ConsultationData {
     id: number;
     drug_name: string;
     quantity: string;
+    prescribed_quantity:string;
     dosage: string;
+    root: string; // New field
+    strength: string; // New field
+    frequency: string; // New field
+    duration: string; // New field
     cost: number;
     dispensed: boolean;
   }[];
-  lab_test_ordered: { service: string; duration: string; cost: number }[];
+  lab_test_ordered: { service: string; duration: string; cost: number,administered:boolean }[];
   physician: number | null;
   recorded_at: string;
   total_cost: number;
@@ -49,6 +61,8 @@ interface PharmacyData {
 
 interface VisitData {
   visit_id: number;
+  department: string;
+  transfer_history: TransferHistory[];
   total_cost: number;
   triage_data: TriageData | null;
   consultation_data: ConsultationData | null;

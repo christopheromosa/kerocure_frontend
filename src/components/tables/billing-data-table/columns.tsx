@@ -83,24 +83,7 @@ export const columns: ColumnDef<PatientType>[] = [
       );
     },
   },
-  {
-    id: "dob",
-
-    accessorKey: "dob",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          DOB
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
-  },
-
-  {
+    {
     id: "contact_number",
     accessorKey: "contact_number",
     header: "Contact Number",

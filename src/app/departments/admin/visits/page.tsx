@@ -10,16 +10,10 @@ import {
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import LoadingPage from "@/components/loading_animation";
-import OrganizationInfo from "@/components/OrganizationInfo";
 import { useAuth } from "@/context/AuthContext";
 
 type Visit = {
@@ -36,6 +30,13 @@ type Visit = {
   lab: any[];
   pharmacy: any[];
   billing: any[];
+  transfer_history: {
+    from_department: string;
+    to_department: string;
+    reason: string;
+    transferred_by: string;
+    transferred_at: string;
+  }[];
 };
 
 const VisitsTable = () => {
@@ -47,8 +48,8 @@ const VisitsTable = () => {
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [departmentFilter, setDepartmentFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
-  const [selectedVisit, setSelectedVisit] = useState<Visit | null>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [visitTypeFilter, setVisitTypeFilter] = useState(""); // New state for visit type filter
+  const [expandedRows, setExpandedRows] = useState<number[]>([]); // State for expanded rows
   const itemsPerPage = 5;
   const { authState } = useAuth();
 
@@ -81,9 +82,10 @@ const VisitsTable = () => {
 
   // Filter visits based on search criteria
   const filteredVisits = visitsData.filter((visit) => {
-    const patientName = visit.patient_name || ""; // Default to empty string if null/undefined
-    const department = visit.department || ""; // Default to empty string if null/undefined
-    const visitStatus = visit.visit_status || ""; // Default to empty string if null/undefined
+    const patientName = visit.patient_name || "";
+    const department = visit.department || "";
+    const visitStatus = visit.visit_status || "";
+    const visitType = visit.visit_type || "";
 
     const matchesSearch = patientName
       .toLowerCase()
@@ -94,6 +96,9 @@ const VisitsTable = () => {
     const matchesStatus = visitStatus
       .toLowerCase()
       .includes(statusFilter.toLowerCase());
+    const matchesVisitType = visitType
+      .toLowerCase()
+      .includes(visitTypeFilter.toLowerCase());
     const matchesDateRange =
       (!startDate ||
         new Date(visit.visit_date).setHours(0, 0, 0, 0) >=
@@ -103,7 +108,11 @@ const VisitsTable = () => {
           new Date(endDate).setHours(23, 59, 59, 999));
 
     return (
-      matchesSearch && matchesDepartment && matchesStatus && matchesDateRange
+      matchesSearch &&
+      matchesDepartment &&
+      matchesStatus &&
+      matchesVisitType &&
+      matchesDateRange
     );
   });
 
@@ -113,9 +122,12 @@ const VisitsTable = () => {
     currentPage * itemsPerPage
   );
 
-  const handleViewDetails = (visit: Visit) => {
-    setSelectedVisit(visit);
-    setIsDialogOpen(true);
+  const toggleExpandRow = (visitId: number) => {
+    setExpandedRows((prev) =>
+      prev.includes(visitId)
+        ? prev.filter((id) => id !== visitId)
+        : [...prev, visitId]
+    );
   };
 
   return (
@@ -143,6 +155,13 @@ const VisitsTable = () => {
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
         />
+        <Input
+          type="text"
+          placeholder="Filter by Visit Type..."
+          className="w-1/4"
+          value={visitTypeFilter}
+          onChange={(e) => setVisitTypeFilter(e.target.value)}
+        />
         <div className="flex gap-2">
           <DatePicker
             selected={startDate}
@@ -168,7 +187,6 @@ const VisitsTable = () => {
       {/* Total Records Field */}
       <div className="mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200 shadow-sm">
         <div className="flex items-center gap-2">
-          {/* Icon */}
           <svg
             xmlns="http://www.w3.org/2000/svg"
             className="h-5 w-5 text-gray-600"
@@ -181,7 +199,6 @@ const VisitsTable = () => {
               clipRule="evenodd"
             />
           </svg>
-          {/* Text */}
           <p className="text-sm text-gray-700">
             Total Records:{" "}
             <span className="font-semibold text-gray-900">
@@ -200,30 +217,70 @@ const VisitsTable = () => {
               <TableHead>Department</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Total Cost</TableHead>
-              <TableHead>Actions</TableHead>
+              <TableHead className="w-1/12 text-center">Transfers</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {displayedVisits.length > 0 ? (
               displayedVisits.map((visit) => (
-                <TableRow key={visit.visit_id}>
-                  <TableCell>{visit.patient_name}</TableCell>
-                  <TableCell>{visit.visit_date}</TableCell>
-                  <TableCell>{visit.department}</TableCell>
-                  <TableCell>{visit.visit_status}</TableCell>
-                  <TableCell className="text-green-400">
-                    Ksh {visit.billing[0]?.total_cost?.toFixed(2) || "0.00"}
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      variant="outline"
-                      className="bg-yellow-500 hover:bg-yellow-600 dark:bg-yellow-500 dark:hover:bg-yellow-600 text-white dark:text-white"
-                      onClick={() => handleViewDetails(visit)}
-                    >
-                      View
-                    </Button>
-                  </TableCell>
-                </TableRow>
+                <React.Fragment key={visit.visit_id}>
+                  <TableRow>
+                    <TableCell>{visit.patient_name}</TableCell>
+                    <TableCell>{visit.visit_date}</TableCell>
+                    <TableCell>{visit.department}</TableCell>
+                    <TableCell>{visit.visit_status}</TableCell>
+                    <TableCell className="text-green-400">
+                      Ksh {visit.billing[0]?.total_cost?.toFixed(2) || "0.00"}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <Button
+                        variant="ghost"
+                        onClick={() => toggleExpandRow(visit.visit_id)}
+                      >
+                        {expandedRows.includes(visit.visit_id) ? (
+                          <ChevronUp size={18} />
+                        ) : (
+                          <ChevronDown size={18} />
+                        )}
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+
+                  {expandedRows.includes(visit.visit_id) && (
+                    <TableRow key={`details-${visit.visit_id}`}>
+                      <TableCell colSpan={7} className="p-4">
+                        <div className="space-y-3">
+                          {/* Transfer History */}
+                          {visit.transfer_history &&
+                            visit.transfer_history.length > 0 && (
+                              <div>
+                                <span className="font-medium">
+                                  Transfer History:
+                                </span>
+                                <ul className="list-disc list-inside ml-4">
+                                  {visit.transfer_history.map((transfer, idx) => (
+                                    <li key={idx}>
+                                      <strong>From:</strong>{" "}
+                                      {transfer.from_department} |{" "}
+                                      <strong>To:</strong>{" "}
+                                      {transfer.to_department} |{" "}
+                                      <strong>Reason:</strong> {transfer.reason}{" "}
+                                      | <strong>By:</strong>{" "}
+                                      {transfer.transferred_by} |{" "}
+                                      <strong>At:</strong>{" "}
+                                      {new Date(
+                                        transfer.transferred_at
+                                      ).toLocaleString()}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </React.Fragment>
               ))
             ) : (
               <TableRow>
@@ -260,149 +317,6 @@ const VisitsTable = () => {
           </Button>
         </div>
       )}
-
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-4xl p-6 rounded-xl shadow-lg border border-gray-200 bg-white max-h-[80vh] overflow-y-auto">
-          <DialogHeader className="border-b pb-4 ">
-            <DialogTitle className="text-xl font-semibold text-gray-800">
-              <OrganizationInfo />
-            </DialogTitle>
-          </DialogHeader>
-          {selectedVisit && (
-            <div className="space-y-6 text-gray-700 border p-2">
-              {/* Main Visit Details in Grid */}
-              <div className="grid grid-cols-3 gap-4 text-sm border p-2">
-                <div className="space-y-2">
-                  <p className="font-medium">Visit ID:</p>
-                  <p>{selectedVisit.visit_id}</p>
-                </div>
-                <div className="space-y-2">
-                  <p className="font-medium">Patient Name:</p>
-                  <p>{selectedVisit.patient_name}</p>
-                </div>
-                <div className="space-y-2">
-                  <p className="font-medium">Visit Date:</p>
-                  <p>{selectedVisit.visit_date}</p>
-                </div>
-                <div className="space-y-2">
-                  <p className="font-medium">Department:</p>
-                  <p>{selectedVisit.department}</p>
-                </div>
-                <div className="space-y-2">
-                  <p className="font-medium">Status:</p>
-                  <p>{selectedVisit.visit_status}</p>
-                </div>
-                <div className="space-y-2">
-                  <p className="font-medium">Total Cost:</p>
-                  <p className="text-green-600 font-semibold">
-                    Ksh{" "}
-                    {selectedVisit.billing[0]?.total_cost?.toFixed(2) || "0.00"}
-                  </p>
-                </div>
-              </div>
-
-              {/* Consultation Details */}
-              {selectedVisit.consultation.length > 0 && (
-                <div className="mt-4 border p-2">
-                  <h3 className="font-semibold text-lg mb-2">Consultation</h3>
-                  {selectedVisit.consultation.map((consultation, index) => (
-                    <div key={index} className="space-y-2">
-                      <p>
-                        <strong>Diagnosis:</strong> {consultation.diagnosis}
-                      </p>
-                      <p>
-                        <strong>Disease:</strong> {consultation.disease}
-                      </p>
-                      <p>
-                        <strong>Prescription:</strong>
-                      </p>
-                      <ul className="list-disc list-inside ml-4">
-                        {consultation.prescription.map(
-                          (prescription: any, idx: number) => (
-                            <li key={idx}>
-                              {prescription.drug_name} - {prescription.quantity}{" "}
-                              units (Ksh {prescription.cost})
-                            </li>
-                          )
-                        )}
-                      </ul>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Lab Details */}
-              {selectedVisit.lab.length > 0 && (
-                <div className="mt-4 border p-2">
-                  <h3 className="font-semibold text-lg mb-2">Lab Tests</h3>
-                  {selectedVisit.lab.map((lab, index) => (
-                    <div key={index} className="space-y-2">
-                      <p>
-                        <strong>Result:</strong> {lab.result[0]?.result}
-                      </p>
-                      <p>
-                        <strong>Cost:</strong> Ksh {lab.total_cost?.toFixed(2)}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Pharmacy Details */}
-              {selectedVisit.pharmacy.length > 0 && (
-                <div className="mt-4 p-2 border">
-                  <h3 className="font-semibold text-lg mb-2">Pharmacy</h3>
-                  {selectedVisit.pharmacy.map((pharmacy, index) => (
-                    <div key={index} className="space-y-2">
-                      <p>
-                        <strong>Medications:</strong>
-                      </p>
-                      <ul className="list-disc list-inside ml-4">
-                        {pharmacy.prescriptions.map(
-                          (medication: any, idx: number) => (
-                            <li key={idx}>
-                              {medication.medication_name} -{" "}
-                              {medication.quantity} units (Ksh {medication.cost}
-                              )
-                            </li>
-                          )
-                        )}
-                      </ul>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Billing Details */}
-              {selectedVisit.billing.length > 0 && (
-                <div className="mt-4 border p-2">
-                  <h3 className="font-semibold text-lg mb-2">Billing</h3>
-                  {selectedVisit.billing.map((bill, index) => (
-                    <div key={index} className="space-y-2">
-                      <p>
-                        <strong>Consultation Cost:</strong> Ksh{" "}
-                        {bill.consultation_cost?.toFixed(2)}
-                      </p>
-                      <p>
-                        <strong>Lab Cost:</strong> Ksh{" "}
-                        {bill.laboratory_cost?.toFixed(2)}
-                      </p>
-                      <p>
-                        <strong>Pharmacy Cost:</strong> Ksh{" "}
-                        {bill.pharmacy_cost?.toFixed(2)}
-                      </p>
-                      <p>
-                        <strong>Total Cost:</strong> Ksh{" "}
-                        {bill.total_cost?.toFixed(2)}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };

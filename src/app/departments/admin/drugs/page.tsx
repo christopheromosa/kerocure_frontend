@@ -17,7 +17,7 @@ import {
   TableBody,
   TableCell,
 } from "@/components/ui/table";
-import { toast } from "react-toastify";
+import { toast ,ToastContainer} from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { CircularProgress } from "@mui/material";
 import axios from "axios";
@@ -499,6 +499,7 @@ export default function DrugManagement() {
           </form>
         </DialogContent>
       </Dialog>
+      <ToastContainer/>
     </div>
   );
 }

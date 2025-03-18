@@ -18,7 +18,7 @@ import {
   TableBody,
   TableCell,
 } from "@/components/ui/table";
-import { toast } from "react-toastify";
+import { toast,ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { LabTestForm } from "@/components/forms/lab-test-form";
 import { CircularProgress } from "@mui/material";
@@ -488,7 +488,9 @@ export default function LabTestManagement() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        <ToastContainer/>
       </CardContent>
+      
     </Card>
   );
 }

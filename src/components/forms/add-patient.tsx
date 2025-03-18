@@ -22,7 +22,6 @@ export type patientType = {
   patientId: number;
   first_name: string;
   last_name: string;
-  dob: Date;
   residence: string;
   contact_number: string;
   next_of_kin_name: string;
@@ -40,7 +39,6 @@ export function AddPatientDialog() {
   const [first_name, setFirst_name] = useState<string>("");
   const [last_name, setLast_name] = useState<string>("");
   const [residence, setResidence] = useState<string>("");
-  const [dob, setDob] = useState<Date>(new Date());
   const [contact_number, setContact_number] = useState<string>("");
   const [next_of_kin_name, setNextOfKinName] = useState<string>("");
   const [next_of_kin_contact_number, setNextOfKinContact_number] =
@@ -53,7 +51,6 @@ export function AddPatientDialog() {
       patientId,
       first_name,
       last_name,
-      dob,
       residence,
       contact_number,
       next_of_kin_name,
@@ -61,7 +58,7 @@ export function AddPatientDialog() {
       gender,
     };
     console.log(patientData);
-    const formattedDob = dob.toISOString().split("T")[0];
+
     try {
       const response = await fetch("http://localhost:8000/patients/", {
         method: "POST",
@@ -69,7 +66,7 @@ export function AddPatientDialog() {
           "Content-Type": "application/json",
           Authorization: `Token ${authState?.token}`,
         },
-        body: JSON.stringify({ ...patientData, dob: formattedDob }),
+        body: JSON.stringify({ ...patientData }),
       });
       const data = await response.json();
       if (!response.ok) {
@@ -81,9 +78,12 @@ export function AddPatientDialog() {
 
       // Show success toast after a delay
       setTimeout(() => {
-        toast.success(`Patient created successfully for:  ${data.first_name} ${data.last_name}`, {
-          autoClose: 1000,
-        });
+        toast.success(
+          `Patient created successfully for:  ${data.first_name} ${data.last_name}`,
+          {
+            autoClose: 1000,
+          }
+        );
 
         // Set submitted state to true to show patient details
         setIsSubmitted(true);
@@ -105,7 +105,6 @@ export function AddPatientDialog() {
     setPatientId(0);
     setFirst_name("");
     setLast_name("");
-    setDob(new Date());
     setContact_number("");
     setNextOfKinContact_number("");
     setNextOfKinName("");
@@ -161,18 +160,6 @@ export function AddPatientDialog() {
                     type="text"
                     value={last_name}
                     onChange={(e) => setLast_name(e.target.value)}
-                    className="col-span-3"
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="dob" className="text-right">
-                    Date of Birth
-                  </Label>
-                  <Input
-                    id="dob"
-                    type="date"
-                    value={dob.toISOString().split("T")[0]}
-                    onChange={(e) => setDob(new Date(e.target.value))}
                     className="col-span-3"
                   />
                 </div>
@@ -261,7 +248,6 @@ export function AddPatientDialog() {
                 <h2 className="text-xl font-bold">
                   {first_name} {last_name}
                 </h2>
-                <p>Date of Birth: {dob.toLocaleDateString()}</p>
                 <p>Residence: {residence}</p>
                 <p>Contact Number: {contact_number}</p>
                 <p>Next of Kin: {next_of_kin_name}</p>

@@ -4,6 +4,7 @@ import {
   ClipboardCheck,
   Microscope,
   Settings,
+  Users
 } from "lucide-react";
 import {
   Card,
@@ -22,6 +23,11 @@ export default function ConsultationDashboard() {
   const links = [
     { label: "Patients Queue", href: "/departments/consultation/patients", icon: Server },
     { label: "Patients from Lab", href: "/departments/consultation/lab", icon: Microscope },
+    {
+          label: "Visits",
+          href: "/departments/consultation/visits",
+          icon: Users,
+    },
     {
       label: "Tasks Completed",
       href: "/departments/consultation/analytics",

@@ -11,6 +11,7 @@ import {
   Server,
   Microscope,
   Settings,
+  Users
 } from "lucide-react";
 import {
   Breadcrumb,
@@ -43,10 +44,16 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       icon: Microscope,
     },
     {
+          label: "Visits",
+          href: "/departments/consultation/visits",
+          icon: Users,
+        },
+    {
       label: "Task completed",
       href: "/departments/consultation/analytics",
       icon: ClipboardCheck,
     },
+    
     {
       label: "Profile",
       href: "/departments/consultation/profile",

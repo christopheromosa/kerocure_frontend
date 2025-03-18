@@ -40,18 +40,19 @@ const triageSchema = z.object({
   systolic: z.coerce.string().min(1, "Systolic pressure is required"),
   diastolic: z.coerce.string().min(1, "Diastolic pressure is required"),
   pulse: z.coerce.string().min(1, "Pulse rate is required"),
+  age: z.coerce.string().min(1, "Age rate is required"),
 });
 
 type PatientType = {
   id: string;
   first_name: string;
   last_name: string;
-  dob: string;
   contact_number: string;
   gender: string;
   residence: string;
 };
 interface triageType {
+  age:string;
   weight: string;
   height: string;
   systolic: string;
@@ -70,6 +71,9 @@ const Patient = () => {
   const [selectedDepartment, setSelectedDepartment] = useState<string | null>(
     null
   );
+  const [selectedVisitType, setSelectedVisitType] = useState<string | null>(
+      null
+    )
   const [patientData, setPatientData] = useState<PatientType | null>(null);
   const { authState } = useAuth();
   const {
@@ -158,6 +162,7 @@ const Patient = () => {
     const visitData = {
       patient: Number(patientId),
       department: selectedDepartment,
+      visit_type:selectedVisitType,
       current_state: "TRIAGE",
       next_state: "CONSULTATION",
       total_cost: TRIAGE_COST, // Include the fixed triage cost
@@ -181,8 +186,9 @@ const Patient = () => {
         const triagePayload = {
           visit: visit.visit_id,
           vital_signs: {
+            age:`${triageData.age} yrs`,
             weight: `${triageData.weight} kg`, // Include units
-            height: `${triageData.height} ft`,
+            height: `${triageData.height} cm`,
             blood_pressure: `${triageData.systolic}/${triageData.diastolic} mmHg`, // Concatenated BP
             pulse: `${triageData.pulse} bpm`,
           },
@@ -273,10 +279,6 @@ const Patient = () => {
                       <strong>Last Name:</strong> {patientData.last_name}
                     </p>
                     <p>
-                      <strong>Date of Birth:</strong>{" "}
-                      {new Date(patientData.dob).toLocaleDateString()}
-                    </p>
-                    <p>
                       <strong>Residence:</strong> {patientData.residence}
                     </p>
                     <p>
@@ -298,7 +300,7 @@ const Patient = () => {
           <form onSubmit={handleSubmit(onSubmit)}>
             <CardContent className="grid gap-2">
               <div className="grid grid-cols-2 gap-2">
-                <div>
+              <div>
                   <Label htmlFor="weight">Weight(Kg) </Label>
                   <Input id="weight" type="text" {...register("weight")} />
                   {errors.weight && (
@@ -308,7 +310,7 @@ const Patient = () => {
                   )}
                 </div>
                 <div>
-                  <Label htmlFor="height">Height(ft)</Label>
+                  <Label htmlFor="height">Height(cm)</Label>
                   <Input id="height" type="text" {...register("height")} />
                   {errors.height && (
                     <p className="text-red-500 dark:text-red-500 text-sm">
@@ -350,6 +352,33 @@ const Patient = () => {
                   </p>
                 )}
               </div>
+               <div>
+                <Label htmlFor="age">Age(yrs) </Label>
+                <Input id="age" type="text" {...register("age")} />
+                 {errors.weight && (
+                  <p className="text-red-500 dark:text-red-500 text-sm">
+                   {errors.age?.message as string}
+                     </p>
+                      )}
+                </div>
+              <div className="grid gap-2">
+                <Label htmlFor="visit_type">Send to:</Label>
+                <select
+                  id="visit_type"
+                  className="border rounded p-2"
+                  onChange={(e) => setSelectedVisitType(e.target.value)}
+                  value={selectedVisitType || ""}
+                >
+                  <option value="">Select Visit Type</option>
+                   <option  value="Outpatient">
+                      Outpatient
+                    </option>
+                   <option  value="Inpatient">
+                      Inpatient
+                    </option>                        
+                </select>
+                
+              </div>              
               <div className="grid gap-2">
                 <Label htmlFor="department">Send to:</Label>
                 <select
