@@ -32,7 +32,7 @@ export const PrescriptionsTab = ({
   note_id,
   visit,
   visitData,
-  patientId
+  patientId,
 }: any) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isConfirmationDialogOpen, setIsConfirmationDialogOpen] = useState(false);
@@ -80,7 +80,7 @@ export const PrescriptionsTab = ({
       {
         ...drug,
         dosage: "",
-        prescribed_quantity:"",
+        prescribed_quantity: "",
         root: "",
         strength: "",
         frequency: "",
@@ -104,7 +104,6 @@ export const PrescriptionsTab = ({
     try {
       await handleSaveDrugPrescriptions();
       setIsDialogOpen(false);
-      setIsConfirmationDialogOpen(true); // Open confirmation dialog
       toast.success("Prescriptions saved successfully!", { autoClose: 1000 });
     } catch (error) {
       console.error("Failed to save prescriptions:", error);
@@ -112,8 +111,8 @@ export const PrescriptionsTab = ({
     }
   };
 
-  // Handle confirming payment (without disease selection)
-  const handleConfirmPayment = async () => {
+  // Handle sending patient to pharmacy
+  const handleSendToPharmacy = async () => {
     try {
       await axios.put(
         `${process.env.NEXT_PUBLIC_API_URL}/visits/${visitData?.visit_id}/`,
@@ -129,14 +128,13 @@ export const PrescriptionsTab = ({
           },
         }
       );
-      toast.success("Patient redirected to Pharmacy successfully!", {
+      toast.success("Patient sent to Pharmacy successfully!", {
         autoClose: 1000,
       });
-      window.location.reload()
-      setIsConfirmationDialogOpen(false); // Close confirmation dialog
+      window.location.reload();
     } catch (error) {
-      console.error("Failed to redirect to Pharmacy:", error);
-      toast.error("Failed to redirect to Pharmacy. Please try again.");
+      console.error("Failed to send patient to Pharmacy:", error);
+      toast.error("Failed to send patient to Pharmacy. Please try again.");
     }
   };
 
@@ -187,7 +185,6 @@ export const PrescriptionsTab = ({
                 </Button>
               </div>
               <div className="mt-4 grid grid-cols-2 gap-4">
-                
                 <Input
                   type="text"
                   placeholder="Root"
@@ -223,15 +220,15 @@ export const PrescriptionsTab = ({
                 />
                 <Input
                   type="text"
-	               placeholder="Quantity"
-                   value={drug.prescribed_quantity}
-                   onChange={(e) => {
-                     const updatedDrugs = [...selectedDrugs];
-                     updatedDrugs[index].prescribed_quantity = e.target.value;
-                     setSelectedDrugs(updatedDrugs);
-                     setPrescriptions(updatedDrugs);
-                   }}
-                  />
+                  placeholder="Quantity"
+                  value={drug.prescribed_quantity}
+                  onChange={(e) => {
+                    const updatedDrugs = [...selectedDrugs];
+                    updatedDrugs[index].prescribed_quantity = e.target.value;
+                    setSelectedDrugs(updatedDrugs);
+                    setPrescriptions(updatedDrugs);
+                  }}
+                />
                 <Input
                   type="text"
                   placeholder="Duration"
@@ -243,7 +240,6 @@ export const PrescriptionsTab = ({
                     setPrescriptions(updatedDrugs);
                   }}
                 />
-                
                 <Textarea
                   placeholder="Other details"
                   value={drug.dosage}
@@ -253,7 +249,7 @@ export const PrescriptionsTab = ({
                     setSelectedDrugs(updatedDrugs);
                     setPrescriptions(updatedDrugs);
                   }}
-                  className="col-span-2" // Span across two columns
+                  className="col-span-2"
                 />
               </div>
             </Card>
@@ -264,6 +260,16 @@ export const PrescriptionsTab = ({
         {selectedDrugs.length > 0 && (
           <Button onClick={handleSavePrescriptions} className="mt-4 mr-4">
             Save Drug Prescriptions
+          </Button>
+        )}
+
+        {/* "Send to Pharmacy" Button */}
+        {selectedDrugs.length > 0 && (
+          <Button
+            onClick={() => setIsConfirmationDialogOpen(true)}
+            className="mt-4 bg-green-500 hover:bg-green-600 text-white dark:bg-green-500 dark:hover:bg-green-600 dark:text-white"
+          >
+            Send to Pharmacy
           </Button>
         )}
 
@@ -324,9 +330,7 @@ export const PrescriptionsTab = ({
               <DialogClose asChild>
                 <Button variant="outline">Cancel</Button>
               </DialogClose>
-              <Button onClick={handleConfirmPayment}>
-                Confirm and Proceed
-              </Button>
+              <Button onClick={handleSendToPharmacy}>Send to Pharmacy</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
