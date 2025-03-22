@@ -18,8 +18,6 @@ type PatientType = {
   last_name: string;  
   residence: string;
   contact_number: string;
-  next_of_kin_name: string;
-  next_of_kin_contact_number: string;
   gender: string;
 };
 
@@ -166,27 +164,7 @@ export default function PatientPage() {
                 }
               />
             </div>
-            <div>
-              <Label>Next of Kin Name</Label>
-              <Input
-                value={patient.next_of_kin_name}
-                onChange={(e) =>
-                  setPatient({ ...patient, next_of_kin_name: e.target.value })
-                }
-              />
-            </div>
-            <div>
-              <Label>Next of Kin Contact</Label>
-              <Input
-                value={patient.next_of_kin_contact_number}
-                onChange={(e) =>
-                  setPatient({
-                    ...patient,
-                    next_of_kin_contact_number: e.target.value,
-                  })
-                }
-              />
-            </div>
+           
             <div>
               <Label>Gender</Label>
               <select
@@ -234,14 +212,7 @@ export default function PatientPage() {
                 <strong>Contact Number:</strong> {patient.contact_number}
               </p>
 
-              <p>
-                <strong>Next of Kin:</strong> {patient.next_of_kin_name}
-              </p>
-              <p>
-                <strong>Next of Kin Contact:</strong>{" "}
-                {patient.next_of_kin_contact_number}
-              </p>
-            </div>
+              </div>
           </div>
         </div>
       )}

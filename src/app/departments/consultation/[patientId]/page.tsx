@@ -85,6 +85,7 @@ const PatientManagementPage = () => {
         `${process.env.NEXT_PUBLIC_API_URL}/consultation/${visitData?.consultation_data?.note_id}/`,
         {
           lab_tests_ordered: updatedTestRequests,
+          lab_tests_paid_status: false, 
           visit: visitData?.visit_id,
           physician: authState?.user_id,
         },
@@ -141,6 +142,7 @@ const PatientManagementPage = () => {
         `${process.env.NEXT_PUBLIC_API_URL}/consultation/${visitData?.consultation_data?.note_id}/`,
         {
           prescription: updatedPrescriptions,
+          prescriptions_paid_status: false,
           visit: visitData?.visit_id,
         },
         {

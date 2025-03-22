@@ -17,6 +17,7 @@ import {
   AlertDialogTitle,
   AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";	
 import { useAuth } from "@/context/AuthContext";
 import { useVisit } from "@/context/VisitContext";
 import axios from "axios";
@@ -37,7 +38,7 @@ interface Prescription {
   cost: number;
   dispensed: boolean;
   dosage: string;
-  root: string; // New field
+  route: string; // New field
   strength: string; // New field
   frequency: string; // New field
   duration: string; // New field
@@ -111,7 +112,7 @@ const PharmacyDetailsPage = () => {
           prescribed_quantity: prescription.prescribed_quantity,
           cost: prescription.cost,
           dosage: prescription.dosage,
-          root: prescription.root, // New field
+          route: prescription.route, // New field
           strength: prescription.strength, // New field
           frequency: prescription.frequency, // New field
           duration: prescription.duration, // New field
@@ -141,17 +142,11 @@ const PharmacyDetailsPage = () => {
     setDispenseQuantity(1); // Reset quantity to 1
   };
 
-  // Handle quantity adjustment
-  const adjustQuantity = (amount: number) => {
-    if (
-      selectedDrug &&
-      dispenseQuantity + amount > 0 &&
-      dispenseQuantity + amount <= selectedDrug.quantity
-    ) {
-      setDispenseQuantity(dispenseQuantity + amount);
-    }
-  };
-
+const handleQuantityChange = (value: number) => {
+  if (selectedDrug && value > 0 && value <= selectedDrug.quantity) {
+    setDispenseQuantity(value);
+  }
+};
   // Complete dispensing
   const handleCompleteDispensing = async () => {
     setShowConfirmationDialog(true);
@@ -174,6 +169,21 @@ const PharmacyDetailsPage = () => {
             },
           }
         );
+        // Create DrugSale record
+         await axios.post(
+           `${process.env.NEXT_PUBLIC_API_URL}/drug-sales/`,
+           {
+             drug: selectedDrug.id,
+             quantity_sold: dispenseQuantity,
+             total_amount: selectedDrug.cost * dispenseQuantity,
+           },
+           {
+             headers: {
+               "Content-Type": "application/json",
+               Authorization: `Token ${authState?.token}`,
+             },
+           }
+         );
 
         if (response.status === 200) {
           // Update the local drugs state with the new quantity and status
@@ -326,6 +336,16 @@ const PharmacyDetailsPage = () => {
           <CardTitle>
             Prescriptions for {visitData?.patient_data?.first_name}{" "}
             {visitData?.patient_data?.last_name}
+             <div className="mb-4">
+              <p className="font-medium">
+                Payment Status:{" "}
+                {visitData?.consultation_data?.prescription_paid_status ? (
+                  <Badge className="bg-green-500 dark:bg-green-500 text-white dark:text-white">Paid</Badge>
+                ) : (
+                  <Badge className="bg-red-500 dark:bg-red-500 dark:text-white text-white">Pending</Badge>
+                )}
+              </p>
+            </div>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -344,7 +364,7 @@ const PharmacyDetailsPage = () => {
                 <AccordionContent>
                   <div className="space-y-2">
                     <p>Dosage: {prescription.dosage}</p>
-                    <p>Root: {prescription.root}</p>
+                    <p>Route: {prescription.route}</p>
                     <p>Strength: {prescription.strength}</p>
                     <p>Frequency: {prescription.frequency}</p>
                     <p>Duration: {prescription.duration}</p>
@@ -422,11 +442,13 @@ const PharmacyDetailsPage = () => {
             {selectedDrug && (
               <div className="space-y-2">
                 <p>Selected Drug: {selectedDrug.drug_name}</p>
-                <div className="flex items-center space-x-2">
-                  <Button onClick={() => adjustQuantity(-1)}>-</Button>
-                  <Input type="number" value={dispenseQuantity} readOnly />
-                  <Button onClick={() => adjustQuantity(1)}>+</Button>
-                </div>
+                <Input
+                  type="number"
+                  value={dispenseQuantity}
+                  onChange={(e) => handleQuantityChange(Number(e.target.value))}
+                  min={1}
+                  max={selectedDrug.quantity}
+                />
                 <p>
                   Total Cost: Ksh{" "}
                   {(selectedDrug.cost * dispenseQuantity).toFixed(2)}

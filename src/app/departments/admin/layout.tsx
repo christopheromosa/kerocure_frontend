@@ -22,7 +22,9 @@ import {
   FlaskConical,
   Settings,
   Users,
-  ClipboardCheck
+  CreditCard,
+  Building,
+  ClipboardList
   
 } from "lucide-react";
 import {
@@ -86,13 +88,28 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       ],
     },
     {
-      section: "Administrative Sections",
+      section: "Financial Management",
       items: [
+        {
+          label: "Drug Sales",
+          href: "/departments/admin/drugSales",
+          icon: ShoppingBag,
+        },
+        {
+          label: "Lab Sales",
+          href: "/departments/admin/labSales",
+          icon: FlaskConical,
+        },
         {
           label: "Billing",
           href: "/departments/admin/billing",
-          icon: DollarSign,
+          icon: CreditCard,
         },
+      ],
+    },
+    {
+      section: "Administrative Sections",
+      items: [
         {
           label: "Drugs",
           href: "/departments/admin/drugs",
@@ -104,9 +121,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           icon: Activity,
         },
         {
-          label: "Consultation Departments",
+          label: "Departments",
           href: "/departments/admin/departments",
-          icon: LayoutDashboard,
+          icon: Building,
         },
         {
           label: "Lab Tests",
@@ -121,7 +138,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         {
           label: "Reports",
           href: "/departments/admin/reports",
-          icon: ClipboardCheck,
+          icon: ClipboardList,
         },
       ],
     },
@@ -136,7 +153,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       ],
     },
     {
-      section: "User Settings",
+      section: "Settings",
       items: [
         {
           label: "Profile",

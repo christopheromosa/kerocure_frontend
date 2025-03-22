@@ -28,6 +28,7 @@ import { useVisit } from "@/context/VisitContext";
 import PageTransition from "@/components/PageTransition";
 import axios from "axios";
 import { useRouter } from "next/navigation";
+import { Badge } from "@/components/ui/badge"; // Import Badge component
 
 const LabResultsPage = () => {
   const params = useParams();
@@ -76,7 +77,7 @@ const LabResultsPage = () => {
   };
 
   // Function to check if a lab record exists for the patient
-  const checkLabRecordExists = async (visitId:any) => {
+  const checkLabRecordExists = async (visitId: any) => {
     try {
       const response = await axios.get(
         `${process.env.NEXT_PUBLIC_API_URL}/check-lab-record/${visitId}/`,
@@ -87,7 +88,7 @@ const LabResultsPage = () => {
           },
         }
       );
-  
+
       // If the response contains data, return it
       if (response.data) {
         return response.data;
@@ -110,12 +111,52 @@ const LabResultsPage = () => {
     }));
 
     try {
+      // Prepare payload for LabTestSale
+      if (orders.length === 1) {
+        // Single test submission
+        const singleTestPayload = {
+          service: orders[0].service,
+          operation_count: 1,
+          total_amount: orders[0].cost,
+        };
+
+        await axios.post(
+          `${process.env.NEXT_PUBLIC_API_URL}/lab-test-sales/`,
+          singleTestPayload,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Token ${authState?.token}`,
+            },
+          }
+        );
+      } else if (orders.length > 1) {
+        // Multiple tests submission
+        const multipleTestsPayload = {
+          tests: orders.map((test) => ({
+            service: test.service,
+            operation_count: 1,
+            total_amount: test.cost,
+          })),
+        };
+
+        await axios.post(
+          `${process.env.NEXT_PUBLIC_API_URL}/lab-test-sales/bulk/`,
+          multipleTestsPayload,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Token ${authState?.token}`,
+            },
+          }
+        );
+      }
+
       // Check if a lab record exists for the patient
       const existingLabRecord = await checkLabRecordExists(visitData?.visit_id);
-      
 
       if (existingLabRecord) {
-      console.log("Existing lab record:", existingLabRecord);;
+        console.log("Existing lab record:", existingLabRecord);
         // Append new results to the existing lab record
         const updatedResults = [
           ...existingLabRecord.result,
@@ -123,9 +164,9 @@ const LabResultsPage = () => {
         ];
         const updatedTotalCost =
           parseInt(existingLabRecord.total_cost) + totalCost;
-          console.log(totalCost)
-          console.log(parseInt(existingLabRecord.total_cost))
-          console.log(updatedTotalCost)
+        console.log(totalCost);
+        console.log(parseInt(existingLabRecord.total_cost));
+        console.log(updatedTotalCost);
 
         // Update the existing lab record
         await axios.put(
@@ -164,32 +205,31 @@ const LabResultsPage = () => {
       }
 
       // Prepare payload for updating lab_test_ordered
-          const payload = {
-            visit: visitData?.visit_id,
-            lab_tests_ordered: visitData?.consultation_data?.lab_test_ordered.map(
-              (test) => ({
-                ...test,
-                administered: orders.some((order) => order.service === test.service)
-                  ? true
-                  : test.administered,
-              })
-            ),
-          };
-      
-          console.log("Payload for updating lab_test_ordered:", payload);
-      
-          // Update the administered field to true for the submitted test orders
-          const response = await axios.put(
-            `${process.env.NEXT_PUBLIC_API_URL}/consultation/${visitData?.consultation_data?.note_id}/`,
-            payload,
-            {
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Token ${authState?.token}`,
-              },
-            }
-          );
-      
+      const payload = {
+        visit: visitData?.visit_id,
+        lab_tests_ordered: visitData?.consultation_data?.lab_test_ordered.map(
+          (test) => ({
+            ...test,
+            administered: orders.some((order) => order.service === test.service)
+              ? true
+              : test.administered,
+          })
+        ),
+      };
+
+      console.log("Payload for updating lab_test_ordered:", payload);
+
+      // Update the administered field to true for the submitted test orders
+      const response = await axios.put(
+        `${process.env.NEXT_PUBLIC_API_URL}/consultation/${visitData?.consultation_data?.note_id}/`,
+        payload,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Token ${authState?.token}`,
+          },
+        }
+      );
 
       // Update visit state
       await axios.put(
@@ -238,6 +278,18 @@ const LabResultsPage = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
+            {/* Display Paid Status */}
+            <div className="mb-4">
+              <p className="font-medium">
+                Payment Status:{" "}
+                {visitData?.consultation_data?.lab_tests_paid_status ? (
+                  <Badge className="bg-green-500 dark:bg-green-500 text-white dark:text-white">Paid</Badge>
+                ) : (
+                  <Badge className="bg-red-500 dark:bg-red-500 dark:text-white text-white">Pending</Badge>
+                )}
+              </p>
+            </div>
+
             <Table>
               <TableHeader>
                 <TableRow>

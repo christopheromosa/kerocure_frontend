@@ -26,8 +26,6 @@ type Patient = {
   dob: string;
   residence: string;
   contact_number: string;
-  next_of_kin_name: string;
-  next_of_kin_contact_number: string;
   gender: string;
 };
 
@@ -126,10 +124,8 @@ const AdminPatientsPage = () => {
             <TableRow>
               <TableHead>First Name</TableHead>
               <TableHead>Last Name</TableHead>
-              <TableHead>DOB</TableHead>
               <TableHead>Residence</TableHead>
               <TableHead>Contact</TableHead>
-              <TableHead>Next of Kin</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -139,10 +135,8 @@ const AdminPatientsPage = () => {
                 <TableRow key={patient.id}>
                   <TableCell>{patient.first_name}</TableCell>
                   <TableCell>{patient.last_name}</TableCell>
-                  <TableCell>{patient.dob}</TableCell>
                   <TableCell>{patient.residence}</TableCell>
                   <TableCell>{patient.contact_number}</TableCell>
-                  <TableCell>{patient.next_of_kin_name}</TableCell>
                   <TableCell className="space-x-2">
                     <Button
                       size="sm"

@@ -22,6 +22,7 @@ export const DiagnosisTab = ({ visitData }: { visitData: any }) => {
   const [allDiseases, setAllDiseases] = useState<any[]>([]);
   const [isAddDiseaseDialogOpen, setIsAddDiseaseDialogOpen] = useState(false);
   const [newDiseaseName, setNewDiseaseName] = useState("");
+  const [isAddingDisease, setIsAddingDisease] = useState(false);
 
   // Fetch diagnosis data and diseases on component mount
   useEffect(() => {
@@ -114,7 +115,7 @@ export const DiagnosisTab = ({ visitData }: { visitData: any }) => {
   // Handle adding a new disease
   const handleAddDisease = async () => {
     if (!newDiseaseName) return;
-
+ setIsAddingDisease(true); 
     try {
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_API_URL}/diseases/`,
@@ -126,9 +127,13 @@ export const DiagnosisTab = ({ visitData }: { visitData: any }) => {
       setSelectedDisease(newDiseaseName);
       setIsAddDiseaseDialogOpen(false);
       setNewDiseaseName("");
+      toast.success("Disease added successfully!", { autoClose: 1000 });
     } catch (error) {
       console.error("Failed to add disease:", error);
-    }
+      toast.error("Failed to add disease. Please try again.");
+    }finally {
+        setIsAddingDisease(false); // End loading
+      }
   };
 
   // Save diagnosis data to the backend
@@ -213,7 +218,7 @@ export const DiagnosisTab = ({ visitData }: { visitData: any }) => {
             )}
             {diseaseSearchTerm.length > 2 && searchResults.length === 0 && (
               <div className="mt-2">
-                <p className="text-sm text-gray-600">No disease found.</p>
+                <p className="text-sm text-gray-600">No disease found. Would you like to add a new one?</p>
                 <Input
                   placeholder="Enter new disease name"
                   value={newDiseaseName}
@@ -223,8 +228,9 @@ export const DiagnosisTab = ({ visitData }: { visitData: any }) => {
                 <Button
                   className="mt-2"
                   onClick={handleAddDisease}
+                  disabled={isAddingDisease}
                 >
-                  Add New Disease
+                  {isAddingDisease ? "Adding..." : "Add New Disease"}
                 </Button>
               </div>
             )}

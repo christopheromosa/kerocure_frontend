@@ -9,7 +9,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import {
   Table,
@@ -19,27 +18,28 @@ import {
   TableBody,
   TableCell,
 } from "@/components/ui/table";
-import { toast,ToastContainer } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { DrugForm } from "@/components/forms/drug-form";
-import { CircularProgress } from "@mui/material";
 import { useAuth } from "@/context/AuthContext";
 
 export default function DrugManagement() {
   const [drugs, setDrugs] = useState<any[]>([]);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [currentDrug, setCurrentDrug] = useState<any>(null);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [drugToDelete, setDrugToDelete] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
   const { authState } = useAuth();
 
-  // Pagination state
+  // Dispense Dialog State
+  const [isDispenseDialogOpen, setIsDispenseDialogOpen] = useState(false);
+  const [selectedDrugForDispense, setSelectedDrugForDispense] = useState<any>(null);
+  const [quantitySold, setQuantitySold] = useState<number>(0);
+  const [totalAmount, setTotalAmount] = useState<number>(0);
+
+  // Status Filter State
+  const [statusFilter, setStatusFilter] = useState<string>("All");
+
+  // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5; // Number of items per page
+  const itemsPerPage = 5;
 
   // Fetch drugs from the backend
   const fetchDrugs = async () => {
@@ -67,10 +67,12 @@ export default function DrugManagement() {
     fetchDrugs();
   }, []);
 
-  // Filter drugs based on search query
-  const filteredDrugs = drugs.filter((drug) =>
-    drug.drug_name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Filter drugs based on search query and status
+  const filteredDrugs = drugs.filter((drug) => {
+    const matchesSearch = drug.drug_name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = statusFilter === "All" || drug.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
 
   // Paginate results
   const totalPages = Math.ceil(filteredDrugs.length / itemsPerPage);
@@ -78,121 +80,6 @@ export default function DrugManagement() {
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
-
-  // Handle adding or editing a drug
-  const handleSaveDrug = async (drug: any) => {
-    try {
-      if (currentDrug) {
-        // Edit existing drug
-        await axios.put(
-          `${process.env.NEXT_PUBLIC_API_URL}/drugs/${currentDrug.id}/`,
-          drug,
-          {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Token ${authState?.token}`,
-            },
-          }
-        );
-        toast.success("Drug updated successfully!");
-      } else {
-        // Add new drug
-        await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/drugs/`, drug, {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Token ${authState?.token}`,
-          },
-        });
-        toast.success("Drug added successfully!");
-      }
-      fetchDrugs(); // Refresh the list
-      setIsDialogOpen(false);
-      setCurrentDrug(null);
-    } catch (error) {
-      console.error("Failed to save drug:", error);
-      toast.error("Failed to save drug.");
-    }
-  };
-
-  // Handle deleting a drug
-  const handleDeleteDrug = async () => {
-    try {
-      await axios.delete(
-        `${process.env.NEXT_PUBLIC_API_URL}/drugs/${drugToDelete.id}/`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Token ${authState?.token}`,
-          },
-        }
-      );
-      toast.success("Drug deleted successfully!");
-      fetchDrugs(); // Refresh the list
-      setIsDeleteDialogOpen(false);
-      setDrugToDelete(null);
-    } catch (error) {
-      console.error("Failed to delete drug:", error);
-      toast.error("Failed to delete drug.");
-    }
-  };
-
-  // Handle file upload
-  const handleFileUpload = async (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    setIsUploading(true);
-    setUploadProgress(0);
-
-    const formData = new FormData();
-    formData.append("file", file);
-
-    try {
-      await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL}/upload-drug-stock/`,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-            Authorization: `Token ${authState?.token}`,
-          },
-          onUploadProgress: (progressEvent) => {
-            const percentCompleted = Math.round(
-              (progressEvent.loaded * 100) / (progressEvent.total || 1)
-            );
-
-            // Gradually increase the progress bar
-            const increaseProgress = (target: number) => {
-              setTimeout(() => {
-                setUploadProgress((prev) => {
-                  if (prev < target) {
-                    increaseProgress(target); // Continue increasing
-                    return prev + 1; // Increment by 1%
-                  }
-                  return target; // Stop when target is reached
-                });
-              }, 50); // Adjust speed (50ms per step)
-            };
-
-            increaseProgress(percentCompleted);
-          },
-        }
-      );
-
-      toast.success("File uploaded successfully!");
-      fetchDrugs();
-    } catch (error) {
-      console.error("Failed to upload file:", error);
-      toast.error("Failed to upload file check format");
-    } finally {
-      setTimeout(() => {
-        setIsUploading(false);
-        setUploadProgress(0);
-      }, 1000);
-    }
-  };
 
   // Handle printing the drug list
   const handlePrintDrugList = () => {
@@ -323,58 +210,24 @@ export default function DrugManagement() {
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-1/3"
           />
-          <Button
-            className="bg-gray-500 hover:bg-gray-600 text-white dark:bg-gray-500 dark:hover:bg-gray-600 dark:text-white"
-            onClick={handlePrintDrugList}
-          >
-            Print Drug List
-          </Button>
-        </div>
-
-        {/* Add File Upload Input */}
-        <div className="mb-4">
-          <label className="block font-semibold text-gray-700 mb-2">
-            Upload Drug Stock File
-          </label>
-          <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-            <p className="text-sm text-gray-500 mb-4">
-              Please upload an Excel file with the following format:
-              <br />
-              <span className="font-bold">DRUG | COST | QUANTITY</span>
-            </p>
-            <input
-              type="file"
-              accept=".xlsx, .xls"
-              onChange={handleFileUpload}
-              disabled={isUploading}
-              className="hidden"
-              id="file-upload"
-            />
-            <label
-              htmlFor="file-upload"
-              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg cursor-pointer hover:bg-blue-700"
+          <div className="flex items-center space-x-4">
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="p-2 border rounded"
             >
-              <span>Choose File</span>
-            </label>
-            {isUploading && (
-              <div className="mt-4 flex flex-col items-center">
-                <CircularProgress
-                  variant="determinate"
-                  value={uploadProgress}
-                  size={60}
-                  thickness={5}
-                  className="text-blue-600"
-                />
-                <p className="mt-2 text-sm text-gray-600">
-                  Uploading... {uploadProgress}%
-                </p>
-              </div>
-            )}
+              <option value="All">All</option>
+              <option value="Available">Available</option>
+              <option value="Out of Stock">Out of Stock</option>
+            </select>
+            <Button
+              className="bg-gray-500 hover:bg-gray-600 text-white dark:bg-gray-500 dark:hover:bg-gray-600 dark:text-white"
+              onClick={handlePrintDrugList}
+            >
+              Print Drug List
+            </Button>
           </div>
         </div>
-
-        {/* Add Drug Button */}
-        <Button onClick={() => setIsDialogOpen(true)}>Add Drug</Button>
 
         {/* Loading State */}
         {isLoading && <p className="text-center">Loading drugs...</p>}
@@ -401,23 +254,13 @@ export default function DrugManagement() {
                     <TableCell>{drug.status}</TableCell>
                     <TableCell>
                       <Button
-                        className="bg-green-500 hover:bg-green-600 text-white dark:bg-green-500 dark:hover:bg-green-600 dark:text-white"
+                        className="bg-blue-500 hover:bg-blue-600 text-white"
                         onClick={() => {
-                          setCurrentDrug(drug);
-                          setIsDialogOpen(true);
+                          setSelectedDrugForDispense(drug);
+                          setIsDispenseDialogOpen(true);
                         }}
                       >
-                        Edit
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        className="ml-2 bg-red-500 hover:bg-red-600 dark:bg-red-500 dark:hover:bg-red-600 text-white dark:text-white"
-                        onClick={() => {
-                          setDrugToDelete(drug);
-                          setIsDeleteDialogOpen(true);
-                        }}
-                      >
-                        Delete
+                        Dispense
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -452,50 +295,76 @@ export default function DrugManagement() {
           </>
         )}
 
-        {/* Add/Edit Drug Dialog */}
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        {/* Dispense Dialog */}
+        <Dialog open={isDispenseDialogOpen} onOpenChange={setIsDispenseDialogOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>
-                {currentDrug ? "Edit Drug" : "Add Drug"}
-              </DialogTitle>
+              <DialogTitle>Dispense Drug</DialogTitle>
             </DialogHeader>
-            <DrugForm
-              drug={currentDrug}
-              onSubmit={handleSaveDrug}
-              onCancel={() => {
-                setIsDialogOpen(false);
-                setCurrentDrug(null);
-              }}
-            />
+            <div className="space-y-4">
+              <p>Drug Name: {selectedDrugForDispense?.drug_name}</p>
+              <p>Quantity: {selectedDrugForDispense?.quantity}</p>
+              <p>Cost: Ksh {selectedDrugForDispense?.cost}</p>
+              <p>Status: {selectedDrugForDispense?.status}</p>
+              <Input
+                type="number"
+                placeholder="Quantity Sold"
+                value={quantitySold}
+                onChange={(e) => {
+                  const qty = Number(e.target.value);
+                  setQuantitySold(qty);
+                  setTotalAmount(qty * selectedDrugForDispense?.cost);
+                }}
+              />
+              <p>Total Amount: Ksh {totalAmount}</p>
+              <Button
+                onClick={async () => {
+                 const newQuantity = selectedDrugForDispense.quantity - quantitySold;
+                  // Update drug quantity
+                  await axios.put(
+                    `${process.env.NEXT_PUBLIC_API_URL}/drugs/${selectedDrugForDispense.id}/`,
+                    {
+                      ...selectedDrugForDispense,
+                      quantity: newQuantity,
+                       status: newQuantity <= 0 ? "Out of Stock" : "Available",
+                    },
+                    {
+                      headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Token ${authState?.token}`,
+                      },
+                    }
+                  );
+
+                  // Create DrugSale record
+                  await axios.post(
+                    `${process.env.NEXT_PUBLIC_API_URL}/drug-sales/`,
+                    {
+                      drug: selectedDrugForDispense.id,
+                      quantity_sold: quantitySold,
+                      total_amount: totalAmount,
+                    },
+                    {
+                      headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Token ${authState?.token}`,
+                      },
+                    }
+                  );
+
+                  toast.success("Drug dispensed successfully!");
+                  fetchDrugs(); // Refresh the list
+                  
+                  setIsDispenseDialogOpen(false);
+                }}
+              >
+                Complete
+              </Button>
+            </div>
           </DialogContent>
         </Dialog>
 
-        {/* Delete Confirmation Dialog */}
-        <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Confirm Deletion</DialogTitle>
-            </DialogHeader>
-            <p>Are you sure you want to delete this drug?</p>
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => setIsDeleteDialogOpen(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="destructive"
-                className="bg-red-500 hover:bg-red-600 dark:bg-red-500 dark:hover:bg-red-600 text-white dark:text-white"
-                onClick={handleDeleteDrug}
-              >
-                Delete
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-        <ToastContainer/>
+        <ToastContainer />
       </CardContent>
     </Card>
   );

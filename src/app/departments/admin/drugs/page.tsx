@@ -17,7 +17,7 @@ import {
   TableBody,
   TableCell,
 } from "@/components/ui/table";
-import { toast ,ToastContainer} from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { CircularProgress } from "@mui/material";
 import axios from "axios";
@@ -39,11 +39,47 @@ export default function DrugManagement() {
   const [isLoading, setIsLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUpdateStockDialogOpen, setIsUpdateStockDialogOpen] = useState(false);
+  const [selectedDrug, setSelectedDrug] = useState<Drug | null>(null);
+  const [newQuantity, setNewQuantity] = useState<number>(0);
+  const [totalQuantity, setTotalQuantity] = useState<number>(0);
+  const [updateStockSearchQuery, setUpdateStockSearchQuery] = useState("");
+  const [filteredUpdateStockDrugs, setFilteredUpdateStockDrugs] = useState<
+    Drug[]
+  >([]);
   const { authState } = useAuth();
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 4; // Number of items per page
+  const itemsPerPage = 10; // Number of items per page
+
+  // Status Filter State
+  const [statusFilter, setStatusFilter] = useState<string>("All");
+
+  // Function to handle drug selection
+  const handleDrugSelection = (drug: Drug) => {
+    setSelectedDrug(drug);
+    setTotalQuantity(drug.quantity);
+  };
+
+  // Function to calculate total quantity
+  const calculateTotalQuantity = (quantity: number) => {
+    if (selectedDrug) {
+      setTotalQuantity(selectedDrug.quantity + quantity);
+    }
+  };
+
+  // Function to update drug stock
+  const handleUpdateStock = async () => {
+    if (selectedDrug) {
+      const updatedDrug = { ...selectedDrug, quantity: totalQuantity };
+      await handleUpdateStockDrug(updatedDrug);
+      setIsUpdateStockDialogOpen(false);
+      setSelectedDrug(null);
+      setNewQuantity(0);
+      setTotalQuantity(0);
+    }
+  };
 
   // Fetch all drugs on page load
   const fetchDrugs = async () => {
@@ -73,9 +109,28 @@ export default function DrugManagement() {
   }, []);
 
   // Filter drugs based on search query
-  const filteredDrugs = drugs.filter((drug) =>
-    drug.drug_name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredDrugs = drugs.filter((drug) => {
+    const matchesSearch = drug.drug_name
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase());
+    const matchesStatus =
+      statusFilter === "All" || drug.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
+  // Filter drugs for the Update Stock dialog
+  useEffect(() => {
+    if (updateStockSearchQuery.trim() === "") {
+      setFilteredUpdateStockDrugs([]); // Empty list when search query is empty
+    } else {
+      const filtered = drugs.filter((drug) =>
+        drug.drug_name
+          .toLowerCase()
+          .includes(updateStockSearchQuery.toLowerCase())
+      );
+      setFilteredUpdateStockDrugs(filtered);
+    }
+  }, [updateStockSearchQuery, drugs]);
 
   // Paginate results
   const totalPages = Math.ceil(filteredDrugs.length / itemsPerPage);
@@ -87,22 +142,23 @@ export default function DrugManagement() {
   // Handle adding or editing a drug
   const handleSaveDrug = async (drug: Drug) => {
     try {
-      const url = currentDrug
-        ? `${process.env.NEXT_PUBLIC_API_URL}/drugs/${currentDrug.id}/`
-        : `${process.env.NEXT_PUBLIC_API_URL}/drugs/`;
-      const method = currentDrug ? "PUT" : "POST";
+      const url = currentDrug?.id
+        ? `${process.env.NEXT_PUBLIC_API_URL}/drugs/${currentDrug.id}/` // Update existing drug
+        : `${process.env.NEXT_PUBLIC_API_URL}/drugs/`; // Create new drug
+      const method = currentDrug?.id ? "PUT" : "POST";
 
       const response = await fetch(url, {
         method,
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Token ${authState?.token}`,
         },
         body: JSON.stringify(drug),
       });
 
       if (response.ok) {
         toast.success(
-          currentDrug
+          currentDrug?.id
             ? "Drug updated successfully!"
             : "Drug added successfully!"
         );
@@ -118,6 +174,33 @@ export default function DrugManagement() {
     }
   };
 
+  // Handle updating drug stock
+  const handleUpdateStockDrug = async (drug: Drug) => {
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/drugs/${drug.id}/`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Token ${authState?.token}`,
+          },
+          body: JSON.stringify(drug),
+        }
+      );
+
+      if (response.ok) {
+        toast.success("Drug stock updated successfully!");
+        fetchDrugs();
+      } else {
+        throw new Error("Failed to update drug stock.");
+      }
+    } catch (error) {
+      console.error("Failed to update drug stock:", error);
+      toast.error("Failed to update drug stock.");
+    }
+  };
+
   // Handle deleting a drug
   const handleDeleteDrug = async (id: number) => {
     try {
@@ -125,6 +208,9 @@ export default function DrugManagement() {
         `${process.env.NEXT_PUBLIC_API_URL}/drugs/${id}/`,
         {
           method: "DELETE",
+          headers: {
+            Authorization: `Token ${authState?.token}`,
+          },
         }
       );
 
@@ -160,6 +246,7 @@ export default function DrugManagement() {
         {
           headers: {
             "Content-Type": "multipart/form-data",
+            Authorization: `Token ${authState?.token}`,
           },
           onUploadProgress: (progressEvent) => {
             const percentCompleted = Math.round(
@@ -189,41 +276,41 @@ export default function DrugManagement() {
           <title>Drug List</title>
           <style>
             body {
-                          font-family: Arial, sans-serif;
-                          margin: 0;
-                          padding: 20px;
-                          background-color: #f9f9f9;
-                        }
-                        .container {
-                          max-width: 600px;
-                          margin: 0 auto;
-                          background-color: #fff;
-                          padding: 10px;
-                          border: 1px solid #ddd;
-                          border-radius: 8px;
-                          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-                        }
-                        .header {
-                          text-align: center;
-                          border-bottom: 2px solid #000;
-                          padding-bottom: 10px;
-                          margin-bottom: 10px;
-                        }
-                        .header img {
-                          width: 100px;
-                          height: auto;
-                          margin-bottom: 7px;
-                        }
-                        .header h1 {
-                          margin: 0;
-                          font-size: 24px;
-                          color: #333;
-                        }
-                        .header p {
-                          margin: 5px 0;
-                          font-size: 14px;
-                          color: #666;
-                        }
+              font-family: Arial, sans-serif;
+              margin: 0;
+              padding: 20px;
+              background-color: #f9f9f9;
+            }
+            .container {
+              max-width: 600px;
+              margin: 0 auto;
+              background-color: #fff;
+              padding: 10px;
+              border: 1px solid #ddd;
+              border-radius: 8px;
+              box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            }
+            .header {
+              text-align: center;
+              border-bottom: 2px solid #000;
+              padding-bottom: 10px;
+              margin-bottom: 10px;
+            }
+            .header img {
+              width: 100px;
+              height: auto;
+              margin-bottom: 7px;
+            }
+            .header h1 {
+              margin: 0;
+              font-size: 24px;
+              color: #333;
+            }
+            .header p {
+              margin: 5px 0;
+              font-size: 14px;
+              color: #666;
+            }
             .table {
               width: 100%;
               border-collapse: collapse;
@@ -249,7 +336,7 @@ export default function DrugManagement() {
           <div class="container">
             <!-- Header -->
             <div class="header">
-            <img src="/kerocureLogo-removebg-preview.png" alt="Organization Logo" />
+              <img src="/kerocureLogo-removebg-preview.png" alt="Organization Logo" />
               <h1>KEROCURE MEDICAL CENTER</h1>
               <p>PO BOX: 3192, KISII</p>
               <p>Email: Kerocure1@gmail.com | Tel: +254 725 808 100</p>
@@ -270,10 +357,10 @@ export default function DrugManagement() {
                   .map(
                     (drug) => `
                   <tr>
-                    <td>${drug.drug_name}</td>
+                    <td>{drug.drug_name}</td>
                     <td>KSH ${drug.cost}</td>
-                    <td>${drug.quantity}</td>
-                    <td>${drug.status}</td>
+                    <td>{drug.quantity}</td>
+                    <td>{drug.status}</td>
                   </tr>
                 `
                   )
@@ -305,12 +392,27 @@ export default function DrugManagement() {
           onChange={(e) => setSearchQuery(e.target.value)}
           className="w-1/3"
         />
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="p-2 border rounded"
+        >
+          <option value="All">All</option>
+          <option value="Available">Available</option>
+          <option value="Out of Stock">Out of Stock</option>
+        </select>
         <div className="space-x-2">
           <Button
             className="bg-blue-500 hover:bg-blue-600 dark:bg-blue-500 dark:hover:bg-blue-600 text-white dark:text-white"
             onClick={() => setIsDialogOpen(true)}
           >
             Add Drug
+          </Button>
+          <Button
+            className="bg-green-500 hover:bg-green-600 text-white dark:bg-green-500 dark:hover:bg-green-600 dark:text-white"
+            onClick={() => setIsUpdateStockDialogOpen(true)}
+          >
+            Update Stock
           </Button>
           <Button
             className="bg-gray-500 hover:bg-gray-600 dark:bg-gray-500 dark:hover:bg-gray-600 text-white dark:text-white"
@@ -435,6 +537,68 @@ export default function DrugManagement() {
         </>
       )}
 
+      {/* Update Stock Dialog */}
+      <Dialog
+        open={isUpdateStockDialogOpen}
+        onOpenChange={setIsUpdateStockDialogOpen}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Update Drug Stock</DialogTitle>
+          </DialogHeader>
+          <div className="p-2 mb-2">
+            <Input
+              placeholder="Search drugs..."
+              value={updateStockSearchQuery}
+              onChange={(e) => setUpdateStockSearchQuery(e.target.value)}
+              className="w-full mb-4"
+            />
+            {filteredUpdateStockDrugs.length > 0 ? (
+              filteredUpdateStockDrugs.map((drug) => (
+                <div
+                  key={drug.id}
+                  onClick={() => handleDrugSelection(drug)}
+                  className="cursor-pointer hover:bg-gray-500 p-2 rounded"
+                >
+                  {drug.drug_name}
+                </div>
+              ))
+            ) : (
+              <Button
+                className="w-full bg-blue-500 hover:bg-blue-600 text-white"
+                onClick={() => {
+                  setIsUpdateStockDialogOpen(false); // Close the Update Stock dialog
+                  setIsDialogOpen(true); // Open the Add Drug dialog
+                }}
+              >
+                Add New Drug
+              </Button>
+            )}
+            {selectedDrug && (
+              <div className="mt-4">
+                <p>Drug Name: {selectedDrug.drug_name}</p>
+                <p>Current Quantity: {selectedDrug.quantity}</p>
+                <p>Status: {selectedDrug.status}</p>
+                <Input
+                  type="number"
+                  placeholder="Add Quantity"
+                  value={newQuantity}
+                  onChange={(e) => {
+                    setNewQuantity(Number(e.target.value));
+                    calculateTotalQuantity(Number(e.target.value));
+                  }}
+                  className="w-full mb-2"
+                />
+                <p>Total Quantity: {totalQuantity}</p>
+                <Button onClick={handleUpdateStock} className="w-full">
+                  Complete
+                </Button>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Add/Edit Drug Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent>
@@ -499,7 +663,7 @@ export default function DrugManagement() {
           </form>
         </DialogContent>
       </Dialog>
-      <ToastContainer/>
+      <ToastContainer />
     </div>
   );
 }

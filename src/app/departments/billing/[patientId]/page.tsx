@@ -21,6 +21,7 @@ import {
 import PageTransition from "@/components/PageTransition";
 import LoadingPage from "@/components/loading_animation";
 import axios from "axios";
+import { Badge } from "@/components/ui/badge";
 
 const BillingDetailsPage = () => {
   const params = useParams();
@@ -29,9 +30,9 @@ const BillingDetailsPage = () => {
   const router = useRouter();
   const { fetchVisitData, visitData } = useVisit();
   const [totalCost, setTotalCost] = useState<number>(0);
-  const [discountPercentage, setDiscountPercentage] = useState<number>(0); // State for discount percentage
-  const [discountAmount, setDiscountAmount] = useState<number>(0); // State for discount amount
-  const [finalCost, setFinalCost] = useState<number>(0); // State for final cost after discount
+  const [discountPercentage, setDiscountPercentage] = useState<number>(0);
+  const [discountAmount, setDiscountAmount] = useState<number>(0);
+  const [finalCost, setFinalCost] = useState<number>(0);
   const [showSuccessDialog, setShowSuccessDialog] = useState<boolean>(false);
   const [showErrorDialog, setShowErrorDialog] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -48,23 +49,72 @@ const BillingDetailsPage = () => {
     const labCost = visitData?.lab_data?.total_cost || 0;
     const pharmacyCost = visitData?.pharmacy_data?.cost || 0;
 
-    // Calculate total cost
     const total = consultationCost + labCost + pharmacyCost;
     setTotalCost(total);
 
-    // Calculate discount amount based on percentage
     const discount = (total * discountPercentage) / 100;
     setDiscountAmount(discount);
 
-    // Calculate final cost after discount
     const final = total - discount;
     setFinalCost(final);
   };
 
   // Handle discount percentage input change
-  const handleDiscountPercentageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleDiscountPercentageChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const percentage = parseFloat(e.target.value);
     setDiscountPercentage(percentage);
+  };
+
+  // Confirm payment for lab tests
+  const confirmLabTestsPayment = async () => {
+    try {
+      await axios.put(
+        `${process.env.NEXT_PUBLIC_API_URL}/consultation/${visitData?.consultation_data?.note_id}/`,
+        {
+         visit:visitData?.visit_id,
+          lab_tests_paid_status: true,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Token ${authState?.token}`,
+          },
+        }
+      );
+
+      toast.success("Lab tests payment confirmed successfully!");
+      fetchVisitData(patientId); // Refresh visit data
+    } catch (error) {
+      console.error("Error confirming lab tests payment:", error);
+      toast.error("Failed to confirm lab tests payment.");
+    }
+  };
+
+  // Confirm payment for prescriptions
+  const confirmPrescriptionsPayment = async () => {
+    try {
+      await axios.put(
+        `${process.env.NEXT_PUBLIC_API_URL}/consultation/${visitData?.consultation_data?.note_id}/`,
+        {
+        visit:visitData?.visit_id,
+          prescription_paid_status: true,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Token ${authState?.token}`,
+          },
+        }
+      );
+
+      toast.success("Prescriptions payment confirmed successfully!");
+      fetchVisitData(patientId); // Refresh visit data
+    } catch (error) {
+      console.error("Error confirming prescriptions payment:", error);
+      toast.error("Failed to confirm prescriptions payment.");
+    }
   };
 
   // Save billing details
@@ -81,9 +131,9 @@ const BillingDetailsPage = () => {
           laboratory_cost: visitData?.lab_data?.total_cost,
           pharmacy_cost: visitData?.pharmacy_data?.cost,
           total_cost: totalCost,
-          discount_percentage: discountPercentage, // Include discount percentage in the request
-          discount_amount: discountAmount, // Include discount amount in the request
-          final_cost: finalCost, // Include final cost in the request
+          discount_percentage: discountPercentage,
+          discount_amount: discountAmount,
+          final_cost: finalCost,
           visit: visitData?.visit_id,
           billed_by: authState?.user_id,
         }),
@@ -218,8 +268,11 @@ const BillingDetailsPage = () => {
               <p><strong>Pharmacy Cost:</strong> Ksh ${
                 visitData?.pharmacy_data?.cost || 0.0
               }</p>
-              <p><strong>Discount Percentage:</strong> ${discountPercentage}%</p>
-              <p><strong>Discount Amount:</strong> Ksh ${discountAmount.toFixed(2)}</p>
+              ${
+                 discountPercentage > 0
+                   ? `<p><strong>Discount Percentage:</strong> ${discountPercentage}%</p>`
+                   : ""
+               }
               <p class="total"><strong>Final Cost:</strong> Ksh ${finalCost.toFixed(
                 2
               )}</p>
@@ -254,7 +307,86 @@ const BillingDetailsPage = () => {
   return (
     <PageTransition>
       {isLoading && <LoadingPage />}
-      <div className="p-6">
+      <div className="p-6 space-y-6">
+        {/* Lab Tests Card */}
+        {(visitData?.consultation_data?.lab_test_ordered ?? []).length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Lab Tests</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {visitData?.consultation_data?.lab_test_ordered.map(
+                  (test, index) => (
+                    <div
+                      key={index}
+                      className="flex justify-between items-center"
+                    >
+                      <span>{test.service}</span>
+                      <span>Ksh {test.cost}</span>
+                    </div>
+                  )
+                )}
+              </div>
+              <div className="mt-4">
+                <p className="font-medium">
+                  Total Lab Tests Cost: Ksh{" "}
+                  {visitData?.consultation_data?.lab_test_ordered
+                    .reduce((sum, test) => sum + test.cost, 0)
+                    .toFixed(2)}
+                </p>
+                {visitData?.consultation_data?.lab_tests_paid_status ? (
+                  <Badge className="dark:bg-green-500 bg-green-500 text-white dark:text-white">Paid</Badge>
+                ) : (
+                  <Button onClick={confirmLabTestsPayment}>
+                    Confirm Payment
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Prescriptions Card */}
+        {(visitData?.consultation_data?.prescription ?? []).length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Prescriptions</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {visitData?.consultation_data?.prescription.map(
+                  (prescription, index) => (
+                    <div
+                      key={index}
+                      className="flex justify-between items-center"
+                    >
+                      <span>{prescription.drug_name}</span>
+                      <span>Ksh {prescription.cost}</span>
+                    </div>
+                  )
+                )}
+              </div>
+              <div className="mt-4">
+                <p className="font-medium">
+                  Total Prescriptions Cost: Ksh{" "}
+                  {visitData?.consultation_data?.prescription
+                    .reduce((sum, prescription) => sum + prescription.cost, 0)
+                    .toFixed(2)}
+                </p>
+                {visitData?.consultation_data?.prescription_paid_status ? (
+                  <Badge className="bg-green-500 dark:bg-green-500 dark:text-white text-white">Paid</Badge>
+                ) : (
+                  <Button onClick={confirmPrescriptionsPayment}>
+                    Confirm Payment
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Existing Billing Card */}
         <Card>
           <CardHeader>
             <CardTitle>
@@ -329,8 +461,11 @@ const BillingDetailsPage = () => {
             </div>
 
             {/* Save Billing Button */}
-            <Button className="mt-4" onClick={handleSaveBilling}>
-              Save Billing Details
+            <Button
+              className="mt-4 bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white"
+              onClick={handleSaveBilling}
+            >
+              Checkout
             </Button>
 
             {/* Print Receipt Button */}

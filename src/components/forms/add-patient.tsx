@@ -24,8 +24,6 @@ export type patientType = {
   last_name: string;
   residence: string;
   contact_number: string;
-  next_of_kin_name: string;
-  next_of_kin_contact_number: string;
   gender: string; // Add gender field
 };
 
@@ -40,9 +38,6 @@ export function AddPatientDialog() {
   const [last_name, setLast_name] = useState<string>("");
   const [residence, setResidence] = useState<string>("");
   const [contact_number, setContact_number] = useState<string>("");
-  const [next_of_kin_name, setNextOfKinName] = useState<string>("");
-  const [next_of_kin_contact_number, setNextOfKinContact_number] =
-    useState<string>("");
   const [gender, setGender] = useState<string>("Male"); // Add gender state
 
   const handleSubmit = async (e: FormEvent) => {
@@ -53,8 +48,6 @@ export function AddPatientDialog() {
       last_name,
       residence,
       contact_number,
-      next_of_kin_name,
-      next_of_kin_contact_number,
       gender,
     };
     console.log(patientData);
@@ -106,8 +99,6 @@ export function AddPatientDialog() {
     setFirst_name("");
     setLast_name("");
     setContact_number("");
-    setNextOfKinContact_number("");
-    setNextOfKinName("");
     setGender("male");
     setIsSubmitted(false);
   };
@@ -187,33 +178,7 @@ export function AddPatientDialog() {
                     className="col-span-3"
                   />
                 </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="next_of_kin_name" className="text-right">
-                    Next of Kin Name
-                  </Label>
-                  <Input
-                    id="next_of_kin_name"
-                    type="text"
-                    value={next_of_kin_name}
-                    onChange={(e) => setNextOfKinName(e.target.value)}
-                    className="col-span-3"
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label
-                    htmlFor="next_of_kin_contact_number"
-                    className="text-right"
-                  >
-                    Next of Kin Contact
-                  </Label>
-                  <Input
-                    id="next_of_kin_contact_number"
-                    type="text"
-                    value={next_of_kin_contact_number}
-                    onChange={(e) => setNextOfKinContact_number(e.target.value)}
-                    className="col-span-3"
-                  />
-                </div>
+               
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="gender" className="text-right">
                     Gender
@@ -250,9 +215,7 @@ export function AddPatientDialog() {
                 </h2>
                 <p>Residence: {residence}</p>
                 <p>Contact Number: {contact_number}</p>
-                <p>Next of Kin: {next_of_kin_name}</p>
-                <p>Next of Kin Contact: {next_of_kin_contact_number}</p>
-              </div>
+                        </div>
               <Button
                 onClick={() => router.back()}
                 className="px-4 py-2 bg-blue-500 text-white rounded"

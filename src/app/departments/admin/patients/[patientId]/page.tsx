@@ -15,13 +15,9 @@ import OrganizationInfo from "@/components/OrganizationInfo";
 type PatientType = {
   patientId: number;
   first_name: string;
-  last_name: string;
-  
-  dob: Date;
+  last_name: string;  
   residence: string;
   contact_number: string;
-  next_of_kin_name: string;
-  next_of_kin_contact_number: string;
   gender: string;
 };
 
@@ -151,16 +147,6 @@ export default function PatientPage() {
               />
             </div>
             <div>
-              <Label>Date of Birth</Label>
-              <Input
-                type="date"
-                value={new Date(patient.dob).toISOString().split("T")[0]}
-                onChange={(e) =>
-                  setPatient({ ...patient, dob: new Date(e.target.value) })
-                }
-              />
-            </div>
-            <div>
               <Label>Residence</Label>
               <Input
                 value={patient.residence}
@@ -175,27 +161,6 @@ export default function PatientPage() {
                 value={patient.contact_number}
                 onChange={(e) =>
                   setPatient({ ...patient, contact_number: e.target.value })
-                }
-              />
-            </div>
-            <div>
-              <Label>Next of Kin Name</Label>
-              <Input
-                value={patient.next_of_kin_name}
-                onChange={(e) =>
-                  setPatient({ ...patient, next_of_kin_name: e.target.value })
-                }
-              />
-            </div>
-            <div>
-              <Label>Next of Kin Contact</Label>
-              <Input
-                value={patient.next_of_kin_contact_number}
-                onChange={(e) =>
-                  setPatient({
-                    ...patient,
-                    next_of_kin_contact_number: e.target.value,
-                  })
                 }
               />
             </div>
@@ -236,10 +201,6 @@ export default function PatientPage() {
               <p>
                 <strong>Last Name:</strong> {patient.last_name}
               </p>
-               <p>
-                <strong>Date of Birth:</strong>{" "}
-                {new Date(patient.dob).toLocaleDateString()}
-              </p>
               <p>
                 <strong>Gender:</strong> {patient.gender}
               </p>
@@ -250,13 +211,6 @@ export default function PatientPage() {
                 <strong>Contact Number:</strong> {patient.contact_number}
               </p>
 
-              <p>
-                <strong>Next of Kin:</strong> {patient.next_of_kin_name}
-              </p>
-              <p>
-                <strong>Next of Kin Contact:</strong>{" "}
-                {patient.next_of_kin_contact_number}
-              </p>
             </div>
           </div>
         </div>

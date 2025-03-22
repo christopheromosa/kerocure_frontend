@@ -28,19 +28,27 @@ interface ConsultationData {
     id: number;
     drug_name: string;
     quantity: string;
-    prescribed_quantity:string;
+    prescribed_quantity: string;
     dosage: string;
-    root: string; // New field
+    route: string; // New field
     strength: string; // New field
     frequency: string; // New field
     duration: string; // New field
     cost: number;
     dispensed: boolean;
   }[];
-  lab_test_ordered: { service: string; duration: string; cost: number,administered:boolean }[];
+  lab_test_ordered: {
+    service: string;
+    duration: string;
+    cost: number;
+    administered: boolean;
+  }[];
   physician: number | null;
   recorded_at: string;
   total_cost: number;
+  consultation_paid_status: boolean;
+  lab_tests_paid_status: boolean;
+  prescription_paid_status: boolean;
 }
 interface PatientData {
   id: number;

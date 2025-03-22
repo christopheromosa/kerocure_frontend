@@ -81,7 +81,7 @@ export const PrescriptionsTab = ({
         ...drug,
         dosage: "",
         prescribed_quantity: "",
-        root: "",
+        route: "",
         strength: "",
         frequency: "",
         duration: "",
@@ -187,11 +187,11 @@ export const PrescriptionsTab = ({
               <div className="mt-4 grid grid-cols-2 gap-4">
                 <Input
                   type="text"
-                  placeholder="Root"
-                  value={drug.root}
+                  placeholder="Route"
+                  value={drug.route}
                   onChange={(e) => {
                     const updatedDrugs = [...selectedDrugs];
-                    updatedDrugs[index].root = e.target.value;
+                    updatedDrugs[index].route = e.target.value;
                     setSelectedDrugs(updatedDrugs);
                     setPrescriptions(updatedDrugs);
                   }}
@@ -283,7 +283,7 @@ export const PrescriptionsTab = ({
                   <TableHead>Medication</TableHead>
                   <TableHead>Cost (Ksh)</TableHead>
                   <TableHead>Dosage</TableHead>
-                  <TableHead>Root</TableHead>
+                  <TableHead>Route</TableHead>
                   <TableHead>Strength</TableHead>
                   <TableHead>Frequency</TableHead>
                   <TableHead>Quantity</TableHead>
@@ -298,7 +298,7 @@ export const PrescriptionsTab = ({
                       <TableCell>{drug.drug_name}</TableCell>
                       <TableCell>{drug.cost}</TableCell>
                       <TableCell>{drug.dosage}</TableCell>
-                      <TableCell>{drug.root}</TableCell>
+                      <TableCell>{drug.route}</TableCell>
                       <TableCell>{drug.strength}</TableCell>
                       <TableCell>{drug.frequency}</TableCell>
                       <TableCell>{drug.prescribed_quantity}</TableCell>

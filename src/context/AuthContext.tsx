@@ -7,6 +7,7 @@ import {
   useEffect,
   ReactNode,
 } from "react";
+import LoadingPage from "@/components/loading_animation";
 
 // Define the shape of the authentication state
 interface AuthState {
@@ -59,6 +60,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     is_active: true, // Default to true
   });
 
+  const [loading, setLoading] = useState(true);
+
   // Check localStorage for existing auth state on initial load
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -72,6 +75,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (token && roles.length > 0 && username && first_name && last_name &&  user_id) {
       setAuthState({ token, roles, username, user_id,first_name,last_name, is_active });
     }
+
+    setLoading(false);
   }, []);
 
   // Login function
@@ -122,6 +127,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }));
     localStorage.setItem("roles", JSON.stringify([role])); // Update localStorage
   };
+  // Only render children when loading is complete
+    if (loading) {
+      return <div><LoadingPage/></div>; // Or a loading spinner
+    }
 
   return (
     <AuthContext.Provider value={{ authState, login, logout, selectRole }}>
