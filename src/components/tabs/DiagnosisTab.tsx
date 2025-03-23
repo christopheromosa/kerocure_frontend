@@ -42,6 +42,10 @@ export const DiagnosisTab = ({ visitData }: { visitData: any }) => {
             setSections(diagnosisData);
             setIsNewRecord(false);
           }
+          // Set the selected disease from the backend
+          if (response.data.disease) {
+            setSelectedDisease(response.data.disease);
+          }
         } else {
           setSections([]);
           setIsNewRecord(true);
@@ -245,12 +249,18 @@ export const DiagnosisTab = ({ visitData }: { visitData: any }) => {
           </DialogContent>
         </Dialog>
 
-        {/* Selected Disease */}
-        {selectedDisease && (
-          <div className="mb-4">
-            <strong>Selected Disease:</strong> {selectedDisease}
-          </div>
-        )}
+       {/* Selected Disease */}
+        <div className="mb-4 flex justify-between">
+          <span>Disease: <strong>{selectedDisease || "None"}</strong> </span>
+          <Button
+            variant="outline"
+            size="sm"
+            className="ml-2 bg-green-600 text-white dark:bg-green-600 dark:text-white"
+            onClick={() => setIsAddDiseaseDialogOpen(true)} // Open the disease search dialog
+          >
+            Change Disease
+          </Button>
+        </div>
 
         {/* Dialog for adding new sections */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -293,7 +303,7 @@ export const DiagnosisTab = ({ visitData }: { visitData: any }) => {
 
         {/* Save diagnosis button */}
         <Button onClick={handleSaveDiagnosis} className="mt-4 mr-4">
-          {isNewRecord ? "Save Diagnosis" : "Update Diagnosis"}
+          {isNewRecord ? "Save Diagnosis" : "Save Diagnosis"}
         </Button>
         {/* Button to Add Disease */}
                 <Button

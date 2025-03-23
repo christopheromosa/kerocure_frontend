@@ -294,11 +294,11 @@ const BillingDetailsPage = () => {
     printWindow?.print();
 
     setTimeout(() => {
-      toast.success("Saved billing details successfully!", {
+      toast.success("Patient checkout successfully", {
         autoClose: 1000,
         onClose: () => {
-          window.location.reload();
           router.push("/departments/billing");
+          
         },
       });
     }, 1000);
@@ -462,10 +462,10 @@ const BillingDetailsPage = () => {
 
             {/* Save Billing Button */}
             <Button
-              className="mt-4 bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white"
+              className="mt-4 bg-blue-600 dark:text-white hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white"
               onClick={handleSaveBilling}
             >
-              Checkout
+              Save billing records
             </Button>
 
             {/* Print Receipt Button */}

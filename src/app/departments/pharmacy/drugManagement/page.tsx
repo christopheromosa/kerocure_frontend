@@ -253,15 +253,29 @@ export default function DrugManagement() {
                     <TableCell>{drug.quantity}</TableCell>
                     <TableCell>{drug.status}</TableCell>
                     <TableCell>
-                      <Button
-                        className="bg-blue-500 hover:bg-blue-600 text-white"
-                        onClick={() => {
-                          setSelectedDrugForDispense(drug);
-                          setIsDispenseDialogOpen(true);
-                        }}
-                      >
-                        Dispense
-                      </Button>
+                      <div className="relative">
+                        <Button
+                          className={`${
+                            drug.status === "Available"
+                              ? "bg-blue-500 hover:bg-blue-600"
+                              : "bg-gray-300 cursor-not-allowed"
+                          } text-white`}
+                          onClick={() => {
+                            if (drug.status === "Available") {
+                              setSelectedDrugForDispense(drug);
+                              setIsDispenseDialogOpen(true);
+                            }
+                          }}
+                          disabled={drug.status !== "Available"}
+                        >
+                          Dispense
+                        </Button>
+                        {drug.status !== "Available" && (
+                          <div className="absolute top-full left-0 mt-2 p-2 bg-gray-700 text-white text-sm rounded opacity-0 hover:opacity-100 transition-opacity">
+                            This drug is out of stock and cannot be dispensed.
+                          </div>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}

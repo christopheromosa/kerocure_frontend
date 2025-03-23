@@ -67,9 +67,9 @@ const TriageTable = () => {
   }, [authState?.token]);
 
   // Filter triage records by Visit ID
-  const filteredTriage = triageData?.filter((triage) =>
-    triage.patient_name.toString().includes(search)
-  );
+const filteredTriage = triageData?.filter((triage) =>
+  triage.patient_name.toString().toLowerCase().includes(search.toLowerCase())
+);
 
   // Pagination logic
   const totalPages = Math.ceil(filteredTriage.length / itemsPerPage);
@@ -94,7 +94,7 @@ const TriageTable = () => {
       <div className="flex justify-between items-center mb-4">
         <Input
           type="text"
-          placeholder="Search by Visit ID..."
+          placeholder="Search by Patient Name..."
           className="w-1/3"
           value={search}
           onChange={(e) => setSearch(e.target.value)}

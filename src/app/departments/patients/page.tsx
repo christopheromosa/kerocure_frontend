@@ -24,8 +24,6 @@ type PatientType = {
   last_name: string;
   residence: string;
   contact_number: string;
-  next_of_kin_name: string;
-  next_of_kin_contact_number: string;
   gender: string;
 };
 
@@ -102,7 +100,6 @@ export default function PatientList() {
             <TableHead>Last Name</TableHead>
             <TableHead>Residence</TableHead>
             <TableHead>Contact Number</TableHead>
-            <TableHead>Next of Kin</TableHead>
             <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -113,7 +110,6 @@ export default function PatientList() {
               <TableCell>{patient.last_name}</TableCell>
               <TableCell>{patient.residence}</TableCell>
               <TableCell>{patient.contact_number}</TableCell>
-              <TableCell>{patient.next_of_kin_name}</TableCell>
               <TableCell className="space-x-2">
                 <Link href={`patients/${patient.id}`}>
                   <Button

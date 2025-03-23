@@ -185,7 +185,10 @@ export default function DrugManagement() {
             "Content-Type": "application/json",
             Authorization: `Token ${authState?.token}`,
           },
-          body: JSON.stringify(drug),
+          body: JSON.stringify({
+                    ...drug,
+                    quantity: drug.quantity, // Ensure this is the updated quantity
+                  }),
         }
       );
 

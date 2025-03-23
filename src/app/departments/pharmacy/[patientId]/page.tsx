@@ -142,26 +142,32 @@ const PharmacyDetailsPage = () => {
     setDispenseQuantity(1); // Reset quantity to 1
   };
 
-const handleQuantityChange = (value: number) => {
-  if (selectedDrug && value > 0 && value <= selectedDrug.quantity) {
-    setDispenseQuantity(value);
+const handleQuantityChange = (value: string) => {
+  // Allow only numeric input (optional: you can add more validation)
+  if (/^\d*$/.test(value)) { // Only allow digits
+    setDispenseQuantity(value); // Store as string
   }
 };
   // Complete dispensing
-  const handleCompleteDispensing = async () => {
-    setShowConfirmationDialog(true);
-  };
+const handleCompleteDispensing = async () => {
+  if (selectedPrescription && parseInt(dispenseQuantity) !== parseInt(selectedPrescription.prescribed_quantity)) {
+    toast.error("Dispense quantity must match the prescribed quantity.");
+    return;
+  }
+  setShowConfirmationDialog(true);
+};
 
   const confirmDispensing = async () => {
     setShowConfirmationDialog(false);
     if (selectedDrug && selectedPrescription) {
       try {
+       const quantityDispensed = parseInt(dispenseQuantity);
         // Call the dispense-drug/ endpoint
         const response = await axios.post(
           `${process.env.NEXT_PUBLIC_API_URL}/dispense-drug/`,
           {
             drug_id: selectedDrug.id,
-            quantity_dispensed: dispenseQuantity,
+            quantity_dispensed: quantityDispensed,
           },
           {
             headers: {
@@ -443,15 +449,16 @@ const handleQuantityChange = (value: number) => {
               <div className="space-y-2">
                 <p>Selected Drug: {selectedDrug.drug_name}</p>
                 <Input
-                  type="number"
+                  type="text" // Use text input
                   value={dispenseQuantity}
-                  onChange={(e) => handleQuantityChange(Number(e.target.value))}
+                  onChange={(e) => handleQuantityChange(e.target.value)} // Pass string value
                   min={1}
                   max={selectedDrug.quantity}
+                  placeholder="Enter quantity"
                 />
                 <p>
                   Total Cost: Ksh{" "}
-                  {(selectedDrug.cost * dispenseQuantity).toFixed(2)}
+                  {(selectedDrug.cost * parseInt(dispenseQuantity || 0)).toFixed(2)}
                 </p>
                 <Button onClick={handleCompleteDispensing}>Complete</Button>
               </div>

@@ -219,7 +219,7 @@ export const PrescriptionsTab = ({
                   }}
                 />
                 <Input
-                  type="text"
+                  type="number"
                   placeholder="Quantity"
                   value={drug.prescribed_quantity}
                   onChange={(e) => {
