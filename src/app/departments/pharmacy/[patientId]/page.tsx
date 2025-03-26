@@ -69,7 +69,7 @@ const PharmacyDetailsPage = () => {
   const [drugs, setDrugs] = useState<Drug[]>([]); // Store all drugs here
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedDrug, setSelectedDrug] = useState<Drug | null>(null);
-  const [dispenseQuantity, setDispenseQuantity] = useState<number>(1);
+  const [dispenseQuantity, setDispenseQuantity] = useState<string>("");
   const [showConfirmationDialog, setShowConfirmationDialog] =
     useState<boolean>(false);
 
@@ -139,7 +139,7 @@ const PharmacyDetailsPage = () => {
   // Handle drug selection
   const handleDrugSelection = (drug: Drug) => {
     setSelectedDrug(drug);
-    setDispenseQuantity(1); // Reset quantity to 1
+    setDispenseQuantity(""); // Reset quantity to 1
   };
 
 const handleQuantityChange = (value: string) => {
@@ -181,7 +181,7 @@ const handleCompleteDispensing = async () => {
            {
              drug: selectedDrug.id,
              quantity_sold: dispenseQuantity,
-             total_amount: selectedDrug.cost * dispenseQuantity,
+             total_amount: selectedDrug.cost * parseInt(dispenseQuantity),
            },
            {
              headers: {
@@ -205,7 +205,7 @@ const handleCompleteDispensing = async () => {
             ...selectedPrescription,
             medication_name: selectedDrug.drug_name,
             quantity: dispenseQuantity.toString(),
-            cost: selectedDrug.cost * dispenseQuantity,
+            cost: selectedDrug.cost * parseInt(dispenseQuantity),
             dispensed: true,
           };
           setDispensedDrugs((prev) => [...prev, dispensedDrug]);
@@ -458,7 +458,7 @@ const handleCompleteDispensing = async () => {
                 />
                 <p>
                   Total Cost: Ksh{" "}
-                  {(selectedDrug.cost * parseInt(dispenseQuantity || 0)).toFixed(2)}
+                  {(selectedDrug.cost * parseInt(dispenseQuantity || "")).toFixed(2)}
                 </p>
                 <Button onClick={handleCompleteDispensing}>Complete</Button>
               </div>

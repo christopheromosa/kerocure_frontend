@@ -57,7 +57,7 @@ export const AddStaffDialog = ({
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
-        <Button className="mt-6 bg-blue-500 hover:bg-blue-600 dark:bg-blue-500 dark:hover:bg-blue-600 text-white">
+        <Button className="mt-6 bg-blue-500 hover:bg-blue-600 dark:text-white dark:bg-blue-500 dark:hover:bg-blue-600 text-white">
           Add Staff
         </Button>
       </DialogTrigger>
