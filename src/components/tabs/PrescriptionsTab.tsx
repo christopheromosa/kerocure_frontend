@@ -147,10 +147,9 @@ export const PrescriptionsTab = ({
 
   // Calculate the total cost of selected drugs
   const totalCost = selectedDrugs.reduce(
-    (sum, drug) => sum + parseInt(drug.cost),
+    (sum, drug) => sum + (parseInt(drug.cost) * (parseInt(drug.prescribed_quantity) || 1)),
     0
   );
-
   return (
     <Card>
       <CardHeader className="mt-0 pt-0">

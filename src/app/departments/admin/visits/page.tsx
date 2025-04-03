@@ -270,7 +270,13 @@ const VisitsTable = () => {
                                       <strong>At:</strong>{" "}
                                       {new Date(
                                         transfer.transferred_at
-                                      ).toLocaleString()}
+                                      ).toLocaleString([], {
+                                        year: 'numeric',
+                                        month: 'short',
+                                        day: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit'
+                                      })}
                                     </li>
                                   ))}
                                 </ul>

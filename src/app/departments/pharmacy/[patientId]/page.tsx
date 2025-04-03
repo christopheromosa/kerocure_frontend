@@ -458,7 +458,7 @@ const handleCompleteDispensing = async () => {
                 />
                 <p>
                   Total Cost: Ksh{" "}
-                  {(selectedDrug.cost * parseInt(dispenseQuantity || "")).toFixed(2)}
+                   {( selectedDrug.cost * (parseInt(dispenseQuantity) || 0) ).toFixed(2)}
                 </p>
                 <Button onClick={handleCompleteDispensing}>Complete</Button>
               </div>
@@ -480,7 +480,7 @@ const handleCompleteDispensing = async () => {
             <AlertDialogTitle>Confirm Dispensing</AlertDialogTitle>
             <AlertDialogDescription>
               Are you sure you want to dispense this drug? This action cannot be
-              undone and will directly modify the database.
+              undone and will directly modify the records.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
