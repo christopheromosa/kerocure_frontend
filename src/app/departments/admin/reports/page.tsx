@@ -29,7 +29,7 @@ type Visit = {
   visit_type: string;
   department: string;
   visit_status: string;
-  transfer_history:any[]
+  transfer_history: any[];
   patient_name: string;
   patient_id: number;
   total_cost: number;
@@ -263,211 +263,247 @@ const VisitsTable = () => {
         </div>
       )}
 
-   <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-       <DialogContent className="max-w-4xl p-6 rounded-xl shadow-lg border border-gray-200 bg-white max-h-[80vh] overflow-y-auto">
-         <DialogHeader className="border-b pb-4 flex justify-between items-center">
-           <DialogTitle className="text-xl font-semibold text-gray-800">
-             <OrganizationInfo />
-           </DialogTitle>
-           <Button
-             variant="outline"
-             onClick={() => setIsDialogOpen(false)}
-             className="text-sm"
-           >
-             Close
-           </Button>
-         </DialogHeader>
-         {selectedVisit && (
-           <div className="space-y-6 text-gray-700 border p-2">
-             {/* Main Visit Details */}
-             <div className="grid grid-cols-3 gap-4 text-sm border p-2">
-               <div className="space-y-2">
-                 <p className="font-medium">Visit ID:</p>
-                 <p>{selectedVisit.visit_id}</p>
-               </div>
-               <div className="space-y-2">
-                 <p className="font-medium">Patient Name:</p>
-                 <p>{selectedVisit.patient_name}</p>
-               </div>
-               <div className="space-y-2">
-                 <p className="font-medium">Visit Date:</p>
-                 <p>{format(new Date(selectedVisit.visit_date), "dd MMM yyyy, h:mm a")}</p>
-               </div>
-               <div className="space-y-2">
-                 <p className="font-medium">Department:</p>
-                 <p>{selectedVisit.department}</p>
-               </div>
-               <div className="space-y-2">
-                 <p className="font-medium">Status:</p>
-                 <p>{selectedVisit.visit_status}</p>
-               </div>
-               <div className="space-y-2">
-                 <p className="font-medium">Total Cost:</p>
-                 <p className="text-green-600 font-semibold">
-                   Ksh {selectedVisit.billing[0]?.total_cost?.toFixed(2) || "0.00"}
-                 </p>
-               </div>
-             </div>
-     
-             {/* Transfer History */}
-             {selectedVisit.transfer_history && selectedVisit.transfer_history.length > 0 && (
-               <div className="mt-4 border p-2">
-                 <h3 className="font-semibold text-lg mb-2">Transfer History</h3>
-                 {selectedVisit.transfer_history.map((transfer, index) => (
-                   <div key={index} className="space-y-2">
-                     <p>
-                       <strong>Reason:</strong> {transfer.reason}
-                     </p>
-                     <p>
-                       <strong>From Department:</strong> {transfer.from_department}
-                     </p>
-                     <p>
-                       <strong>To Department:</strong> {transfer.to_department}
-                     </p>
-                     <p>
-                       <strong>Transferred At:</strong> {transfer.transferred_at}
-                     </p>
-                     <p>
-                       <strong>Transferred By:</strong> {transfer.transferred_by}
-                     </p>
-                   </div>
-                 ))}
-               </div>
-             )}
-     
-             {/* Consultation */}
-             {selectedVisit.consultation && selectedVisit.consultation.length > 0 && (
-               <div className="mt-4 border p-2">
-                 <h3 className="font-semibold text-lg mb-2">Consultation</h3>
-                 {selectedVisit.consultation.map((consultation, index) => {
-                   const diagnosis = JSON.parse(consultation.diagnosis);
-                   const medicalHistory = consultation.medical_history; // Ensure this is an array
-                   return (
-                     <div key={index} className="space-y-2">
-                       {/* Medical History */}
-                       {medicalHistory && medicalHistory.length > 0 && (
-                         <>
-                           <p>
-                             <strong>Medical History:</strong>
-                           </p>
-                           <ul className="list-disc list-inside ml-4">
-                             {medicalHistory.map((history: any, idx: number) => (
-                               <li key={idx}>
-                                 {history.title}: {history.content}
-                               </li>
-                             ))}
-                           </ul>
-                         </>
-                       )}
-     
-                       {/* Diagnosis */}
-                       <p>
-                         <strong>Diagnosis:</strong>
-                       </p>
-                       <ul className="list-disc list-inside ml-4">
-                         {diagnosis.map((diag: any, idx: number) => (
-                           <li key={idx}>
-                             {diag.title}: {diag.content}
-                           </li>
-                         ))}
-                       </ul>
-     
-                       {/* Disease */}
-                       <p>
-                         <strong>Disease:</strong> {consultation.disease}
-                       </p>
-     
-                       {/* Prescription */}
-                       <p>
-                         <strong>Prescription:</strong>
-                       </p>
-                       <ul className="list-disc list-inside ml-4">
-                         {consultation.prescription.map((prescription: any, idx: number) => (
-                           <li key={idx}>
-                             {prescription.drug_name} - {prescription.quantity} units (Ksh{" "}
-                             {prescription.cost})
-                           </li>
-                         ))}
-                       </ul>
-                     </div>
-                   );
-                 })}
-               </div>
-             )}
-     
-             {/* Lab Tests */}
-             {selectedVisit.lab && selectedVisit.lab.length > 0 && (
-               <div className="mt-4 border p-2">
-                 <h3 className="font-semibold text-lg mb-2">Lab Tests</h3>
-                 {selectedVisit.lab.map((lab, index) => (
-                   <div key={index} className="space-y-2">
-                     <p>
-                       <strong>Results:</strong>
-                     </p>
-                     <ul className="list-disc list-inside ml-4">
-                       {lab.result.map((result: any, idx: number) => (
-                         <li key={idx}>
-                           {result.service}: {result.result} (Ksh {result.cost})
-                         </li>
-                       ))}
-                     </ul>
-                     <p>
-                       <strong>Total Lab Cost:</strong> Ksh {lab.total_cost?.toFixed(2)}
-                     </p>
-                   </div>
-                 ))}
-               </div>
-             )}
-     
-             {/* Pharmacy */}
-             {selectedVisit.pharmacy && selectedVisit.pharmacy.length > 0 && (
-               <div className="mt-4 p-2 border">
-                 <h3 className="font-semibold text-lg mb-2">Pharmacy</h3>
-                 {selectedVisit.pharmacy.map((pharmacy, index) => (
-                   <div key={index} className="space-y-2">
-                     <p>
-                       <strong>Medications:</strong>
-                     </p>
-                     <ul className="list-disc list-inside ml-4">
-                       {pharmacy.prescriptions.map((medication: any, idx: number) => (
-                         <li key={idx}>
-                           {medication.medication_name} - {medication.quantity} units (Ksh{" "}
-                           {medication.cost})
-                         </li>
-                       ))}
-                     </ul>
-                   </div>
-                 ))}
-               </div>
-             )}
-     
-             {/* Billing */}
-             {selectedVisit.billing && selectedVisit.billing.length > 0 && (
-               <div className="mt-4 border p-2">
-                 <h3 className="font-semibold text-lg mb-2">Billing</h3>
-                 {selectedVisit.billing.map((bill, index) => (
-                   <div key={index} className="space-y-2">
-                     <p>
-                       <strong>Consultation Cost:</strong> Ksh{" "}
-                       {bill.consultation_cost?.toFixed(2)}
-                     </p>
-                     <p>
-                       <strong>Lab Cost:</strong> Ksh {bill.laboratory_cost?.toFixed(2)}
-                     </p>
-                     <p>
-                       <strong>Pharmacy Cost:</strong> Ksh {bill.pharmacy_cost?.toFixed(2)}
-                     </p>
-                     <p>
-                       <strong>Total Cost:</strong> Ksh {bill.total_cost?.toFixed(2)}
-                     </p>
-                   </div>
-                 ))}
-               </div>
-             )}
-           </div>
-         )}
-       </DialogContent>
-     </Dialog>
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="max-w-4xl p-6 rounded-xl shadow-lg border border-gray-200 bg-white max-h-[80vh] overflow-y-auto">
+          <DialogHeader className="border-b pb-4 flex justify-between items-center">
+            <DialogTitle className="text-xl font-semibold text-gray-800">
+              <OrganizationInfo />
+            </DialogTitle>
+            <Button
+              variant="outline"
+              onClick={() => setIsDialogOpen(false)}
+              className="text-sm"
+            >
+              Close
+            </Button>
+          </DialogHeader>
+          {selectedVisit && (
+            <div className="space-y-6 text-gray-700 border p-2">
+              {/* Main Visit Details */}
+              <div className="grid grid-cols-3 gap-4 text-sm border p-2">
+                <div className="space-y-2">
+                  <p className="font-medium">Visit ID:</p>
+                  <p>{selectedVisit.visit_id}</p>
+                </div>
+                <div className="space-y-2">
+                  <p className="font-medium">Patient Name:</p>
+                  <p>{selectedVisit.patient_name}</p>
+                </div>
+                <div className="space-y-2">
+                  <p className="font-medium">Visit Date:</p>
+                  <p>
+                    {format(
+                      new Date(selectedVisit.visit_date),
+                      "dd MMM yyyy, h:mm a"
+                    )}
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <p className="font-medium">Department:</p>
+                  <p>{selectedVisit.department}</p>
+                </div>
+                <div className="space-y-2">
+                  <p className="font-medium">Status:</p>
+                  <p>{selectedVisit.visit_status}</p>
+                </div>
+                <div className="space-y-2">
+                  <p className="font-medium">Total Cost:</p>
+                  <p className="text-green-600 font-semibold">
+                    Ksh{" "}
+                    {selectedVisit.billing[0]?.total_cost?.toFixed(2) || "0.00"}
+                  </p>
+                </div>
+              </div>
+
+              {/* Transfer History */}
+              {selectedVisit.transfer_history &&
+                selectedVisit.transfer_history.length > 0 && (
+                  <div className="mt-4 border p-2">
+                    <h3 className="font-semibold text-lg mb-2">
+                      Transfer History
+                    </h3>
+                    {selectedVisit.transfer_history.map((transfer, index) => (
+                      <div key={index} className="space-y-2">
+                        <p>
+                          <strong>Reason:</strong> {transfer.reason}
+                        </p>
+                        <p>
+                          <strong>From Department:</strong>{" "}
+                          {transfer.from_department}
+                        </p>
+                        <p>
+                          <strong>To Department:</strong>{" "}
+                          {transfer.to_department}
+                        </p>
+                        <p>
+                          <strong>Transferred At:</strong>{" "}
+                          {new Date(transfer.transferred_at).toLocaleString(
+                            [],
+                            {
+                              year: "numeric",
+                              month: "short",
+                              day: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            }
+                          )}
+                        </p>
+                        <p>
+                          <strong>Transferred By:</strong>{" "}
+                          {transfer.transferred_by}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+              {/* Consultation */}
+              {selectedVisit.consultation &&
+                selectedVisit.consultation.length > 0 && (
+                  <div className="mt-4 border p-2">
+                    <h3 className="font-semibold text-lg mb-2">Consultation</h3>
+                    {selectedVisit.consultation.map((consultation, index) => {
+                      const diagnosis = JSON.parse(consultation.diagnosis);
+                      const medicalHistory = consultation.medical_history; // Ensure this is an array
+                      return (
+                        <div key={index} className="space-y-2">
+                          {/* Medical History */}
+                          {medicalHistory && medicalHistory.length > 0 && (
+                            <>
+                              <p>
+                                <strong>Medical History:</strong>
+                              </p>
+                              <ul className="list-disc list-inside ml-4">
+                                {medicalHistory.map(
+                                  (history: any, idx: number) => (
+                                    <li key={idx}>
+                                      {history.title}: {history.content}
+                                    </li>
+                                  )
+                                )}
+                              </ul>
+                            </>
+                          )}
+
+                          {/* Diagnosis */}
+                          <p>
+                            <strong>Diagnosis:</strong>
+                          </p>
+                          <ul className="list-disc list-inside ml-4">
+                            {diagnosis.map((diag: any, idx: number) => (
+                              <li key={idx}>
+                                {diag.title}: {diag.content}
+                              </li>
+                            ))}
+                          </ul>
+
+                          {/* Disease */}
+                          <p>
+                            <strong>Disease:</strong> {consultation.disease}
+                          </p>
+
+                          {/* Prescription */}
+                          <p>
+                            <strong>Prescription:</strong>
+                          </p>
+                          <ul className="list-disc list-inside ml-4">
+                            {consultation.prescription.map(
+                              (prescription: any, idx: number) => (
+                                <li key={idx}>
+                                  {prescription.drug_name} -{" "}
+                                  {prescription.quantity} units (Ksh{" "}
+                                  {prescription.cost})
+                                </li>
+                              )
+                            )}
+                          </ul>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+              {/* Lab Tests */}
+              {selectedVisit.lab && selectedVisit.lab.length > 0 && (
+                <div className="mt-4 border p-2">
+                  <h3 className="font-semibold text-lg mb-2">Lab Tests</h3>
+                  {selectedVisit.lab.map((lab, index) => (
+                    <div key={index} className="space-y-2">
+                      <p>
+                        <strong>Results:</strong>
+                      </p>
+                      <ul className="list-disc list-inside ml-4">
+                        {lab.result.map((result: any, idx: number) => (
+                          <li key={idx}>
+                            {result.service}: {result.result} (Ksh {result.cost}
+                            )
+                          </li>
+                        ))}
+                      </ul>
+                      <p>
+                        <strong>Total Lab Cost:</strong> Ksh{" "}
+                        {lab.total_cost?.toFixed(2)}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Pharmacy */}
+              {selectedVisit.pharmacy && selectedVisit.pharmacy.length > 0 && (
+                <div className="mt-4 p-2 border">
+                  <h3 className="font-semibold text-lg mb-2">Pharmacy</h3>
+                  {selectedVisit.pharmacy.map((pharmacy, index) => (
+                    <div key={index} className="space-y-2">
+                      <p>
+                        <strong>Medications:</strong>
+                      </p>
+                      <ul className="list-disc list-inside ml-4">
+                        {pharmacy.prescriptions.map(
+                          (medication: any, idx: number) => (
+                            <li key={idx}>
+                              {medication.medication_name} -{" "}
+                              {medication.quantity} units (Ksh {medication.cost}
+                              )
+                            </li>
+                          )
+                        )}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Billing */}
+              {selectedVisit.billing && selectedVisit.billing.length > 0 && (
+                <div className="mt-4 border p-2">
+                  <h3 className="font-semibold text-lg mb-2">Billing</h3>
+                  {selectedVisit.billing.map((bill, index) => (
+                    <div key={index} className="space-y-2">
+                      <p>
+                        <strong>Consultation Cost:</strong> Ksh{" "}
+                        {bill.consultation_cost?.toFixed(2)}
+                      </p>
+                      <p>
+                        <strong>Lab Cost:</strong> Ksh{" "}
+                        {bill.laboratory_cost?.toFixed(2)}
+                      </p>
+                      <p>
+                        <strong>Pharmacy Cost:</strong> Ksh{" "}
+                        {bill.pharmacy_cost?.toFixed(2)}
+                      </p>
+                      <p>
+                        <strong>Total Cost:</strong> Ksh{" "}
+                        {bill.total_cost?.toFixed(2)}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

@@ -73,7 +73,7 @@ const BillingDetailsPage = () => {
       await axios.put(
         `${process.env.NEXT_PUBLIC_API_URL}/consultation/${visitData?.consultation_data?.note_id}/`,
         {
-         visit:visitData?.visit_id,
+          visit: visitData?.visit_id,
           lab_tests_paid_status: true,
         },
         {
@@ -98,7 +98,7 @@ const BillingDetailsPage = () => {
       await axios.put(
         `${process.env.NEXT_PUBLIC_API_URL}/consultation/${visitData?.consultation_data?.note_id}/`,
         {
-        visit:visitData?.visit_id,
+          visit: visitData?.visit_id,
           prescription_paid_status: true,
         },
         {
@@ -269,10 +269,10 @@ const BillingDetailsPage = () => {
                 visitData?.pharmacy_data?.cost || 0.0
               }</p>
               ${
-                 discountPercentage > 0
-                   ? `<p><strong>Discount Percentage:</strong> ${discountPercentage}%</p>`
-                   : ""
-               }
+                discountPercentage > 0
+                  ? `<p><strong>Discount Percentage:</strong> ${discountPercentage}%</p>`
+                  : ""
+              }
               <p class="total"><strong>Final Cost:</strong> Ksh ${finalCost.toFixed(
                 2
               )}</p>
@@ -298,7 +298,6 @@ const BillingDetailsPage = () => {
         autoClose: 1000,
         onClose: () => {
           router.push("/departments/billing");
-          
         },
       });
     }, 1000);
@@ -336,7 +335,9 @@ const BillingDetailsPage = () => {
                     .toFixed(2)}
                 </p>
                 {visitData?.consultation_data?.lab_tests_paid_status ? (
-                  <Badge className="dark:bg-green-500 bg-green-500 text-white dark:text-white">Paid</Badge>
+                  <Badge className="dark:bg-green-500 bg-green-500 text-white dark:text-white">
+                    Paid
+                  </Badge>
                 ) : (
                   <Button onClick={confirmLabTestsPayment}>
                     Confirm Payment
@@ -362,7 +363,11 @@ const BillingDetailsPage = () => {
                       className="flex justify-between items-center"
                     >
                       <span>{prescription.drug_name}</span>
-                      <span>Ksh {prescription.cost}</span>
+                      <span>
+                        Ksh{" "}
+                        {prescription.cost *
+                          parseInt(prescription.prescribed_quantity)}
+                      </span>
                     </div>
                   )
                 )}
@@ -371,11 +376,19 @@ const BillingDetailsPage = () => {
                 <p className="font-medium">
                   Total Prescriptions Cost: Ksh{" "}
                   {visitData?.consultation_data?.prescription
-                    .reduce((sum, prescription) => sum + prescription.cost, 0)
+                    .reduce(
+                      (sum, prescription) =>
+                        sum +
+                        prescription.cost *
+                          parseInt(prescription.prescribed_quantity),
+                      0
+                    )
                     .toFixed(2)}
                 </p>
                 {visitData?.consultation_data?.prescription_paid_status ? (
-                  <Badge className="bg-green-500 dark:bg-green-500 dark:text-white text-white">Paid</Badge>
+                  <Badge className="bg-green-500 dark:bg-green-500 dark:text-white text-white">
+                    Paid
+                  </Badge>
                 ) : (
                   <Button onClick={confirmPrescriptionsPayment}>
                     Confirm Payment

@@ -17,7 +17,7 @@ import {
   AlertDialogTitle,
   AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
-import { Badge } from "@/components/ui/badge";	
+import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/context/AuthContext";
 import { useVisit } from "@/context/VisitContext";
 import axios from "axios";
@@ -34,7 +34,7 @@ interface Prescription {
   id: number;
   drug_name: string;
   quantity: string;
-  prescribed_quantity:string;
+  prescribed_quantity: string;
   cost: number;
   dispensed: boolean;
   dosage: string;
@@ -108,7 +108,7 @@ const PharmacyDetailsPage = () => {
         (prescription, index) => ({
           id: index,
           drug_name: prescription.drug_name,
-          quantity:prescription.quantity,
+          quantity: prescription.quantity,
           prescribed_quantity: prescription.prescribed_quantity,
           cost: prescription.cost,
           dosage: prescription.dosage,
@@ -142,26 +142,31 @@ const PharmacyDetailsPage = () => {
     setDispenseQuantity(""); // Reset quantity to 1
   };
 
-const handleQuantityChange = (value: string) => {
-  // Allow only numeric input (optional: you can add more validation)
-  if (/^\d*$/.test(value)) { // Only allow digits
-    setDispenseQuantity(value); // Store as string
-  }
-};
+  const handleQuantityChange = (value: string) => {
+    // Allow only numeric input (optional: you can add more validation)
+    if (/^\d*$/.test(value)) {
+      // Only allow digits
+      setDispenseQuantity(value); // Store as string
+    }
+  };
   // Complete dispensing
-const handleCompleteDispensing = async () => {
-  if (selectedPrescription && parseInt(dispenseQuantity) !== parseInt(selectedPrescription.prescribed_quantity)) {
-    toast.error("Dispense quantity must match the prescribed quantity.");
-    return;
-  }
-  setShowConfirmationDialog(true);
-};
+  const handleCompleteDispensing = async () => {
+    if (
+      selectedPrescription &&
+      parseInt(dispenseQuantity) !==
+        parseInt(selectedPrescription.prescribed_quantity)
+    ) {
+      toast.error("Dispense quantity must match the prescribed quantity.");
+      return;
+    }
+    setShowConfirmationDialog(true);
+  };
 
   const confirmDispensing = async () => {
     setShowConfirmationDialog(false);
     if (selectedDrug && selectedPrescription) {
       try {
-       const quantityDispensed = parseInt(dispenseQuantity);
+        const quantityDispensed = parseInt(dispenseQuantity);
         // Call the dispense-drug/ endpoint
         const response = await axios.post(
           `${process.env.NEXT_PUBLIC_API_URL}/dispense-drug/`,
@@ -176,20 +181,20 @@ const handleCompleteDispensing = async () => {
           }
         );
         // Create DrugSale record
-         await axios.post(
-           `${process.env.NEXT_PUBLIC_API_URL}/drug-sales/`,
-           {
-             drug: selectedDrug.id,
-             quantity_sold: dispenseQuantity,
-             total_amount: selectedDrug.cost * parseInt(dispenseQuantity),
-           },
-           {
-             headers: {
-               "Content-Type": "application/json",
-               Authorization: `Token ${authState?.token}`,
-             },
-           }
-         );
+        await axios.post(
+          `${process.env.NEXT_PUBLIC_API_URL}/drug-sales/`,
+          {
+            drug: selectedDrug.id,
+            quantity_sold: dispenseQuantity,
+            total_amount: selectedDrug.cost * parseInt(dispenseQuantity),
+          },
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Token ${authState?.token}`,
+            },
+          }
+        );
 
         if (response.status === 200) {
           // Update the local drugs state with the new quantity and status
@@ -228,7 +233,7 @@ const handleCompleteDispensing = async () => {
   };
 
   // Function to check for existing medication records
-  const checkExistingMedication = async (visitId:any) => {
+  const checkExistingMedication = async (visitId: any) => {
     try {
       const response = await axios.get(
         `${process.env.NEXT_PUBLIC_API_URL}/check-existing-medication/${visitId}/`,
@@ -239,7 +244,7 @@ const handleCompleteDispensing = async () => {
         }
       );
       return response.data; // Returns the existing medication record or a message
-    } catch (error:any) {
+    } catch (error: any) {
       if (error.response?.status === 404) {
         // No medication record found
         return null;
@@ -253,7 +258,9 @@ const handleCompleteDispensing = async () => {
   const handleSavePrescription = async () => {
     try {
       // Check if a medication record exists for this visit
-      const existingMedication = await checkExistingMedication(visitData?.visit_id);
+      const existingMedication = await checkExistingMedication(
+        visitData?.visit_id
+      );
 
       let updatedPrescriptions = [];
       let updatedTotalCost = calculateTotalCost();
@@ -342,13 +349,17 @@ const handleCompleteDispensing = async () => {
           <CardTitle>
             Prescriptions for {visitData?.patient_data?.first_name}{" "}
             {visitData?.patient_data?.last_name}
-             <div className="mb-4">
+            <div className="mb-4">
               <p className="font-medium">
                 Payment Status:{" "}
                 {visitData?.consultation_data?.prescription_paid_status ? (
-                  <Badge className="bg-green-500 dark:bg-green-500 text-white dark:text-white">Paid</Badge>
+                  <Badge className="bg-green-500 dark:bg-green-500 text-white dark:text-white">
+                    Paid
+                  </Badge>
                 ) : (
-                  <Badge className="bg-red-500 dark:bg-red-500 dark:text-white text-white">Pending</Badge>
+                  <Badge className="bg-red-500 dark:bg-red-500 dark:text-white text-white">
+                    Pending
+                  </Badge>
                 )}
               </p>
             </div>
@@ -358,7 +369,10 @@ const handleCompleteDispensing = async () => {
           {/* Replace Table with Accordion */}
           <Accordion type="single" collapsible>
             {prescriptions.map((prescription) => (
-              <AccordionItem key={prescription.id} value={`item-${prescription.id}`}>
+              <AccordionItem
+                key={prescription.id}
+                value={`item-${prescription.id}`}
+              >
                 <AccordionTrigger>
                   <div className="flex items-center justify-between w-full">
                     <span>{prescription.drug_name}</span>
@@ -374,8 +388,14 @@ const handleCompleteDispensing = async () => {
                     <p>Strength: {prescription.strength}</p>
                     <p>Frequency: {prescription.frequency}</p>
                     <p>Duration: {prescription.duration}</p>
-                    <p>Prescribed Quantity: {prescription.prescribed_quantity}</p>
-                    <p>Cost: Ksh {prescription.cost}</p>
+                    <p>
+                      Prescribed Quantity: {prescription.prescribed_quantity}
+                    </p>
+                    <p>
+                      Cost: Ksh{" "}
+                      {prescription.cost *
+                        parseInt(prescription.prescribed_quantity)}
+                    </p>
                     <div className="flex items-center space-x-2">
                       <Checkbox
                         checked={prescription.dispensed}
@@ -458,7 +478,9 @@ const handleCompleteDispensing = async () => {
                 />
                 <p>
                   Total Cost: Ksh{" "}
-                   {( selectedDrug.cost * (parseInt(dispenseQuantity) || 0) ).toFixed(2)}
+                  {(
+                    selectedDrug.cost * (parseInt(dispenseQuantity) || 0)
+                  ).toFixed(2)}
                 </p>
                 <Button onClick={handleCompleteDispensing}>Complete</Button>
               </div>
