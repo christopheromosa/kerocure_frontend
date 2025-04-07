@@ -31,6 +31,7 @@ import {
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { useAuth } from "@/context/AuthContext";
+import { RoleSwitcher } from "@/components/RoleSwitcher";
 
 const DashboardPage = () => {
   const { data, isLoading } = useDashboardData();
@@ -137,6 +138,7 @@ const DashboardPage = () => {
           Welcome, {authState?.first_name} {authState?.last_name}
         </h1>
         <Button onClick={handleRefresh}>Refresh Page</Button>
+        <RoleSwitcher />
       </div>
 
       {/* Patients in Queue */}

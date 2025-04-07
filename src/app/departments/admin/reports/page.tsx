@@ -85,7 +85,7 @@ const VisitsTable = () => {
   const filteredVisits = visitsData.filter((visit) => {
     const patientName = visit.patient_name || ""; // Default to empty string if null/undefined
     const department = visit.department || ""; // Default to empty string if null/undefined
-    const visitStatus = visit.visit_status || ""; // Default to empty string if null/undefined
+    const visitStatus = visit.visit_type || ""; // Default to empty string if null/undefined
 
     const matchesSearch = patientName
       .toLowerCase()
@@ -140,7 +140,7 @@ const VisitsTable = () => {
         />
         <Input
           type="text"
-          placeholder="Filter by Status..."
+          placeholder="Filter by Visit type..."
           className="w-1/4"
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
@@ -198,10 +198,11 @@ const VisitsTable = () => {
           <TableHeader>
             <TableRow>
               <TableHead>Patient Name</TableHead>
-              <TableHead>Visit Date</TableHead>
+              <TableHead>Visit Type</TableHead>
               <TableHead>Department</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Total Cost</TableHead>
+              <TableHead>Visit Date</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -210,12 +211,13 @@ const VisitsTable = () => {
               displayedVisits.map((visit) => (
                 <TableRow key={visit.visit_id}>
                   <TableCell>{visit.patient_name}</TableCell>
-                  <TableCell>{visit.visit_date}</TableCell>
+                  <TableCell>{visit.visit_type}</TableCell>
                   <TableCell>{visit.department}</TableCell>
                   <TableCell>{visit.visit_status}</TableCell>
                   <TableCell className="text-green-400">
                     Ksh {visit.billing[0]?.total_cost?.toFixed(2) || "0.00"}
                   </TableCell>
+                  <TableCell>{visit.visit_date}</TableCell>
                   <TableCell>
                     <Button
                       variant="outline"
@@ -283,15 +285,15 @@ const VisitsTable = () => {
               <div className="grid grid-cols-3 gap-4 text-sm border p-2">
                 <div className="space-y-2">
                   <p className="font-medium">Visit ID:</p>
-                  <p>{selectedVisit.visit_id}</p>
+                  <p className="font-bold">{selectedVisit.visit_id}</p>
                 </div>
                 <div className="space-y-2">
                   <p className="font-medium">Patient Name:</p>
-                  <p>{selectedVisit.patient_name}</p>
+                  <p className="font-bold">{selectedVisit.patient_name}</p>
                 </div>
                 <div className="space-y-2">
                   <p className="font-medium">Visit Date:</p>
-                  <p>
+                  <p className="font-bold">
                     {format(
                       new Date(selectedVisit.visit_date),
                       "dd MMM yyyy, h:mm a"
@@ -300,15 +302,15 @@ const VisitsTable = () => {
                 </div>
                 <div className="space-y-2">
                   <p className="font-medium">Department:</p>
-                  <p>{selectedVisit.department}</p>
+                  <p className="font-bold">{selectedVisit.department}</p>
                 </div>
                 <div className="space-y-2">
                   <p className="font-medium">Status:</p>
-                  <p>{selectedVisit.visit_status}</p>
+                  <p className="font-bold">{selectedVisit.visit_status}</p>
                 </div>
                 <div className="space-y-2">
                   <p className="font-medium">Total Cost:</p>
-                  <p className="text-green-600 font-semibold">
+                  <p className="text-green-600 font-bold">
                     Ksh{" "}
                     {selectedVisit.billing[0]?.total_cost?.toFixed(2) || "0.00"}
                   </p>
@@ -411,8 +413,8 @@ const VisitsTable = () => {
                               (prescription: any, idx: number) => (
                                 <li key={idx}>
                                   {prescription.drug_name} -{" "}
-                                  {prescription.quantity} units (Ksh{" "}
-                                  {prescription.cost})
+                                  {prescription.prescribed_quantity} units 
+                                  
                                 </li>
                               )
                             )}
@@ -462,8 +464,8 @@ const VisitsTable = () => {
                         {pharmacy.prescriptions.map(
                           (medication: any, idx: number) => (
                             <li key={idx}>
-                              {medication.medication_name} -{" "}
-                              {medication.quantity} units (Ksh {medication.cost}
+                              {medication.drug_name} -{" "}
+                              {medication.prescribed_quantity} units (Ksh {medication.cost}
                               )
                             </li>
                           )

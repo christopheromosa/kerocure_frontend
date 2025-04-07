@@ -15,14 +15,41 @@ import { useAuth } from "@/context/AuthContext";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
+// Custom auto-resizing Textarea component
+const AutoResizeTextarea = React.forwardRef<
+  HTMLTextAreaElement,
+  React.TextareaHTMLAttributes<HTMLTextAreaElement>
+>(({ value, onChange, ...props }, ref) => {
+  const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+
+  React.useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+    }
+  }, [value]);
+
+  return (
+    <Textarea
+      ref={textareaRef}
+      value={value}
+      onChange={onChange}
+      className="min-h-[60px] resize-none"
+      {...props}
+    />
+  );
+});
+
+AutoResizeTextarea.displayName = "AutoResizeTextarea";
+
 export const MedicalHistoryTab = ({ visitData }: any) => {
   const { authState } = useAuth();
   const [sections, setSections] = useState<any[]>([]);
   const [newSectionTitle, setNewSectionTitle] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isNewRecord, setIsNewRecord] = useState(true); // Track if it's a new record
+  const [isNewRecord, setIsNewRecord] = useState(true);
+  const [hasEdits, setHasEdits] = useState(false); // Track if edits have been made
 
-  // Fetch medical history data from the backend
   useEffect(() => {
     const fetchMedicalHistory = async () => {
       try {
@@ -36,12 +63,12 @@ export const MedicalHistoryTab = ({ visitData }: any) => {
             }
           );
           if (response.data.medical_history) {
-            setSections(response.data.medical_history); // Set existing medical history
-            setIsNewRecord(false); // It's an existing record
+            setSections(response.data.medical_history);
+            setIsNewRecord(false);
           }
         } else {
-          setSections([]); // Initialize with empty sections if no note_id exists
-          setIsNewRecord(true); // It's a new record
+          setSections([]);
+          setIsNewRecord(true);
         }
       } catch (error) {
         console.error("Failed to fetch medical history:", error);
@@ -51,41 +78,39 @@ export const MedicalHistoryTab = ({ visitData }: any) => {
     fetchMedicalHistory();
   }, [authState?.token, visitData?.consultation_data?.note_id]);
 
-  // Add a new section
   const handleAddSection = () => {
     if (newSectionTitle.trim()) {
       const newSection = { title: newSectionTitle, content: "" };
-      setSections([...sections, newSection]); // Append new section to existing sections
+      setSections([...sections, newSection]);
       setNewSectionTitle("");
       setIsDialogOpen(false);
+      setHasEdits(true); // Mark as edited when adding new section
     }
   };
 
-  // Update the content of a section
   const handleSectionContentChange = (index: number, content: string) => {
     const updatedSections = [...sections];
     updatedSections[index].content = content;
     setSections(updatedSections);
+    setHasEdits(true); // Mark that edits have been made
   };
 
-  // Delete a section
   const handleDeleteSection = (index: number) => {
-    const updatedSections = sections.filter((_, i) => i !== index); // Remove the section at the specified index
+    const updatedSections = sections.filter((_, i) => i !== index);
     setSections(updatedSections);
+    setHasEdits(true); // Mark as edited when deleting section
   };
 
-  // Save medical history to the backend
   const handleSaveMedicalHistory = async () => {
     try {
       const payload = {
         medical_history: sections,
-        visit: visitData?.visit_id, // Include visit ID in the payload
-        physician: authState?.user_id, // Include physician ID in the payload
+        visit: visitData?.visit_id,
+        physician: authState?.user_id,
       };
 
       if (isNewRecord) {
-        // Create a new consultation record
-        const response = await axios.post(
+        await axios.post(
           `${process.env.NEXT_PUBLIC_API_URL}/consultation/`,
           payload,
           {
@@ -94,12 +119,12 @@ export const MedicalHistoryTab = ({ visitData }: any) => {
             },
           }
         );
-        toast.success("Medical history created successfully!",{autoClose:1000});
-        window.location.reload()
-        setIsNewRecord(false); // Update state to reflect that it's no longer a new record
+        toast.success("Medical history created successfully!", {
+          autoClose: 1000,
+        });
+        setIsNewRecord(false);
       } else {
-        // Update the existing consultation record
-        const response = await axios.put(
+        await axios.put(
           `${process.env.NEXT_PUBLIC_API_URL}/consultation/${visitData?.consultation_data?.note_id}/`,
           payload,
           {
@@ -108,9 +133,12 @@ export const MedicalHistoryTab = ({ visitData }: any) => {
             },
           }
         );
-        toast.success("Medical history updated successfully!",{autoClose:1000});
-        window.location.reload()
+        toast.success("Medical history updated successfully!", {
+          autoClose: 1000,
+        });
       }
+      setHasEdits(false); // Reset edit state after successful save
+      window.location.reload();
     } catch (error) {
       console.error("Failed to save medical history:", error);
       toast.error("Failed to save medical history. Please try again.");
@@ -123,7 +151,6 @@ export const MedicalHistoryTab = ({ visitData }: any) => {
         <CardTitle>Medical History</CardTitle>
       </CardHeader>
       <CardContent>
-        {/* Dialog for adding new sections */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button className="mb-4">Add New Section</Button>
@@ -141,7 +168,6 @@ export const MedicalHistoryTab = ({ visitData }: any) => {
           </DialogContent>
         </Dialog>
 
-        {/* Display existing sections with delete button */}
         {sections.map((section, index) => (
           <div key={index} className="mb-4">
             <div className="flex justify-between items-center">
@@ -154,17 +180,26 @@ export const MedicalHistoryTab = ({ visitData }: any) => {
                 Delete
               </Button>
             </div>
-            <Textarea
+            <AutoResizeTextarea
               value={section.content}
-              onChange={(e) => handleSectionContentChange(index, e.target.value)}
+              onChange={(e) =>
+                handleSectionContentChange(index, e.target.value)
+              }
               placeholder={`Enter ${section.title} notes...`}
             />
           </div>
         ))}
 
-        {/* Save button with dynamic text */}
-        <Button onClick={handleSaveMedicalHistory} className="mt-4">
-          {isNewRecord ? "Save Medical History" : "Update Medical History"}
+        <Button
+          onClick={handleSaveMedicalHistory}
+          className="mt-4"
+          variant={hasEdits ? "default" : "secondary"}
+        >
+          {isNewRecord
+            ? "Save Medical History"
+            : hasEdits
+            ? "Save Changes"
+            : "Medical History Saved"}
         </Button>
         <ToastContainer />
       </CardContent>

@@ -40,6 +40,7 @@ const LabResultsPage = () => {
   const [showSuccessDialog, setShowSuccessDialog] = useState<boolean>(false);
   const [showErrorDialog, setShowErrorDialog] = useState<boolean>(false);
   const [totalCost, setTotalCost] = useState<number>(0);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   // Filter test orders to display only those with administered: false
   const orders =
@@ -54,7 +55,10 @@ const LabResultsPage = () => {
 
   // Calculate total cost whenever orders change
   useEffect(() => {
-    const calculatedTotalCost = orders.reduce((sum, test) => sum + test.cost, 0);
+    const calculatedTotalCost = orders.reduce(
+      (sum, test) => sum + test.cost,
+      0
+    );
     setTotalCost(calculatedTotalCost);
   }, [orders]);
 
@@ -103,6 +107,7 @@ const LabResultsPage = () => {
 
   // Function to submit test results
   const handleSubmitResults = async () => {
+    setIsSubmitting(true);
     // Format results for submission
     const formattedResults = orders.map((test) => ({
       service: test.service,
@@ -254,6 +259,7 @@ const LabResultsPage = () => {
     } catch (error) {
       console.error("Error submitting test results:", error);
       setShowErrorDialog(true);
+      setIsSubmitting(false); // Re-enable button on error
     }
   };
 
@@ -266,6 +272,9 @@ const LabResultsPage = () => {
   if (!patientId) {
     return <div className="p-6">Loading patient details...</div>;
   }
+  const handleRefresh = () => {
+    window.location.reload();
+  };
 
   return (
     <PageTransition>
@@ -279,15 +288,20 @@ const LabResultsPage = () => {
           </CardHeader>
           <CardContent>
             {/* Display Paid Status */}
-            <div className="mb-4">
+            <div className="mb-4 flex justify-between items-center">
               <p className="font-medium">
                 Payment Status:{" "}
                 {visitData?.consultation_data?.lab_tests_paid_status ? (
-                  <Badge className="bg-green-500 dark:bg-green-500 text-white dark:text-white">Paid</Badge>
+                  <Badge className="bg-green-500 dark:bg-green-500 text-white dark:text-white">
+                    Paid
+                  </Badge>
                 ) : (
-                  <Badge className="bg-red-500 dark:bg-red-500 dark:text-white text-white">Pending</Badge>
+                  <Badge className="bg-red-500 dark:bg-red-500 dark:text-white text-white">
+                    Pending
+                  </Badge>
                 )}
               </p>
+              <Button onClick={handleRefresh}>Refresh Page</Button>
             </div>
 
             <Table>
@@ -326,8 +340,12 @@ const LabResultsPage = () => {
                 readOnly // Make total cost read-only since it's calculated dynamically
               />
             </div>
-            <Button className="mt-4" onClick={handleSubmitResults}>
-              Submit Results
+            <Button
+              className="mt-4"
+              onClick={handleSubmitResults}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Submitting..." : "Submit Results"}
             </Button>
           </CardContent>
         </Card>

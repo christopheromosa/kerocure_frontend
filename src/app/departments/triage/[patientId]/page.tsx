@@ -35,12 +35,12 @@ import {
 } from "@/components/ui/dialog";
 
 const triageSchema = z.object({
-  weight: z.coerce.string().min(1, "Weight is required"),
-  height: z.coerce.string().min(1, "Height is required"),
-  systolic: z.coerce.string().min(1, "Systolic pressure is required"),
-  diastolic: z.coerce.string().min(1, "Diastolic pressure is required"),
-  pulse: z.coerce.string().min(1, "Pulse rate is required"),
-  age: z.coerce.string().min(1, "Age rate is required"),
+  weight: z.coerce.string().optional(),
+  height: z.coerce.string().optional(),
+  systolic: z.coerce.string().optional(),
+  diastolic: z.coerce.string().optional(),
+  pulse: z.coerce.string().optional(),
+  age: z.coerce.string().min(1, "Age is required"),
 });
 
 type PatientType = {
@@ -52,7 +52,7 @@ type PatientType = {
   residence: string;
 };
 interface triageType {
-  age:string;
+  age: string;
   weight: string;
   height: string;
   systolic: string;
@@ -72,8 +72,8 @@ const Patient = () => {
     null
   );
   const [selectedVisitType, setSelectedVisitType] = useState<string | null>(
-      null
-    )
+    null
+  );
   const [patientData, setPatientData] = useState<PatientType | null>(null);
   const { authState } = useAuth();
   const {
@@ -149,9 +149,27 @@ const Patient = () => {
       console.error("No patient ID found.");
       return;
     }
+    if (!selectedVisitType) {
+      toast.error("Visit type is required");
+      return;
+    }
+    if (!selectedDepartment) {
+      toast.error("Department is required");
+      return;
+    }
 
     // Set triage data and show confirmation dialog
-    setTriageData(data);
+    // Replace empty fields with "N/A"
+    const completeData = {
+      ...data,
+      weight: data.weight || "N/A",
+      height: data.height || "N/A",
+      systolic: data.systolic || "N/A",
+      diastolic: data.diastolic || "N/A",
+      pulse: data.pulse || "N/A",
+    };
+
+    setTriageData(completeData);
     setShowConfirmationDialog(true);
   };
 
@@ -162,7 +180,7 @@ const Patient = () => {
     const visitData = {
       patient: Number(patientId),
       department: selectedDepartment,
-      visit_type:selectedVisitType,
+      visit_type: selectedVisitType,
       current_state: "TRIAGE",
       next_state: "CONSULTATION",
       total_cost: TRIAGE_COST, // Include the fixed triage cost
@@ -186,7 +204,7 @@ const Patient = () => {
         const triagePayload = {
           visit: visit.visit_id,
           vital_signs: {
-            age:`${triageData.age} yrs`,
+            age: `${triageData.age} yrs`,
             weight: `${triageData.weight} kg`, // Include units
             height: `${triageData.height} cm`,
             blood_pressure: `${triageData.systolic}/${triageData.diastolic} mmHg`, // Concatenated BP
@@ -300,7 +318,7 @@ const Patient = () => {
           <form onSubmit={handleSubmit(onSubmit)}>
             <CardContent className="grid gap-2">
               <div className="grid grid-cols-2 gap-2">
-              <div>
+                <div>
                   <Label htmlFor="weight">Weight(Kg) </Label>
                   <Input id="weight" type="text" {...register("weight")} />
                   {errors.weight && (
@@ -352,15 +370,15 @@ const Patient = () => {
                   </p>
                 )}
               </div>
-               <div>
+              <div>
                 <Label htmlFor="age">Age(yrs) </Label>
                 <Input id="age" type="text" {...register("age")} />
-                 {errors.weight && (
+                {errors.weight && (
                   <p className="text-red-500 dark:text-red-500 text-sm">
-                   {errors.age?.message as string}
-                     </p>
-                      )}
-                </div>
+                    {errors.age?.message as string}
+                  </p>
+                )}
+              </div>
               <div className="grid gap-2">
                 <Label htmlFor="visit_type">Send to:</Label>
                 <select
@@ -370,15 +388,10 @@ const Patient = () => {
                   value={selectedVisitType || ""}
                 >
                   <option value="">Select Visit Type</option>
-                   <option  value="Outpatient">
-                      Outpatient
-                    </option>
-                   <option  value="Inpatient">
-                      Inpatient
-                    </option>                        
+                  <option value="Outpatient">Outpatient</option>
+                  <option value="Inpatient">Inpatient</option>
                 </select>
-                
-              </div>              
+              </div>
               <div className="grid gap-2">
                 <Label htmlFor="department">Send to:</Label>
                 <select

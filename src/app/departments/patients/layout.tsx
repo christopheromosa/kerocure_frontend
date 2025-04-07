@@ -17,6 +17,7 @@ import {
 import { usePathname } from "next/navigation";
 import { Separator } from "@/components/ui/separator";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
+import { RoleSwitcher } from "@/components/RoleSwitcher";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const links = [
@@ -56,6 +57,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 </span>
                 !
               </span>
+              <RoleSwitcher />
             </div>
           </header>
           <main className="h-full bg-background border p-4">{children}</main>

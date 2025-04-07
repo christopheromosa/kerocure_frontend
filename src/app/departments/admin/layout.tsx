@@ -16,7 +16,6 @@ import {
   Briefcase,
   Microscope,
   ShoppingBag,
-  DollarSign,
   Pill,
   Activity,
   FlaskConical,

@@ -24,6 +24,8 @@ import {
   TableBody,
   TableCell,
 } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 export const PrescriptionsTab = ({
   prescriptions,
@@ -35,10 +37,14 @@ export const PrescriptionsTab = ({
   patientId,
 }: any) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isConfirmationDialogOpen, setIsConfirmationDialogOpen] = useState(false);
+  const [isConfirmationDialogOpen, setIsConfirmationDialogOpen] =
+    useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [drugs, setDrugs] = useState<any[]>([]);
   const [selectedDrugs, setSelectedDrugs] = useState<any[]>(prescriptions);
+  const [expandedDrugs, setExpandedDrugs] = useState<Record<number, boolean>>(
+    {}
+  );
   const { authState } = useAuth();
 
   // Fetch drugs on component mount
@@ -70,7 +76,7 @@ export const PrescriptionsTab = ({
 
   // Handle drug search input
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
+    setSearchTerm(e.target.value.toLowerCase());
   };
 
   // Handle adding a drug to the selected list
@@ -90,6 +96,7 @@ export const PrescriptionsTab = ({
     setSelectedDrugs(updatedDrugs);
     setPrescriptions(updatedDrugs);
     setSearchTerm("");
+    setIsDialogOpen(false);
   };
 
   // Handle deleting a drug from the selected list
@@ -99,21 +106,21 @@ export const PrescriptionsTab = ({
     setPrescriptions(updatedDrugs);
   };
 
-  // Handle saving prescriptions
-  const handleSavePrescriptions = async () => {
-    try {
-      await handleSaveDrugPrescriptions();
-      setIsDialogOpen(false);
-      toast.success("Prescriptions saved successfully!", { autoClose: 1000 });
-    } catch (error) {
-      console.error("Failed to save prescriptions:", error);
-      toast.error("Failed to save prescriptions. Please try again.");
-    }
+  // Toggle expanded view for a drug
+  const toggleExpanded = (index: number) => {
+    setExpandedDrugs((prev) => ({
+      ...prev,
+      [index]: !prev[index],
+    }));
   };
 
-  // Handle sending patient to pharmacy
+  // Handle sending to pharmacy (combines save and send)
   const handleSendToPharmacy = async () => {
     try {
+      // First save the prescriptions
+      await handleSaveDrugPrescriptions();
+
+      // Then update the visit state
       await axios.put(
         `${process.env.NEXT_PUBLIC_API_URL}/visits/${visitData?.visit_id}/`,
         {
@@ -128,28 +135,29 @@ export const PrescriptionsTab = ({
           },
         }
       );
-      toast.success("Patient sent to Pharmacy successfully!", {
+
+      toast.success("Prescriptions saved and patient sent to Pharmacy!", {
         autoClose: 1000,
       });
       window.location.reload();
     } catch (error) {
-      console.error("Failed to send patient to Pharmacy:", error);
-      toast.error("Failed to send patient to Pharmacy. Please try again.");
+      console.error("Failed to process prescriptions:", error);
+      toast.error("Failed to process prescriptions. Please try again.");
     }
   };
 
-  // Filter drugs based on the search term
+  // Filter drugs based on the search term (case insensitive)
   const filteredDrugs = searchTerm.trim()
-    ? drugs.filter((drug) =>
-        drug.drug_name.toLowerCase().includes(searchTerm.toLowerCase())
-      )
+    ? drugs.filter((drug) => drug.drug_name.toLowerCase().includes(searchTerm))
     : [];
 
   // Calculate the total cost of selected drugs
   const totalCost = selectedDrugs.reduce(
-    (sum, drug) => sum + (parseInt(drug.cost) * (parseInt(drug.prescribed_quantity) || 1)),
+    (sum, drug) =>
+      sum + parseInt(drug.cost) * (parseInt(drug.prescribed_quantity) || 1),
     0
   );
+
   return (
     <Card>
       <CardHeader className="mt-0 pt-0">
@@ -159,157 +167,210 @@ export const PrescriptionsTab = ({
       </CardHeader>
       <CardContent>
         {/* "Add Prescription" Button */}
-        <Button
-          className="mt-4 bg-blue-500 hover:bg-blue-600 text-white dark:bg-blue-500 dark:hover:bg-blue-600 dark:text-white"
-          onClick={() => setIsDialogOpen(true)}
-        >
+        <Button className="mt-4" onClick={() => setIsDialogOpen(true)}>
           Add Prescription
         </Button>
 
         {/* Card-based layout for selected drugs */}
         <div className="mt-6 space-y-4">
-          {selectedDrugs.map((drug: any, index: number) => (
-            <Card key={index} className="p-4">
-              <div className="flex justify-between items-center">
-                <div>
-                  <h3 className="font-semibold">{drug.drug_name}</h3>
-                  <p className="text-sm text-gray-600">Cost: Ksh {drug.cost}</p>
+          {selectedDrugs.length > 0 ? (
+            selectedDrugs.map((drug: any, index: number) => (
+              <Card key={index} className="p-4">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h3 className="font-semibold">{drug.drug_name}</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Cost: Ksh {drug.cost} | Qty: {drug.quantity}
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => toggleExpanded(index)}
+                    >
+                      {expandedDrugs[index] ? (
+                        <ChevronUp className="h-4 w-4" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4" />
+                      )}
+                      <span className="ml-2">Options</span>
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => handleDeleteDrug(index)}
+                    >
+                      Remove
+                    </Button>
+                  </div>
                 </div>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => handleDeleteDrug(index)}
-                >
-                  Delete
-                </Button>
-              </div>
-              <div className="mt-4 grid grid-cols-2 gap-4">
-                <Input
-                  type="text"
-                  placeholder="Route"
-                  value={drug.route}
-                  onChange={(e) => {
-                    const updatedDrugs = [...selectedDrugs];
-                    updatedDrugs[index].route = e.target.value;
-                    setSelectedDrugs(updatedDrugs);
-                    setPrescriptions(updatedDrugs);
-                  }}
-                />
-                <Input
-                  type="text"
-                  placeholder="Strength"
-                  value={drug.strength}
-                  onChange={(e) => {
-                    const updatedDrugs = [...selectedDrugs];
-                    updatedDrugs[index].strength = e.target.value;
-                    setSelectedDrugs(updatedDrugs);
-                    setPrescriptions(updatedDrugs);
-                  }}
-                />
-                <Input
-                  type="text"
-                  placeholder="Frequency"
-                  value={drug.frequency}
-                  onChange={(e) => {
-                    const updatedDrugs = [...selectedDrugs];
-                    updatedDrugs[index].frequency = e.target.value;
-                    setSelectedDrugs(updatedDrugs);
-                    setPrescriptions(updatedDrugs);
-                  }}
-                />
-                <Input
-                  type="number"
-                  placeholder="Quantity"
-                  value={drug.prescribed_quantity}
-                  onChange={(e) => {
-                    const updatedDrugs = [...selectedDrugs];
-                    updatedDrugs[index].prescribed_quantity = e.target.value;
-                    setSelectedDrugs(updatedDrugs);
-                    setPrescriptions(updatedDrugs);
-                  }}
-                />
-                <Input
-                  type="text"
-                  placeholder="Duration"
-                  value={drug.duration}
-                  onChange={(e) => {
-                    const updatedDrugs = [...selectedDrugs];
-                    updatedDrugs[index].duration = e.target.value;
-                    setSelectedDrugs(updatedDrugs);
-                    setPrescriptions(updatedDrugs);
-                  }}
-                />
-                <Textarea
-                  placeholder="Other details"
-                  value={drug.dosage}
-                  onChange={(e) => {
-                    const updatedDrugs = [...selectedDrugs];
-                    updatedDrugs[index].dosage = e.target.value;
-                    setSelectedDrugs(updatedDrugs);
-                    setPrescriptions(updatedDrugs);
-                  }}
-                  className="col-span-2"
-                />
-              </div>
-            </Card>
-          ))}
+
+                {/* Always visible fields */}
+                <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="text-sm font-medium">Quantity*</label>
+                    <Input
+                      type="number"
+                      value={drug.prescribed_quantity}
+                      onChange={(e) => {
+                        const updatedDrugs = [...selectedDrugs];
+                        updatedDrugs[index].prescribed_quantity =
+                          e.target.value;
+                        setSelectedDrugs(updatedDrugs);
+                        setPrescriptions(updatedDrugs);
+                      }}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Route*</label>
+                    <Input
+                      type="text"
+                      value={drug.route}
+                      onChange={(e) => {
+                        const updatedDrugs = [...selectedDrugs];
+                        updatedDrugs[index].route = e.target.value;
+                        setSelectedDrugs(updatedDrugs);
+                        setPrescriptions(updatedDrugs);
+                      }}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Frequency*</label>
+                    <Input
+                      type="text"
+                      value={drug.frequency}
+                      onChange={(e) => {
+                        const updatedDrugs = [...selectedDrugs];
+                        updatedDrugs[index].frequency = e.target.value;
+                        setSelectedDrugs(updatedDrugs);
+                        setPrescriptions(updatedDrugs);
+                      }}
+                      required
+                    />
+                  </div>
+                </div>
+
+                {/* Additional fields (toggleable) */}
+                {expandedDrugs[index] && (
+                  <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium">Strength</label>
+                      <Input
+                        type="text"
+                        value={drug.strength}
+                        onChange={(e) => {
+                          const updatedDrugs = [...selectedDrugs];
+                          updatedDrugs[index].strength = e.target.value;
+                          setSelectedDrugs(updatedDrugs);
+                          setPrescriptions(updatedDrugs);
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium">Duration</label>
+                      <Input
+                        type="text"
+                        value={drug.duration}
+                        onChange={(e) => {
+                          const updatedDrugs = [...selectedDrugs];
+                          updatedDrugs[index].duration = e.target.value;
+                          setSelectedDrugs(updatedDrugs);
+                          setPrescriptions(updatedDrugs);
+                        }}
+                      />
+                    </div>
+                    <div className="col-span-2">
+                      <label className="text-sm font-medium">
+                        Dosage Instructions
+                      </label>
+                      <Textarea
+                        value={drug.dosage}
+                        onChange={(e) => {
+                          const updatedDrugs = [...selectedDrugs];
+                          updatedDrugs[index].dosage = e.target.value;
+                          setSelectedDrugs(updatedDrugs);
+                          setPrescriptions(updatedDrugs);
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
+              </Card>
+            ))
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              No prescriptions added yet
+            </div>
+          )}
         </div>
 
-        {/* "Save Prescriptions" Button */}
+        {/* Action Buttons */}
         {selectedDrugs.length > 0 && (
-          <Button onClick={handleSavePrescriptions} className="mt-4 mr-4">
-            Save Drug Prescriptions
-          </Button>
-        )}
-
-        {/* "Send to Pharmacy" Button */}
-        {selectedDrugs.length > 0 && (
-          <Button
-            onClick={() => setIsConfirmationDialogOpen(true)}
-            className="mt-4 bg-green-500 hover:bg-green-600 text-white dark:bg-green-500 dark:hover:bg-green-600 dark:text-white"
-          >
-            Send to Pharmacy
-          </Button>
-        )}
-
-        {/* Table for existing prescriptions (read-only) */}
-        {visitData?.consultation_data?.prescription?.length > 0 && (
-          <div className="mt-8">
-            <h3 className="text-lg font-bold mb-4">Previously Prescribed Drugs</h3>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Medication</TableHead>
-                  <TableHead>Cost (Ksh)</TableHead>
-                  <TableHead>Dosage</TableHead>
-                  <TableHead>Route</TableHead>
-                  <TableHead>Strength</TableHead>
-                  <TableHead>Frequency</TableHead>
-                  <TableHead>Quantity</TableHead>
-                  <TableHead>Duration</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {visitData.consultation_data.prescription.map(
-                  (drug: any, index: number) => (
-                    <TableRow key={index}>
-                      <TableCell>{drug.drug_name}</TableCell>
-                      <TableCell>{drug.cost}</TableCell>
-                      <TableCell>{drug.dosage}</TableCell>
-                      <TableCell>{drug.route}</TableCell>
-                      <TableCell>{drug.strength}</TableCell>
-                      <TableCell>{drug.frequency}</TableCell>
-                      <TableCell>{drug.prescribed_quantity}</TableCell>
-                      <TableCell>{drug.duration}</TableCell>
-                      <TableCell>{drug.status}</TableCell>
-                    </TableRow>
-                  )
-                )}
-              </TableBody>
-            </Table>
+          <div className="mt-6 flex justify-end gap-4">
+            <Button
+              onClick={() => setIsConfirmationDialogOpen(true)}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              Send to Pharmacy
+            </Button>
           </div>
         )}
+
+        {/* Table for existing prescriptions */}
+        <div className="mt-8">
+          <h3 className="text-lg font-bold mb-4">
+            Previously Prescribed Drugs
+          </h3>
+          {visitData?.consultation_data?.prescription?.length > 0 ? (
+            <div className="border rounded-lg">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Medication</TableHead>
+                    <TableHead>Quantity</TableHead>
+                    <TableHead>Route</TableHead>
+                    <TableHead>Frequency</TableHead>
+                    <TableHead>Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {visitData.consultation_data.prescription.map(
+                    (drug: any, index: number) => (
+                      <TableRow key={index}>
+                        <TableCell className="font-medium">
+                          {drug.drug_name}
+                        </TableCell>
+                        <TableCell>
+                          {drug.prescribed_quantity || "N/A"}
+                        </TableCell>
+                        <TableCell>{drug.route || "N/A"}</TableCell>
+                        <TableCell>{drug.frequency || "N/A"}</TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={
+                              drug.status === "dispensed"
+                                ? "default"
+                                : "secondary"
+                            }
+                          >
+                            {drug.status || "pending"}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    )
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              No previous prescriptions found
+            </div>
+          )}
+        </div>
 
         {/* Confirmation Dialog */}
         <Dialog
@@ -318,56 +379,83 @@ export const PrescriptionsTab = ({
         >
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Confirm Payment</DialogTitle>
+              <DialogTitle>Confirm Pharmacy Referral</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
-              <p>
-                <strong>Total Amount to Pay:</strong> Ksh {totalCost}
+              <p className="text-sm text-muted-foreground">
+                This will save the prescriptions and send the patient to the
+                pharmacy.
               </p>
+              <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg">
+                <p className="font-medium">
+                  <strong>Total Amount:</strong> Ksh {totalCost}
+                </p>
+              </div>
             </div>
             <DialogFooter>
               <DialogClose asChild>
                 <Button variant="outline">Cancel</Button>
               </DialogClose>
-              <Button onClick={handleSendToPharmacy}>Send to Pharmacy</Button>
+              <Button onClick={handleSendToPharmacy}>Confirm</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
 
         {/* Add Prescription Dialog */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent>
+          <DialogContent className="max-h-[80vh] flex flex-col">
             <DialogHeader>
               <DialogTitle>Add Prescription</DialogTitle>
             </DialogHeader>
             <Input
-              placeholder="Search drugs..."
+              placeholder="Search drugs by name..."
               value={searchTerm}
               onChange={handleSearch}
+              className="mb-4"
             />
-            {filteredDrugs.length > 0 && (
-              <ul className="mt-2 border rounded-lg p-2 max-h-40 overflow-y-auto">
-                {filteredDrugs.map((drug, index) => (
-                  <li
-                    key={index}
-                    className="p-2 hover:bg-gray-600 cursor-pointer"
-                    onClick={() => handleAddDrug(drug)}
-                  >
-                    <div className="flex justify-between">
-                      <span>{drug.drug_name}</span>
-                      <span>{drug.quantity}</span>
-                      <span>Ksh {drug.cost}</span>
-                      <span>{drug.status}</span>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
+
+            <div className="flex-1 overflow-y-auto">
+              {filteredDrugs.length > 0 ? (
+                <div className="grid gap-2">
+                  {filteredDrugs.map((drug, index) => (
+                    <Card
+                      key={index}
+                      className="p-4 hover:bg-accent cursor-pointer transition-colors"
+                      onClick={() => handleAddDrug(drug)}
+                    >
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <h4 className="font-medium">{drug.drug_name}</h4>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-medium">Ksh {drug.cost}</p>
+                          <p className="text-sm text-muted-foreground">
+                            Stock: {drug.quantity}
+                          </p>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              ) : searchTerm ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  No drugs found matching {searchTerm}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  Search for drugs to prescribe
+                </div>
+              )}
+            </div>
+
             <DialogFooter>
-              <Button onClick={() => setIsDialogOpen(false)}>Cancel</Button>
+              <DialogClose asChild>
+                <Button variant="outline">Cancel</Button>
+              </DialogClose>
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
         <ToastContainer />
       </CardContent>
     </Card>

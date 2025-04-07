@@ -30,7 +30,8 @@ export default function DrugManagement() {
 
   // Dispense Dialog State
   const [isDispenseDialogOpen, setIsDispenseDialogOpen] = useState(false);
-  const [selectedDrugForDispense, setSelectedDrugForDispense] = useState<any>(null);
+  const [selectedDrugForDispense, setSelectedDrugForDispense] =
+    useState<any>(null);
   const [quantitySold, setQuantitySold] = useState<number>(0);
   const [totalAmount, setTotalAmount] = useState<number>(0);
 
@@ -69,8 +70,11 @@ export default function DrugManagement() {
 
   // Filter drugs based on search query and status
   const filteredDrugs = drugs.filter((drug) => {
-    const matchesSearch = drug.drug_name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === "All" || drug.status === statusFilter;
+    const matchesSearch = drug.drug_name
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase());
+    const matchesStatus =
+      statusFilter === "All" || drug.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
@@ -288,7 +292,9 @@ export default function DrugManagement() {
                 <Button
                   variant="outline"
                   disabled={currentPage === 1}
-                  onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.max(prev - 1, 1))
+                  }
                 >
                   Previous
                 </Button>
@@ -310,7 +316,10 @@ export default function DrugManagement() {
         )}
 
         {/* Dispense Dialog */}
-        <Dialog open={isDispenseDialogOpen} onOpenChange={setIsDispenseDialogOpen}>
+        <Dialog
+          open={isDispenseDialogOpen}
+          onOpenChange={setIsDispenseDialogOpen}
+        >
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Dispense Drug</DialogTitle>
@@ -333,14 +342,15 @@ export default function DrugManagement() {
               <p>Total Amount: Ksh {totalAmount}</p>
               <Button
                 onClick={async () => {
-                 const newQuantity = selectedDrugForDispense.quantity - quantitySold;
+                  const newQuantity =
+                    selectedDrugForDispense.quantity - quantitySold;
                   // Update drug quantity
                   await axios.put(
                     `${process.env.NEXT_PUBLIC_API_URL}/drugs/${selectedDrugForDispense.id}/`,
                     {
                       ...selectedDrugForDispense,
                       quantity: newQuantity,
-                       status: newQuantity <= 0 ? "Out of Stock" : "Available",
+                      status: newQuantity <= 0 ? "Out of Stock" : "Available",
                     },
                     {
                       headers: {
@@ -368,7 +378,7 @@ export default function DrugManagement() {
 
                   toast.success("Drug dispensed successfully!");
                   fetchDrugs(); // Refresh the list
-                  
+
                   setIsDispenseDialogOpen(false);
                 }}
               >

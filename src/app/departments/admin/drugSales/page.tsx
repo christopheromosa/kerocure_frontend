@@ -67,8 +67,8 @@ export default function DrugSales() {
       filtered = filtered.filter((sale) => {
         const saleDate = dayjs(sale.date);
         return (
-          saleDate.isAfter(dayjs(startDate)) &&
-          saleDate.isBefore(dayjs(endDate).add(1, "day"))
+          saleDate.isAfter(dayjs(startDate).startOf("day").subtract(1, "ms")) &&
+          saleDate.isBefore(dayjs(endDate).endOf("day").add(1, "ms"))
         );
       });
     }

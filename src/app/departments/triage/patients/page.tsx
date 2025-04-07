@@ -7,6 +7,7 @@ import { columns } from "@/components/tables/triage-data-table/columns";
 import { DataTable } from "@/components/tables/triage-data-table/triage-data-table";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { Button } from "@/components/ui/button";
 
 export default function TriagePage() {
   const [data, setData] = useState([]);
@@ -36,13 +37,18 @@ export default function TriagePage() {
     getPatientsData();
   }, [authState?.token]);
 
+  const handleRefresh = () => {
+    window.location.reload();
+  };
   return (
     <PageTransition>
       {isLoading && <LoadingPage />}
+
       <div className="flex flex-col">
         {/* <SuccessDialog/> */}
-        <div className="p-2 ml-2 float-left">
+        <div className="p-2 ml-2 float-left flex justify-between">
           <AddPatientDialog />
+          <Button onClick={handleRefresh}>Refresh Page</Button>
         </div>
         <DataTable columns={columns} data={data} />
       </div>

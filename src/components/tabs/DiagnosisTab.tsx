@@ -1,7 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,DialogFooter } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import axios from "axios";
@@ -9,6 +16,33 @@ import { useAuth } from "@/context/AuthContext";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import OrganizationInfo from "../OrganizationInfo";
+
+// Custom auto-resizing Textarea component
+const AutoResizeTextarea = React.forwardRef<
+  HTMLTextAreaElement,
+  React.TextareaHTMLAttributes<HTMLTextAreaElement>
+>(({ value, onChange, ...props }, ref) => {
+  const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+
+  React.useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+    }
+  }, [value]);
+
+  return (
+    <Textarea
+      ref={textareaRef}
+      value={value}
+      onChange={onChange}
+      className="min-h-[60px] resize-none"
+      {...props}
+    />
+  );
+});
+
+AutoResizeTextarea.displayName = "AutoResizeTextarea";
 
 export const DiagnosisTab = ({ visitData }: { visitData: any }) => {
   const { authState } = useAuth();
@@ -18,11 +52,13 @@ export const DiagnosisTab = ({ visitData }: { visitData: any }) => {
   const [isNewRecord, setIsNewRecord] = useState(true);
   const [diseaseSearchTerm, setDiseaseSearchTerm] = useState("");
   const [selectedDisease, setSelectedDisease] = useState("");
+  const [originalDisease, setOriginalDisease] = useState(""); // Track original disease for comparison
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [allDiseases, setAllDiseases] = useState<any[]>([]);
   const [isAddDiseaseDialogOpen, setIsAddDiseaseDialogOpen] = useState(false);
   const [newDiseaseName, setNewDiseaseName] = useState("");
   const [isAddingDisease, setIsAddingDisease] = useState(false);
+  const [hasEdits, setHasEdits] = useState(false); // Track if edits have been made
 
   // Fetch diagnosis data and diseases on component mount
   useEffect(() => {
@@ -42,9 +78,9 @@ export const DiagnosisTab = ({ visitData }: { visitData: any }) => {
             setSections(diagnosisData);
             setIsNewRecord(false);
           }
-          // Set the selected disease from the backend
           if (response.data.disease) {
             setSelectedDisease(response.data.disease);
+            setOriginalDisease(response.data.disease); // Store original value
           }
         } else {
           setSections([]);
@@ -78,6 +114,26 @@ export const DiagnosisTab = ({ visitData }: { visitData: any }) => {
     }
   }, [visitData, authState.token]);
 
+  // Add this effect to filter diseases based on search term
+  useEffect(() => {
+    if (diseaseSearchTerm.trim() === "") {
+      setSearchResults([]);
+    } else {
+      const filtered = allDiseases.filter((disease) =>
+        disease.name.toLowerCase().includes(diseaseSearchTerm.toLowerCase())
+      );
+      setSearchResults(filtered);
+    }
+  }, [diseaseSearchTerm, allDiseases]);
+  // Check for edits whenever sections or disease changes
+  useEffect(() => {
+    const diseaseChanged = selectedDisease !== originalDisease;
+    const sectionsChanged = sections.some(
+      (section, index) => section.content !== sections[index]?.originalContent
+    );
+    setHasEdits(diseaseChanged || sectionsChanged);
+  }, [sections, selectedDisease, originalDisease]);
+
   // Add a new section
   const handleAddSection = () => {
     if (newSectionTitle.trim()) {
@@ -85,6 +141,7 @@ export const DiagnosisTab = ({ visitData }: { visitData: any }) => {
       setSections([...sections, newSection]);
       setNewSectionTitle("");
       setIsDialogOpen(false);
+      setHasEdits(true);
     }
   };
 
@@ -99,45 +156,42 @@ export const DiagnosisTab = ({ visitData }: { visitData: any }) => {
   const handleDeleteSection = (index: number) => {
     const updatedSections = sections.filter((_, i) => i !== index);
     setSections(updatedSections);
+    setHasEdits(true);
   };
 
-  // Handle disease search input
-  const handleDiseaseSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const term = e.target.value;
-    setDiseaseSearchTerm(term);
-
-    if (term.length > 2) {
-      const filteredDiseases = allDiseases.filter((disease) =>
-        disease.name.toLowerCase().includes(term.toLowerCase())
-      );
-      setSearchResults(filteredDiseases);
-    } else {
-      setSearchResults([]);
-    }
+  // Handle disease selection
+  const handleDiseaseSelection = (diseaseName: string) => {
+    setSelectedDisease(diseaseName);
+    setHasEdits(true);
+    setIsAddDiseaseDialogOpen(false);
   };
 
   // Handle adding a new disease
   const handleAddDisease = async () => {
     if (!newDiseaseName) return;
- setIsAddingDisease(true); 
+    setIsAddingDisease(true);
     try {
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_API_URL}/diseases/`,
         {
           name: newDiseaseName,
+        },
+        {
+          headers: {
+            Authorization: `Token ${authState?.token}`,
+          },
         }
       );
       setAllDiseases((prev) => [...prev, response.data]);
-      setSelectedDisease(newDiseaseName);
-      setIsAddDiseaseDialogOpen(false);
+      handleDiseaseSelection(newDiseaseName);
       setNewDiseaseName("");
       toast.success("Disease added successfully!", { autoClose: 1000 });
     } catch (error) {
       console.error("Failed to add disease:", error);
       toast.error("Failed to add disease. Please try again.");
-    }finally {
-        setIsAddingDisease(false); // End loading
-      }
+    } finally {
+      setIsAddingDisease(false);
+    }
   };
 
   // Save diagnosis data to the backend
@@ -147,11 +201,11 @@ export const DiagnosisTab = ({ visitData }: { visitData: any }) => {
         diagnosis: JSON.stringify(sections),
         visit: visitData?.visit_id,
         physician: authState?.user_id,
-        disease: selectedDisease, // Include the selected disease
+        disease: selectedDisease,
       };
 
       if (isNewRecord) {
-        const response = await axios.post(
+        await axios.post(
           `${process.env.NEXT_PUBLIC_API_URL}/consultation/`,
           payload,
           {
@@ -161,10 +215,9 @@ export const DiagnosisTab = ({ visitData }: { visitData: any }) => {
           }
         );
         toast.success("Diagnosis created successfully!", { autoClose: 1000 });
-        window.location.reload();
         setIsNewRecord(false);
       } else {
-        const response = await axios.put(
+        await axios.put(
           `${process.env.NEXT_PUBLIC_API_URL}/consultation/${visitData?.consultation_data?.note_id}/`,
           payload,
           {
@@ -175,6 +228,10 @@ export const DiagnosisTab = ({ visitData }: { visitData: any }) => {
         );
         toast.success("Diagnosis updated successfully!", { autoClose: 1000 });
       }
+
+      setOriginalDisease(selectedDisease); // Update original disease after save
+      setHasEdits(false); // Reset edit state
+      window.location.reload();
     } catch (error) {
       console.error("Failed to save diagnosis:", error);
       toast.error("Failed to save diagnosis. Please try again.");
@@ -189,7 +246,6 @@ export const DiagnosisTab = ({ visitData }: { visitData: any }) => {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        
         {/* Disease Search and Selection Dialog */}
         <Dialog
           open={isAddDiseaseDialogOpen}
@@ -202,18 +258,15 @@ export const DiagnosisTab = ({ visitData }: { visitData: any }) => {
             <Input
               placeholder="Search diseases..."
               value={diseaseSearchTerm}
-              onChange={handleDiseaseSearch}
+              onChange={(e) => setDiseaseSearchTerm(e.target.value)}
             />
             {searchResults.length > 0 && (
               <ul className="mt-2 border rounded-lg p-2 max-h-40 overflow-y-auto">
                 {searchResults.map((disease, index) => (
                   <li
                     key={index}
-                    className="p-2 hover:bg-gray-700 cursor-pointer"
-                    onClick={() => {
-                      setSelectedDisease(disease.name);
-                      setIsAddDiseaseDialogOpen(false);
-                    }}
+                    className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
+                    onClick={() => handleDiseaseSelection(disease.name)}
                   >
                     {disease.name}
                   </li>
@@ -222,7 +275,9 @@ export const DiagnosisTab = ({ visitData }: { visitData: any }) => {
             )}
             {diseaseSearchTerm.length > 2 && searchResults.length === 0 && (
               <div className="mt-2">
-                <p className="text-sm text-gray-600">No disease found. Would you like to add a new one?</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  No disease found. Would you like to add a new one?
+                </p>
                 <Input
                   placeholder="Enter new disease name"
                   value={newDiseaseName}
@@ -249,16 +304,27 @@ export const DiagnosisTab = ({ visitData }: { visitData: any }) => {
           </DialogContent>
         </Dialog>
 
-       {/* Selected Disease */}
-        <div className="mb-4 flex justify-between">
-          <span>Disease: <strong>{selectedDisease || "None"}</strong> </span>
+        {/* Selected Disease */}
+        <div className="mb-4 flex justify-between items-center">
+          <div>
+            <span className="font-medium">Disease: </span>
+            <span
+              className={
+                hasEdits && selectedDisease !== originalDisease
+                  ? "text-blue-600 font-semibold"
+                  : ""
+              }
+            >
+              {selectedDisease || "None selected"}
+            </span>
+          </div>
           <Button
             variant="outline"
             size="sm"
-            className="ml-2 bg-green-600 text-white dark:bg-green-600 dark:text-white"
-            onClick={() => setIsAddDiseaseDialogOpen(true)} // Open the disease search dialog
+            className="bg-green-600 text-white dark:bg-green-600 dark:text-white hover:bg-green-700"
+            onClick={() => setIsAddDiseaseDialogOpen(true)}
           >
-            Change Disease
+            {selectedDisease ? "Change Disease" : "Add Disease"}
           </Button>
         </div>
 
@@ -293,26 +359,31 @@ export const DiagnosisTab = ({ visitData }: { visitData: any }) => {
                 Delete
               </Button>
             </div>
-            <Textarea
+            <AutoResizeTextarea
               value={section.content}
-              onChange={(e) => handleSectionContentChange(index, e.target.value)}
+              onChange={(e) =>
+                handleSectionContentChange(index, e.target.value)
+              }
               placeholder={`Enter ${section.title} notes...`}
             />
           </div>
         ))}
 
         {/* Save diagnosis button */}
-        <Button onClick={handleSaveDiagnosis} className="mt-4 mr-4">
-          {isNewRecord ? "Save Diagnosis" : "Save Diagnosis"}
-        </Button>
-        {/* Button to Add Disease */}
-                <Button
-                  className="mb-4"
-                  onClick={() => setIsAddDiseaseDialogOpen(true)}
-                >
-                  Add Disease
-                </Button>
-        
+        <div className="flex justify-between mt-6">
+          <Button
+            variant={hasEdits ? "default" : "secondary"}
+            onClick={handleSaveDiagnosis}
+            className="w-full"
+          >
+            {isNewRecord
+              ? "Save Diagnosis"
+              : hasEdits
+              ? "Save Changes"
+              : "Diagnosis Saved"}
+          </Button>
+        </div>
+
         <ToastContainer />
       </CardContent>
     </Card>

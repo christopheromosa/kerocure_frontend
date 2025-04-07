@@ -67,9 +67,9 @@ const TriageTable = () => {
   }, [authState?.token]);
 
   // Filter triage records by Visit ID
-const filteredTriage = triageData?.filter((triage) =>
-  triage.patient_name.toString().toLowerCase().includes(search.toLowerCase())
-);
+  const filteredTriage = triageData?.filter((triage) =>
+    triage.patient_name.toString().toLowerCase().includes(search.toLowerCase())
+  );
 
   // Pagination logic
   const totalPages = Math.ceil(filteredTriage.length / itemsPerPage);
@@ -195,4 +195,3 @@ const filteredTriage = triageData?.filter((triage) =>
 };
 
 export default TriageTable;
-

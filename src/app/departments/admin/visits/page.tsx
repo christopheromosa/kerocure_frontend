@@ -213,10 +213,12 @@ const VisitsTable = () => {
           <TableHeader>
             <TableRow>
               <TableHead>Patient Name</TableHead>
-              <TableHead>Visit Date</TableHead>
+
               <TableHead>Department</TableHead>
+              <TableHead>Visit Type</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Total Cost</TableHead>
+              <TableHead>Visit Date</TableHead>
               <TableHead className="w-1/12 text-center">Transfers</TableHead>
             </TableRow>
           </TableHeader>
@@ -226,12 +228,14 @@ const VisitsTable = () => {
                 <React.Fragment key={visit.visit_id}>
                   <TableRow>
                     <TableCell>{visit.patient_name}</TableCell>
-                    <TableCell>{visit.visit_date}</TableCell>
+
                     <TableCell>{visit.department}</TableCell>
+                    <TableCell>{visit.visit_type}</TableCell>
                     <TableCell>{visit.visit_status}</TableCell>
                     <TableCell className="text-green-400">
                       Ksh {visit.billing[0]?.total_cost?.toFixed(2) || "0.00"}
                     </TableCell>
+                    <TableCell>{visit.visit_date}</TableCell>
                     <TableCell className="text-center">
                       <Button
                         variant="ghost"
@@ -258,27 +262,29 @@ const VisitsTable = () => {
                                   Transfer History:
                                 </span>
                                 <ul className="list-disc list-inside ml-4">
-                                  {visit.transfer_history.map((transfer, idx) => (
-                                    <li key={idx}>
-                                      <strong>From:</strong>{" "}
-                                      {transfer.from_department} |{" "}
-                                      <strong>To:</strong>{" "}
-                                      {transfer.to_department} |{" "}
-                                      <strong>Reason:</strong> {transfer.reason}{" "}
-                                      | <strong>By:</strong>{" "}
-                                      {transfer.transferred_by} |{" "}
-                                      <strong>At:</strong>{" "}
-                                      {new Date(
-                                        transfer.transferred_at
-                                      ).toLocaleString([], {
-                                        year: 'numeric',
-                                        month: 'short',
-                                        day: 'numeric',
-                                        hour: '2-digit',
-                                        minute: '2-digit'
-                                      })}
-                                    </li>
-                                  ))}
+                                  {visit.transfer_history.map(
+                                    (transfer, idx) => (
+                                      <li key={idx}>
+                                        <strong>From:</strong>{" "}
+                                        {transfer.from_department} |{" "}
+                                        <strong>To:</strong>{" "}
+                                        {transfer.to_department} |{" "}
+                                        <strong>Reason:</strong>{" "}
+                                        {transfer.reason} | <strong>By:</strong>{" "}
+                                        {transfer.transferred_by} |{" "}
+                                        <strong>At:</strong>{" "}
+                                        {new Date(
+                                          transfer.transferred_at
+                                        ).toLocaleString([], {
+                                          year: "numeric",
+                                          month: "short",
+                                          day: "numeric",
+                                          hour: "2-digit",
+                                          minute: "2-digit",
+                                        })}
+                                      </li>
+                                    )
+                                  )}
                                 </ul>
                               </div>
                             )}

@@ -39,10 +39,10 @@ const formSchema = z.object({
 
 export default function LoginForm() {
   const router = useRouter();
-  const { login } = useAuth();
+  const { login, setCurrentRole } = useAuth();
   const [showRoleDialog, setShowRoleDialog] = useState<boolean>(false);
   const [availableRoles, setAvailableRoles] = useState<string[]>([]);
-   const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [showPassword, setShowPassword] = useState<boolean>(false);
 
   // 1. Define your form.
   const form = useForm<z.infer<typeof formSchema>>({
@@ -93,6 +93,7 @@ export default function LoginForm() {
         );
         return;
       }
+      console.log(typeof data.roles);
 
       const roles = data.roles.includes(",")
         ? data.roles.split(",")
@@ -144,6 +145,8 @@ export default function LoginForm() {
   // Function to handle role selection
   const handleRoleSelection = (role: string) => {
     setShowRoleDialog(false); // Close the dialog
+    // Set the selected role as currentRole
+    setCurrentRole(role); // This comes from useAuth()
     redirectUser(role); // Redirect based on the selected role
   };
 
@@ -185,25 +188,26 @@ export default function LoginForm() {
             name="password"
             render={({ field }) => (
               <FormItem>
-                              <FormLabel className="text-red-400">Password</FormLabel>
-                              <FormControl>
-                                <div className="relative">
-                                  <Input
-                                    type={showPassword ? "text" : "password"} // Toggle input type
-                                    placeholder="Enter password"
-                                    {...field}
-                                  />
-                                  <button
-                                    type="button"
-                                    onClick={() => setShowPassword(!showPassword)} // Toggle visibility
-                                    className="absolute right-2 top-2.5 text-gray-500 hover:text-gray-700"
-                                  >
-                                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />} {/* Toggle icon */}
-                                  </button>
-                                </div>
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
+                <FormLabel className="text-red-400">Password</FormLabel>
+                <FormControl>
+                  <div className="relative">
+                    <Input
+                      type={showPassword ? "text" : "password"} // Toggle input type
+                      placeholder="Enter password"
+                      {...field}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)} // Toggle visibility
+                      className="absolute right-2 top-2.5 text-gray-500 hover:text-gray-700"
+                    >
+                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}{" "}
+                      {/* Toggle icon */}
+                    </button>
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
             )}
           />
 
