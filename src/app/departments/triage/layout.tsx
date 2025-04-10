@@ -43,6 +43,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       href: "/departments/triage/analytics",
       icon: ClipboardCheck,
     },
+    {
+      label: "Visits",
+      href: "/departments/triage/visits",
+      icon: Users,
+    },
     { label: "profile", href: "/departments/triage/profile", icon: Settings },
   ];
   const pathname = usePathname();

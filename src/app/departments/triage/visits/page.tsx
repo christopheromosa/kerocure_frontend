@@ -22,15 +22,12 @@ import LoadingPage from "@/components/loading_animation";
 import OrganizationInfo from "@/components/OrganizationInfo";
 import { useAuth } from "@/context/AuthContext";
 import { format } from "date-fns";
-import { toast, ToastContainer } from "react-toastify";
 
 type Visit = {
   visit_id: number;
   visit_date: string;
   visit_type: string;
   department: string;
-  next_state?: string;
-  current_state?: string;
   visit_status: string;
   transfer_history: any[];
   patient_name: string;
@@ -54,8 +51,6 @@ const VisitsTable = () => {
   const [statusFilter, setStatusFilter] = useState("");
   const [selectedVisit, setSelectedVisit] = useState<Visit | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingVisitType, setEditingVisitType] = useState(false);
-  const [currentVisitType, setCurrentVisitType] = useState("");
   const itemsPerPage = 5;
   const { authState } = useAuth();
 
@@ -86,60 +81,11 @@ const VisitsTable = () => {
     fetchVisitsData();
   }, [authState?.token]);
 
-  const updateVisitType = async (visitId: number, newVisit: Visit) => {
-    try {
-      setIsLoading(true);
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/visits/${visitId}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Token ${authState?.token}`,
-          },
-          body: JSON.stringify({
-            visit_type: newVisit.visit_type,
-            next_state: newVisit.next_state,
-            current_state: newVisit.current_state,
-            patient: newVisit.patient_id,
-            // Include other required fields if needed
-          }),
-        }
-      );
-
-      if (!res.ok) throw new Error("Failed to update visit type");
-
-      // Update local state
-      setVisitsData((prevVisits) =>
-        prevVisits.map((visit) =>
-          visit.visit_id === visitId
-            ? { ...visit, visit_type: newVisit.visit_type }
-            : visit
-        )
-      );
-
-      if (selectedVisit?.visit_id === visitId) {
-        setSelectedVisit((prev) => ({
-          ...prev!,
-          visit_type: newVisit.visit_type,
-        }));
-      }
-
-      toast.success("Visit type updated successfully");
-    } catch (error) {
-      console.error("Error updating visit type:", error);
-      toast.error("Failed to update visit type");
-    } finally {
-      setIsLoading(false);
-      setEditingVisitType(false);
-    }
-  };
-
   // Filter visits based on search criteria
   const filteredVisits = visitsData.filter((visit) => {
     const patientName = visit.patient_name || ""; // Default to empty string if null/undefined
     const department = visit.department || ""; // Default to empty string if null/undefined
-    const visitStatus = visit.visit_status || ""; // Default to empty string if null/undefined
+    const visitStatus = visit.visit_type || ""; // Default to empty string if null/undefined
 
     const matchesSearch = patientName
       .toLowerCase()
@@ -170,7 +116,6 @@ const VisitsTable = () => {
   );
 
   const handleViewDetails = (visit: Visit) => {
-    console.log(visit);
     setSelectedVisit(visit);
     setIsDialogOpen(true);
   };
@@ -195,7 +140,7 @@ const VisitsTable = () => {
         />
         <Input
           type="text"
-          placeholder="Filter by Status..."
+          placeholder="Filter by Visit type..."
           className="w-1/4"
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
@@ -253,11 +198,11 @@ const VisitsTable = () => {
           <TableHeader>
             <TableRow>
               <TableHead>Patient Name</TableHead>
-              <TableHead>Visit Date</TableHead>
               <TableHead>Visit Type</TableHead>
               <TableHead>Department</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Total Cost</TableHead>
+              <TableHead>Visit Date</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -267,12 +212,12 @@ const VisitsTable = () => {
                 <TableRow key={visit.visit_id}>
                   <TableCell>{visit.patient_name}</TableCell>
                   <TableCell>{visit.visit_type}</TableCell>
-                  <TableCell>{visit.visit_date}</TableCell>
                   <TableCell>{visit.department}</TableCell>
                   <TableCell>{visit.visit_status}</TableCell>
                   <TableCell className="text-green-400">
                     Ksh {visit.billing[0]?.total_cost?.toFixed(2) || "0.00"}
                   </TableCell>
+                  <TableCell>{visit.visit_date}</TableCell>
                   <TableCell>
                     <Button
                       variant="outline"
@@ -340,15 +285,15 @@ const VisitsTable = () => {
               <div className="grid grid-cols-3 gap-4 text-sm border p-2">
                 <div className="space-y-2">
                   <p className="font-medium">Visit ID:</p>
-                  <p>{selectedVisit.visit_id}</p>
+                  <p className="font-bold">{selectedVisit.visit_id}</p>
                 </div>
                 <div className="space-y-2">
                   <p className="font-medium">Patient Name:</p>
-                  <p>{selectedVisit.patient_name}</p>
+                  <p className="font-bold">{selectedVisit.patient_name}</p>
                 </div>
                 <div className="space-y-2">
                   <p className="font-medium">Visit Date:</p>
-                  <p>
+                  <p className="font-bold">
                     {format(
                       new Date(selectedVisit.visit_date),
                       "dd MMM yyyy, h:mm a"
@@ -357,64 +302,15 @@ const VisitsTable = () => {
                 </div>
                 <div className="space-y-2">
                   <p className="font-medium">Department:</p>
-                  <p>{selectedVisit.department}</p>
+                  <p className="font-bold">{selectedVisit.department}</p>
                 </div>
                 <div className="space-y-2">
                   <p className="font-medium">Status:</p>
-                  <p>{selectedVisit.visit_status}</p>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <p className="font-medium">Visit Type:</p>
-                    {editingVisitType ? (
-                      <div className="flex gap-2">
-                        <select
-                          value={currentVisitType}
-                          onChange={(e) => setCurrentVisitType(e.target.value)}
-                          className="border rounded p-1"
-                        >
-                          <option value="Outpatient">Outpatient</option>
-                          <option value="Inpatient">Inpatient</option>
-                        </select>
-                        <Button
-                          size="sm"
-                          onClick={() =>
-                            updateVisitType(
-                              selectedVisit.visit_id,
-                              selectedVisit
-                            )
-                          }
-                        >
-                          Save
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setEditingVisitType(false)}
-                        >
-                          Cancel
-                        </Button>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        <span>{selectedVisit.visit_type}</span>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setCurrentVisitType(selectedVisit.visit_type);
-                            setEditingVisitType(true);
-                          }}
-                        >
-                          Edit
-                        </Button>
-                      </div>
-                    )}
-                  </div>
+                  <p className="font-bold">{selectedVisit.visit_status}</p>
                 </div>
                 <div className="space-y-2">
                   <p className="font-medium">Total Cost:</p>
-                  <p className="text-green-600 font-semibold">
+                  <p className="text-green-600 font-bold">
                     Ksh{" "}
                     {selectedVisit.billing[0]?.total_cost?.toFixed(2) || "0.00"}
                   </p>
@@ -443,7 +339,16 @@ const VisitsTable = () => {
                         </p>
                         <p>
                           <strong>Transferred At:</strong>{" "}
-                          {transfer.transferred_at}
+                          {new Date(transfer.transferred_at).toLocaleString(
+                            [],
+                            {
+                              year: "numeric",
+                              month: "short",
+                              day: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            }
+                          )}
                         </p>
                         <p>
                           <strong>Transferred By:</strong>{" "}
@@ -487,7 +392,7 @@ const VisitsTable = () => {
                             <strong>Diagnosis:</strong>
                           </p>
                           <ul className="list-disc list-inside ml-4">
-                            {diagnosis?.map((diag: any, idx: number) => (
+                            {diagnosis.map((diag: any, idx: number) => (
                               <li key={idx}>
                                 {diag.title}: {diag.content}
                               </li>
@@ -504,12 +409,11 @@ const VisitsTable = () => {
                             <strong>Prescription:</strong>
                           </p>
                           <ul className="list-disc list-inside ml-4">
-                            {consultation?.prescription?.map(
+                            {consultation.prescription.map(
                               (prescription: any, idx: number) => (
                                 <li key={idx}>
                                   {prescription.drug_name} -{" "}
-                                  {prescription.quantity} units (Ksh{" "}
-                                  {prescription.cost})
+                                  {prescription.prescribed_quantity} units
                                 </li>
                               )
                             )}
@@ -559,9 +463,9 @@ const VisitsTable = () => {
                         {pharmacy.prescriptions.map(
                           (medication: any, idx: number) => (
                             <li key={idx}>
-                              {medication.medication_name} -{" "}
-                              {medication.quantity} units (Ksh {medication.cost}
-                              )
+                              {medication.drug_name} -{" "}
+                              {medication.prescribed_quantity} units (Ksh{" "}
+                              {medication.cost})
                             </li>
                           )
                         )}
@@ -601,7 +505,6 @@ const VisitsTable = () => {
           )}
         </DialogContent>
       </Dialog>
-      <ToastContainer />
     </div>
   );
 };

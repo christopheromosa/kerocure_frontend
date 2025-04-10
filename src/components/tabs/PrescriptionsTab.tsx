@@ -79,8 +79,23 @@ export const PrescriptionsTab = ({
     setSearchTerm(e.target.value.toLowerCase());
   };
 
-  // Handle adding a drug to the selected list
+  // Modify the handleAddDrug function
   const handleAddDrug = (drug: any) => {
+    if (drug.quantity <= 0) {
+      toast.error(`Cannot prescribe ${drug.drug_name} - Out of stock!`, {
+        autoClose: 2000,
+      });
+      return;
+    }
+
+    // Check if drug is already prescribed
+    if (selectedDrugs.some((d) => d.id === drug.id)) {
+      toast.warn(`${drug.drug_name} is already prescribed`, {
+        autoClose: 2000,
+      });
+      return;
+    }
+
     const updatedDrugs = [
       ...selectedDrugs,
       {
@@ -97,6 +112,9 @@ export const PrescriptionsTab = ({
     setPrescriptions(updatedDrugs);
     setSearchTerm("");
     setIsDialogOpen(false);
+    toast.success(`${drug.drug_name} added to prescriptions`, {
+      autoClose: 1000,
+    });
   };
 
   // Handle deleting a drug from the selected list
@@ -116,6 +134,27 @@ export const PrescriptionsTab = ({
 
   // Handle sending to pharmacy (combines save and send)
   const handleSendToPharmacy = async () => {
+    // Check for out of stock drugs
+    const outOfStockDrugs = selectedDrugs.filter((drug) => drug.quantity <= 0);
+
+    if (outOfStockDrugs.length > 0) {
+      toast.error(
+        `Cannot send to pharmacy - ${outOfStockDrugs.length} drugs are out of stock`,
+        { autoClose: 3000 }
+      );
+      return;
+    }
+
+    // Check for invalid quantities
+    const invalidQuantity = selectedDrugs.some(
+      (drug) =>
+        !drug.prescribed_quantity || parseInt(drug.prescribed_quantity) <= 0
+    );
+
+    if (invalidQuantity) {
+      toast.error("Please enter valid quantities for all prescriptions");
+      return;
+    }
     try {
       // First save the prescriptions
       await handleSaveDrugPrescriptions();
@@ -174,132 +213,158 @@ export const PrescriptionsTab = ({
         {/* Card-based layout for selected drugs */}
         <div className="mt-6 space-y-4">
           {selectedDrugs.length > 0 ? (
-            selectedDrugs.map((drug: any, index: number) => (
-              <Card key={index} className="p-4">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <h3 className="font-semibold">{drug.drug_name}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Cost: Ksh {drug.cost} | Qty: {drug.quantity}
-                    </p>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => toggleExpanded(index)}
-                    >
-                      {expandedDrugs[index] ? (
-                        <ChevronUp className="h-4 w-4" />
-                      ) : (
-                        <ChevronDown className="h-4 w-4" />
-                      )}
-                      <span className="ml-2">Options</span>
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => handleDeleteDrug(index)}
-                    >
-                      Remove
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Always visible fields */}
-                <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <label className="text-sm font-medium">Quantity*</label>
-                    <Input
-                      type="number"
-                      value={drug.prescribed_quantity}
-                      onChange={(e) => {
-                        const updatedDrugs = [...selectedDrugs];
-                        updatedDrugs[index].prescribed_quantity =
-                          e.target.value;
-                        setSelectedDrugs(updatedDrugs);
-                        setPrescriptions(updatedDrugs);
-                      }}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium">Route*</label>
-                    <Input
-                      type="text"
-                      value={drug.route}
-                      onChange={(e) => {
-                        const updatedDrugs = [...selectedDrugs];
-                        updatedDrugs[index].route = e.target.value;
-                        setSelectedDrugs(updatedDrugs);
-                        setPrescriptions(updatedDrugs);
-                      }}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium">Frequency*</label>
-                    <Input
-                      type="text"
-                      value={drug.frequency}
-                      onChange={(e) => {
-                        const updatedDrugs = [...selectedDrugs];
-                        updatedDrugs[index].frequency = e.target.value;
-                        setSelectedDrugs(updatedDrugs);
-                        setPrescriptions(updatedDrugs);
-                      }}
-                      required
-                    />
-                  </div>
-                </div>
-
-                {/* Additional fields (toggleable) */}
-                {expandedDrugs[index] && (
-                  <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+            selectedDrugs.map((drug: any, index: number) => {
+              const isOutOfStock = drug.quantity <= 0;
+              return (
+                <Card
+                  key={index}
+                  className={`p-4 ${isOutOfStock ? "border-destructive" : ""}`}
+                >
+                  <div className="flex justify-between items-center">
                     <div>
-                      <label className="text-sm font-medium">Strength</label>
+                      <h3 className="font-semibold">{drug.drug_name}</h3>
+                      <p
+                        className={`text-sm ${
+                          isOutOfStock
+                            ? "text-destructive"
+                            : "text-muted-foreground"
+                        }`}
+                      >
+                        Cost: Ksh {drug.cost} | Qty: {drug.quantity}
+                        {isOutOfStock && (
+                          <span className="ml-2 text-destructive font-bold">
+                            (OUT OF STOCK)
+                          </span>
+                        )}
+                      </p>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => toggleExpanded(index)}
+                      >
+                        {expandedDrugs[index] ? (
+                          <ChevronUp className="h-4 w-4" />
+                        ) : (
+                          <ChevronDown className="h-4 w-4" />
+                        )}
+                        <span className="ml-2">Options</span>
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => handleDeleteDrug(index)}
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Always visible fields */}
+                  <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="text-sm font-medium">Quantity*</label>
                       <Input
-                        type="text"
-                        value={drug.strength}
+                        type="number"
+                        value={drug.prescribed_quantity}
                         onChange={(e) => {
+                          const quantity = parseInt(e.target.value);
+                          if (quantity > drug.quantity) {
+                            toast.error(
+                              `Cannot prescribe more than available stock (${drug.quantity})`
+                            );
+                            return;
+                          }
                           const updatedDrugs = [...selectedDrugs];
-                          updatedDrugs[index].strength = e.target.value;
+                          updatedDrugs[index].prescribed_quantity =
+                            e.target.value;
                           setSelectedDrugs(updatedDrugs);
                           setPrescriptions(updatedDrugs);
                         }}
+                        min="1"
+                        max={drug.quantity}
+                        required
                       />
                     </div>
                     <div>
-                      <label className="text-sm font-medium">Duration</label>
+                      <label className="text-sm font-medium">Route*</label>
                       <Input
                         type="text"
-                        value={drug.duration}
+                        value={drug.route}
                         onChange={(e) => {
                           const updatedDrugs = [...selectedDrugs];
-                          updatedDrugs[index].duration = e.target.value;
+                          updatedDrugs[index].route = e.target.value;
                           setSelectedDrugs(updatedDrugs);
                           setPrescriptions(updatedDrugs);
                         }}
+                        required
                       />
                     </div>
-                    <div className="col-span-2">
-                      <label className="text-sm font-medium">
-                        Dosage Instructions
-                      </label>
-                      <Textarea
-                        value={drug.dosage}
+                    <div>
+                      <label className="text-sm font-medium">Frequency*</label>
+                      <Input
+                        type="text"
+                        value={drug.frequency}
                         onChange={(e) => {
                           const updatedDrugs = [...selectedDrugs];
-                          updatedDrugs[index].dosage = e.target.value;
+                          updatedDrugs[index].frequency = e.target.value;
                           setSelectedDrugs(updatedDrugs);
                           setPrescriptions(updatedDrugs);
                         }}
+                        required
                       />
                     </div>
                   </div>
-                )}
-              </Card>
-            ))
+
+                  {/* Additional fields (toggleable) */}
+                  {expandedDrugs[index] && (
+                    <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm font-medium">Strength</label>
+                        <Input
+                          type="text"
+                          value={drug.strength}
+                          onChange={(e) => {
+                            const updatedDrugs = [...selectedDrugs];
+                            updatedDrugs[index].strength = e.target.value;
+                            setSelectedDrugs(updatedDrugs);
+                            setPrescriptions(updatedDrugs);
+                          }}
+                        />
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium">Duration</label>
+                        <Input
+                          type="text"
+                          value={drug.duration}
+                          onChange={(e) => {
+                            const updatedDrugs = [...selectedDrugs];
+                            updatedDrugs[index].duration = e.target.value;
+                            setSelectedDrugs(updatedDrugs);
+                            setPrescriptions(updatedDrugs);
+                          }}
+                        />
+                      </div>
+                      <div className="col-span-2">
+                        <label className="text-sm font-medium">
+                          Dosage Instructions
+                        </label>
+                        <Textarea
+                          value={drug.dosage}
+                          onChange={(e) => {
+                            const updatedDrugs = [...selectedDrugs];
+                            updatedDrugs[index].dosage = e.target.value;
+                            setSelectedDrugs(updatedDrugs);
+                            setPrescriptions(updatedDrugs);
+                          }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </Card>
+              );
+            })
           ) : (
             <div className="text-center py-8 text-muted-foreground">
               No prescriptions added yet
@@ -417,25 +482,43 @@ export const PrescriptionsTab = ({
             <div className="flex-1 overflow-y-auto">
               {filteredDrugs.length > 0 ? (
                 <div className="grid gap-2">
-                  {filteredDrugs.map((drug, index) => (
-                    <Card
-                      key={index}
-                      className="p-4 hover:bg-accent cursor-pointer transition-colors"
-                      onClick={() => handleAddDrug(drug)}
-                    >
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <h4 className="font-medium">{drug.drug_name}</h4>
+                  {filteredDrugs.map((drug, index) => {
+                    const isOutOfStock = drug.quantity <= 0;
+                    return (
+                      <Card
+                        key={index}
+                        className={`p-4 transition-colors ${
+                          isOutOfStock
+                            ? "bg-gray-100 cursor-not-allowed"
+                            : "hover:bg-accent cursor-pointer"
+                        }`}
+                        onClick={() => !isOutOfStock && handleAddDrug(drug)}
+                      >
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <h4 className="font-medium">{drug.drug_name}</h4>
+                            {isOutOfStock && (
+                              <Badge variant="destructive" className="mt-1">
+                                Out of Stock
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="text-right">
+                            <p className="font-medium">Ksh {drug.cost}</p>
+                            <p
+                              className={`text-sm ${
+                                isOutOfStock
+                                  ? "text-destructive"
+                                  : "text-muted-foreground"
+                              }`}
+                            >
+                              Stock: {drug.quantity}
+                            </p>
+                          </div>
                         </div>
-                        <div className="text-right">
-                          <p className="font-medium">Ksh {drug.cost}</p>
-                          <p className="text-sm text-muted-foreground">
-                            Stock: {drug.quantity}
-                          </p>
-                        </div>
-                      </div>
-                    </Card>
-                  ))}
+                      </Card>
+                    );
+                  })}
                 </div>
               ) : searchTerm ? (
                 <div className="text-center py-8 text-muted-foreground">

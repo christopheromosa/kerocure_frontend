@@ -8,7 +8,10 @@ import {
   DialogTitle,
   DialogTrigger,
   DialogFooter,
+  DialogClose,
+  DialogDescription,
 } from "@/components/ui/dialog";
+import { Search, Plus, X, Loader2, Check } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import axios from "axios";
@@ -116,15 +119,20 @@ export const DiagnosisTab = ({ visitData }: { visitData: any }) => {
 
   // Add this effect to filter diseases based on search term
   useEffect(() => {
-    if (diseaseSearchTerm.trim() === "") {
-      setSearchResults([]);
-    } else {
-      const filtered = allDiseases.filter((disease) =>
-        disease.name.toLowerCase().includes(diseaseSearchTerm.toLowerCase())
-      );
-      setSearchResults(filtered);
-    }
+    const timer = setTimeout(() => {
+      if (diseaseSearchTerm.trim() === "") {
+        setSearchResults([]);
+      } else {
+        const filtered = allDiseases.filter((disease) =>
+          disease.name.toLowerCase().includes(diseaseSearchTerm.toLowerCase())
+        );
+        setSearchResults(filtered);
+      }
+    }, 300); // 300ms delay
+
+    return () => clearTimeout(timer);
   }, [diseaseSearchTerm, allDiseases]);
+
   // Check for edits whenever sections or disease changes
   useEffect(() => {
     const diseaseChanged = selectedDisease !== originalDisease;
@@ -167,28 +175,22 @@ export const DiagnosisTab = ({ visitData }: { visitData: any }) => {
   };
 
   // Handle adding a new disease
-  const handleAddDisease = async () => {
-    if (!newDiseaseName) return;
+  const handleAddDisease = async (diseaseName: string) => {
+    if (!diseaseName) return;
     setIsAddingDisease(true);
     try {
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_API_URL}/diseases/`,
-        {
-          name: newDiseaseName,
-        },
-        {
-          headers: {
-            Authorization: `Token ${authState?.token}`,
-          },
-        }
+        { name: diseaseName },
+        { headers: { Authorization: `Token ${authState?.token}` } }
       );
       setAllDiseases((prev) => [...prev, response.data]);
-      handleDiseaseSelection(newDiseaseName);
-      setNewDiseaseName("");
       toast.success("Disease added successfully!", { autoClose: 1000 });
+      return response.data;
     } catch (error) {
       console.error("Failed to add disease:", error);
       toast.error("Failed to add disease. Please try again.");
+      throw error;
     } finally {
       setIsAddingDisease(false);
     }
@@ -246,60 +248,96 @@ export const DiagnosisTab = ({ visitData }: { visitData: any }) => {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        {/* Disease Search and Selection Dialog */}
         <Dialog
           open={isAddDiseaseDialogOpen}
-          onOpenChange={setIsAddDiseaseDialogOpen}
+          onOpenChange={(open) => {
+            if (!open) {
+              setDiseaseSearchTerm("");
+              setSearchResults([]);
+            }
+            setIsAddDiseaseDialogOpen(open);
+          }}
         >
-          <DialogContent>
+          <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>Add Disease</DialogTitle>
+              <DialogTitle className="text-xl">Primary Diagnosis</DialogTitle>
+              <DialogDescription>
+                Search for existing diagnosis or add a new one
+              </DialogDescription>
             </DialogHeader>
-            <Input
-              placeholder="Search diseases..."
-              value={diseaseSearchTerm}
-              onChange={(e) => setDiseaseSearchTerm(e.target.value)}
-            />
-            {searchResults.length > 0 && (
-              <ul className="mt-2 border rounded-lg p-2 max-h-40 overflow-y-auto">
-                {searchResults.map((disease, index) => (
-                  <li
-                    key={index}
-                    className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
-                    onClick={() => handleDiseaseSelection(disease.name)}
-                  >
-                    {disease.name}
-                  </li>
-                ))}
-              </ul>
-            )}
-            {diseaseSearchTerm.length > 2 && searchResults.length === 0 && (
-              <div className="mt-2">
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  No disease found. Would you like to add a new one?
-                </p>
-                <Input
-                  placeholder="Enter new disease name"
-                  value={newDiseaseName}
-                  onChange={(e) => setNewDiseaseName(e.target.value)}
-                  className="mt-2"
-                />
-                <Button
-                  className="mt-2"
-                  onClick={handleAddDisease}
-                  disabled={isAddingDisease}
-                >
-                  {isAddingDisease ? "Adding..." : "Add New Disease"}
-                </Button>
+
+            <div className="space-y-4">
+              <div className="relative">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search diagnosis..."
+                    value={diseaseSearchTerm}
+                    onChange={(e) => setDiseaseSearchTerm(e.target.value)}
+                    className="pl-10 pr-10"
+                    autoFocus
+                  />
+                  {diseaseSearchTerm && (
+                    <button
+                      onClick={() => setDiseaseSearchTerm("")}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+
+                {/* Search Results */}
+                {diseaseSearchTerm.length > 0 && (
+                  <div className="border rounded-lg overflow-hidden">
+                    {searchResults.length > 0 ? (
+                      <div className="max-h-60 overflow-y-auto">
+                        {searchResults.map((disease, index) => (
+                          <button
+                            key={index}
+                            className="w-full text-left p-3 hover:bg-accent cursor-pointer transition-colors border-b last:border-b-0 flex items-center"
+                            onClick={() => handleDiseaseSelection(disease.name)}
+                          >
+                            <span className="font-medium">{disease.name}</span>
+                            {disease.description && (
+                              <span className="text-sm text-muted-foreground ml-2 truncate">
+                                {disease.description}
+                              </span>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="p-4">
+                        <div className="flex flex-col items-center justify-center space-y-3 text-center">
+                          <p className="text-muted-foreground">
+                            No results found for {diseaseSearchTerm}
+                          </p>
+                          <Button
+                            onClick={() => {
+                              // Automatically add the search term as new disease
+                              handleDiseaseSelection(diseaseSearchTerm);
+                              // Optionally save to backend
+                              handleAddDisease(diseaseSearchTerm);
+                            }}
+                            variant="outline"
+                            className="gap-2"
+                          >
+                            <Plus className="h-4 w-4" />
+                            Add &quot;{diseaseSearchTerm}&quot; as new diagnosis
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
-            )}
+            </div>
+
             <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => setIsAddDiseaseDialogOpen(false)}
-              >
-                Cancel
-              </Button>
+              <DialogClose asChild>
+                <Button variant="outline">Cancel</Button>
+              </DialogClose>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -307,7 +345,7 @@ export const DiagnosisTab = ({ visitData }: { visitData: any }) => {
         {/* Selected Disease */}
         <div className="mb-4 flex justify-between items-center">
           <div>
-            <span className="font-medium">Disease: </span>
+            <span className="font-medium">Primary Diagnosis: </span>
             <span
               className={
                 hasEdits && selectedDisease !== originalDisease

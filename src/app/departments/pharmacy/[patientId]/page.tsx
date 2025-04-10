@@ -190,6 +190,7 @@ const PharmacyDetailsPage = () => {
           patient: patientId,
           current_state: "PHARMACY",
           next_state: "BILLING",
+          visit_status: "completed",
         },
         {
           headers: {

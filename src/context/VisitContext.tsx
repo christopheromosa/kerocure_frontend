@@ -69,6 +69,7 @@ interface PharmacyData {
 
 interface VisitData {
   visit_id: number;
+  visit_status: string; 
   department: string;
   transfer_history: TransferHistory[];
   total_cost: number;

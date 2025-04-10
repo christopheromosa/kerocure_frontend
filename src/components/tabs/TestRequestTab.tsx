@@ -98,13 +98,13 @@ export const TestRequestTab = ({
 
   // Handle saving test requests
   const handleSaveTests = () => {
-    handleSaveTestRequests();
     setIsConfirmationDialogOpen(true);
   };
 
   // Handle confirming payment
   const handleConfirmPayment = () => {
     console.log("Payment confirmed for tests:", selectedTests);
+    handleSaveTestRequests();
     setTimeout(() => {
       toast.success("Patient proceed to consultation successfully!", {
         autoClose: 1000,
@@ -139,10 +139,6 @@ export const TestRequestTab = ({
         {/* Action Buttons */}
         <div className="flex gap-4 mb-6">
           <Button onClick={() => setIsDialogOpen(true)}>Add Test</Button>
-
-          {selectedTests.length > 0 && (
-            <Button onClick={handleSaveTests}>Save Test Requests</Button>
-          )}
         </div>
 
         {/* Current Test Requests */}
@@ -186,11 +182,18 @@ export const TestRequestTab = ({
                 ))}
               </TableBody>
             </Table>
+
             <div className="p-4 border-t">
               <p className="text-right font-medium">
                 Total Cost: Ksh {totalCost}
               </p>
             </div>
+            <Button
+              className="bg-green-600 hover:bg-green-700 m-2"
+              onClick={handleSaveTests}
+            >
+              Save Test Requests
+            </Button>
           </div>
         ) : (
           <div className="text-center py-8 text-muted-foreground">

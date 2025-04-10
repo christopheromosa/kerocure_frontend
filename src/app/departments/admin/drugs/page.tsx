@@ -186,9 +186,9 @@ export default function DrugManagement() {
             Authorization: `Token ${authState?.token}`,
           },
           body: JSON.stringify({
-                    ...drug,
-                    quantity: drug.quantity, // Ensure this is the updated quantity
-                  }),
+            ...drug,
+            quantity: drug.quantity, // Ensure this is the updated quantity
+          }),
         }
       );
 
@@ -543,59 +543,115 @@ export default function DrugManagement() {
       {/* Update Stock Dialog */}
       <Dialog
         open={isUpdateStockDialogOpen}
-        onOpenChange={setIsUpdateStockDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            // Reset all states when dialog closes
+            setUpdateStockSearchQuery("");
+            setSelectedDrug(null);
+            setNewQuantity(0);
+            setTotalQuantity(0);
+          }
+          setIsUpdateStockDialogOpen(open);
+        }}
       >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Update Drug Stock</DialogTitle>
           </DialogHeader>
           <div className="p-2 mb-2">
-            <Input
-              placeholder="Search drugs..."
-              value={updateStockSearchQuery}
-              onChange={(e) => setUpdateStockSearchQuery(e.target.value)}
-              className="w-full mb-4"
-            />
-            {filteredUpdateStockDrugs.length > 0 ? (
-              filteredUpdateStockDrugs.map((drug) => (
-                <div
-                  key={drug.id}
-                  onClick={() => handleDrugSelection(drug)}
-                  className="cursor-pointer hover:bg-gray-500 p-2 rounded"
-                >
-                  {drug.drug_name}
-                </div>
-              ))
-            ) : (
-              <Button
-                className="w-full bg-blue-500 hover:bg-blue-600 text-white"
-                onClick={() => {
-                  setIsUpdateStockDialogOpen(false); // Close the Update Stock dialog
-                  setIsDialogOpen(true); // Open the Add Drug dialog
-                }}
-              >
-                Add New Drug
-              </Button>
-            )}
-            {selectedDrug && (
-              <div className="mt-4">
-                <p>Drug Name: {selectedDrug.drug_name}</p>
-                <p>Current Quantity: {selectedDrug.quantity}</p>
-                <p>Status: {selectedDrug.status}</p>
+            {/* Only show search input if no drug is selected */}
+            {!selectedDrug && (
+              <>
                 <Input
-                  type="number"
-                  placeholder="Add Quantity"
-                  value={newQuantity}
-                  onChange={(e) => {
-                    setNewQuantity(Number(e.target.value));
-                    calculateTotalQuantity(Number(e.target.value));
-                  }}
-                  className="w-full mb-2"
+                  placeholder="Search drugs..."
+                  value={updateStockSearchQuery}
+                  onChange={(e) => setUpdateStockSearchQuery(e.target.value)}
+                  className="w-full mb-4"
                 />
-                <p>Total Quantity: {totalQuantity}</p>
-                <Button onClick={handleUpdateStock} className="w-full">
-                  Complete
-                </Button>
+
+                {/* Scrollable results container - only show when no drug is selected */}
+                {filteredUpdateStockDrugs.length > 0 ? (
+                  <div className="max-h-60 overflow-y-auto mb-4 border rounded-lg shadow-sm">
+                    {filteredUpdateStockDrugs.map((drug) => (
+                      <div
+                        key={drug.id}
+                        onClick={() => handleDrugSelection(drug)}
+                        className="cursor-pointer p-3 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150 border-b last:border-b-0"
+                      >
+                        <div className="font-medium">{drug.drug_name}</div>
+                        <div className="text-sm text-gray-500 dark:text-gray-400">
+                          Qty: {drug.quantity} | Status: {drug.status}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  updateStockSearchQuery && (
+                    <Button
+                      className="w-full bg-blue-500 hover:bg-blue-600 text-white mb-4"
+                      onClick={() => {
+                        setIsUpdateStockDialogOpen(false);
+                        setIsDialogOpen(true);
+                      }}
+                    >
+                      Add New Drug
+                    </Button>
+                  )
+                )}
+              </>
+            )}
+
+            {/* Selected drug details */}
+            {selectedDrug && (
+              <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                <div className="flex justify-between items-center mb-2">
+                  <h3 className="font-bold text-lg">Update Stock</h3>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setSelectedDrug(null);
+                      setNewQuantity(0);
+                      setTotalQuantity(0);
+                    }}
+                  >
+                    Back to Search
+                  </Button>
+                </div>
+                <div className="space-y-2 mb-4">
+                  <p>
+                    <span className="font-medium">Drug Name:</span>{" "}
+                    {selectedDrug.drug_name}
+                  </p>
+                  <p>
+                    <span className="font-medium">Current Quantity:</span>{" "}
+                    {selectedDrug.quantity}
+                  </p>
+                  <p>
+                    <span className="font-medium">Status:</span>{" "}
+                    {selectedDrug.status}
+                  </p>
+                </div>
+
+                <div className="space-y-3">
+                  <Input
+                    type="number"
+                    placeholder="Add Quantity"
+                    value={newQuantity}
+                    onChange={(e) => {
+                      setNewQuantity(Number(e.target.value));
+                      calculateTotalQuantity(Number(e.target.value));
+                    }}
+                    className="w-full"
+                  />
+                  <p className="font-medium">Total Quantity: {totalQuantity}</p>
+                  <Button
+                    onClick={handleUpdateStock}
+                    className="w-full bg-green-600 hover:bg-green-700"
+                  >
+                    Complete Update
+                  </Button>
+                </div>
               </div>
             )}
           </div>

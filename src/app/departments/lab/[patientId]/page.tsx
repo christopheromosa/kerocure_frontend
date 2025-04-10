@@ -28,7 +28,8 @@ import { useVisit } from "@/context/VisitContext";
 import PageTransition from "@/components/PageTransition";
 import axios from "axios";
 import { useRouter } from "next/navigation";
-import { Badge } from "@/components/ui/badge"; // Import Badge component
+import { Badge } from "@/components/ui/badge";
+import { AlertCircle, CheckCircle, Loader2 } from "lucide-react";
 
 const LabResultsPage = () => {
   const params = useParams();
@@ -42,7 +43,6 @@ const LabResultsPage = () => {
   const [totalCost, setTotalCost] = useState<number>(0);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
-  // Filter test orders to display only those with administered: false
   const orders =
     visitData?.consultation_data?.lab_test_ordered
       ?.filter((test) => !test.administered)
@@ -53,7 +53,6 @@ const LabResultsPage = () => {
         administered: test.administered,
       })) ?? [];
 
-  // Calculate total cost whenever orders change
   useEffect(() => {
     const calculatedTotalCost = orders.reduce(
       (sum, test) => sum + test.cost,
@@ -62,17 +61,15 @@ const LabResultsPage = () => {
     setTotalCost(calculatedTotalCost);
   }, [orders]);
 
-  // Fetch patient details and test orders on page load
   useEffect(() => {
     if (patientId) {
       fetchVisitData(patientId.toString());
     }
   }, [patientId, fetchVisitData]);
 
-  // Function to handle updating test results
   const handleResultChange = (
     e: React.ChangeEvent<HTMLInputElement>,
-    testOrder: string // testOrder is the service name
+    testOrder: string
   ) => {
     setTestOrders((prev) => ({
       ...prev,
@@ -80,7 +77,6 @@ const LabResultsPage = () => {
     }));
   };
 
-  // Function to check if a lab record exists for the patient
   const checkLabRecordExists = async (visitId: any) => {
     try {
       const response = await axios.get(
@@ -92,33 +88,38 @@ const LabResultsPage = () => {
           },
         }
       );
-
-      // If the response contains data, return it
-      if (response.data) {
-        return response.data;
-      } else {
-        return null; // No lab record found
-      }
+      return response.data || null;
     } catch (error) {
       console.error("Error checking lab record:", error);
       return null;
     }
   };
 
-  // Function to submit test results
   const handleSubmitResults = async () => {
+    // Validation checks
+    if (!visitData?.consultation_data?.lab_tests_paid_status) {
+      toast.error("Cannot submit results - payment is pending");
+      return;
+    }
+
+    const missingResults = orders.some(
+      (testOrder) => !testOrders[testOrder.service]?.trim()
+    );
+
+    if (missingResults) {
+      toast.error("Please enter results for all tests before submitting");
+      return;
+    }
+
     setIsSubmitting(true);
-    // Format results for submission
     const formattedResults = orders.map((test) => ({
       service: test.service,
-      result: testOrders[test.service] || "", // Use the service name as the key
+      result: testOrders[test.service] || "",
       cost: test.cost,
     }));
 
     try {
-      // Prepare payload for LabTestSale
       if (orders.length === 1) {
-        // Single test submission
         const singleTestPayload = {
           service: orders[0].service,
           operation_count: 1,
@@ -136,7 +137,6 @@ const LabResultsPage = () => {
           }
         );
       } else if (orders.length > 1) {
-        // Multiple tests submission
         const multipleTestsPayload = {
           tests: orders.map((test) => ({
             service: test.service,
@@ -157,23 +157,16 @@ const LabResultsPage = () => {
         );
       }
 
-      // Check if a lab record exists for the patient
       const existingLabRecord = await checkLabRecordExists(visitData?.visit_id);
 
       if (existingLabRecord) {
-        console.log("Existing lab record:", existingLabRecord);
-        // Append new results to the existing lab record
         const updatedResults = [
           ...existingLabRecord.result,
           ...formattedResults,
         ];
         const updatedTotalCost =
           parseInt(existingLabRecord.total_cost) + totalCost;
-        console.log(totalCost);
-        console.log(parseInt(existingLabRecord.total_cost));
-        console.log(updatedTotalCost);
 
-        // Update the existing lab record
         await axios.put(
           `${process.env.NEXT_PUBLIC_API_URL}/lab/${existingLabRecord.result_id}/`,
           {
@@ -190,7 +183,6 @@ const LabResultsPage = () => {
           }
         );
       } else {
-        // Create a new lab record
         await axios.post(
           `${process.env.NEXT_PUBLIC_API_URL}/lab/`,
           {
@@ -209,7 +201,6 @@ const LabResultsPage = () => {
         );
       }
 
-      // Prepare payload for updating lab_test_ordered
       const payload = {
         visit: visitData?.visit_id,
         lab_tests_ordered: visitData?.consultation_data?.lab_test_ordered.map(
@@ -222,10 +213,7 @@ const LabResultsPage = () => {
         ),
       };
 
-      console.log("Payload for updating lab_test_ordered:", payload);
-
-      // Update the administered field to true for the submitted test orders
-      const response = await axios.put(
+      await axios.put(
         `${process.env.NEXT_PUBLIC_API_URL}/consultation/${visitData?.consultation_data?.note_id}/`,
         payload,
         {
@@ -236,7 +224,6 @@ const LabResultsPage = () => {
         }
       );
 
-      // Update visit state
       await axios.put(
         `${process.env.NEXT_PUBLIC_API_URL}/visits/${visitData?.visit_id}/`,
         {
@@ -252,33 +239,31 @@ const LabResultsPage = () => {
         }
       );
 
-      toast.success("Submitted test results successfully!", {
-        autoClose: 1000,
-      });
       setShowSuccessDialog(true);
     } catch (error) {
       console.error("Error submitting test results:", error);
       setShowErrorDialog(true);
-      setIsSubmitting(false); // Re-enable button on error
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  // Function to handle "OK" button click in the success dialog
   const handleSuccessDialogClose = () => {
-    setShowSuccessDialog(false); // Close the dialog
-    router.push("/departments/lab"); // Redirect to /departments/lab
+    setShowSuccessDialog(false);
+    router.push("/departments/lab");
+  };
+
+  const handleRefresh = () => {
+    window.location.reload();
   };
 
   if (!patientId) {
     return <div className="p-6">Loading patient details...</div>;
   }
-  const handleRefresh = () => {
-    window.location.reload();
-  };
 
   return (
     <PageTransition>
-      <div className="p-6">
+      <div className="p-6 space-y-4">
         <Card>
           <CardHeader>
             <CardTitle>
@@ -286,24 +271,54 @@ const LabResultsPage = () => {
               {visitData?.patient_data?.last_name}
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            {/* Display Paid Status */}
-            <div className="mb-4 flex justify-between items-center">
-              <p className="font-medium">
-                Payment Status:{" "}
+          <CardContent className="space-y-4">
+            {/* Validation alerts */}
+            {!visitData?.consultation_data?.lab_tests_paid_status && (
+              <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-300 rounded-md">
+                <AlertCircle className="h-5 w-5" />
+                <span>Payment must be completed before submitting results</span>
+              </div>
+            )}
+
+            {orders.some(
+              (testOrder) => !testOrders[testOrder.service]?.trim()
+            ) && (
+              <div className="flex items-center gap-2 p-3 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-300 rounded-md">
+                <AlertCircle className="h-5 w-5" />
+                <span>Please enter results for all tests</span>
+              </div>
+            )}
+
+            {visitData?.consultation_data?.lab_tests_paid_status &&
+              !orders.some(
+                (testOrder) => !testOrders[testOrder.service]?.trim()
+              ) && (
+                <div className="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-300 rounded-md">
+                  <CheckCircle className="h-5 w-5" />
+                  <span>Ready to submit results</span>
+                </div>
+              )}
+
+            {/* Payment status */}
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-2">
+                <span className="font-medium">Payment Status:</span>
                 {visitData?.consultation_data?.lab_tests_paid_status ? (
-                  <Badge className="bg-green-500 dark:bg-green-500 text-white dark:text-white">
+                  <Badge className="bg-green-500 text-white flex items-center gap-1">
+                    <CheckCircle className="h-4 w-4" />
                     Paid
                   </Badge>
                 ) : (
-                  <Badge className="bg-red-500 dark:bg-red-500 dark:text-white text-white">
+                  <Badge className="bg-red-500 text-white flex items-center gap-1">
+                    <AlertCircle className="h-4 w-4" />
                     Pending
                   </Badge>
                 )}
-              </p>
+              </div>
               <Button onClick={handleRefresh}>Refresh Page</Button>
             </div>
 
+            {/* Tests table */}
             <Table>
               <TableHeader>
                 <TableRow>
@@ -326,26 +341,43 @@ const LabResultsPage = () => {
                           handleResultChange(e, testOrder.service)
                         }
                         placeholder="Enter result"
+                        required
+                        className={
+                          !testOrders[testOrder.service]?.trim()
+                            ? "border-red-500"
+                            : ""
+                        }
                       />
                     </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
+
             <div className="mt-4">
               <label className="block font-semibold mb-1">Total Cost</label>
-              <Input
-                type="number"
-                value={totalCost}
-                readOnly // Make total cost read-only since it's calculated dynamically
-              />
+              <Input type="number" value={totalCost} readOnly />
             </div>
+
             <Button
-              className="mt-4"
+              className="mt-4 w-full"
               onClick={handleSubmitResults}
-              disabled={isSubmitting}
+              disabled={
+                isSubmitting ||
+                !visitData?.consultation_data?.lab_tests_paid_status ||
+                orders.some(
+                  (testOrder) => !testOrders[testOrder.service]?.trim()
+                )
+              }
             >
-              {isSubmitting ? "Submitting..." : "Submit Results"}
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Submitting...
+                </>
+              ) : (
+                "Submit Results"
+              )}
             </Button>
           </CardContent>
         </Card>

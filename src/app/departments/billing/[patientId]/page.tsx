@@ -22,6 +22,7 @@ import PageTransition from "@/components/PageTransition";
 import LoadingPage from "@/components/loading_animation";
 import axios from "axios";
 import { Badge } from "@/components/ui/badge";
+import { CheckCircle } from "lucide-react";
 
 const BillingDetailsPage = () => {
   const params = useParams();
@@ -30,8 +31,6 @@ const BillingDetailsPage = () => {
   const router = useRouter();
   const { fetchVisitData, visitData } = useVisit();
   const [totalCost, setTotalCost] = useState<number>(0);
-  // const [discountPercentage, setDiscountPercentage] = useState<number>(0);
-  // const [discountAmount, setDiscountAmount] = useState<number>(0);
   const [finalCost, setFinalCost] = useState<number>(0);
   const [showSuccessDialog, setShowSuccessDialog] = useState<boolean>(false);
   const [showErrorDialog, setShowErrorDialog] = useState<boolean>(false);
@@ -66,21 +65,8 @@ const BillingDetailsPage = () => {
 
     const total = consultationCost + labCost + pharmacyCost;
     setTotalCost(total);
-
-    // const discount = (total * discountPercentage) / 100;
-    // setDiscountAmount(discount);
-
-    // const final = total - discount;
     setFinalCost(total);
   };
-
-  // Handle discount percentage input change
-  // const handleDiscountPercentageChange = (
-  //   e: React.ChangeEvent<HTMLInputElement>
-  // ) => {
-  //   const percentage = parseFloat(e.target.value);
-  //   setDiscountPercentage(percentage);
-  // };
 
   // Confirm payment for lab tests and add to total
   const confirmLabTestsPayment = async () => {
@@ -154,8 +140,6 @@ const BillingDetailsPage = () => {
           laboratory_cost: visitData?.lab_data?.total_cost,
           pharmacy_cost: visitData?.pharmacy_data?.cost,
           total_cost: totalCost,
-          // discount_percentage: discountPercentage,
-          // discount_amount: discountAmount,
           final_cost: finalCost,
           visit: visitData?.visit_id,
           billed_by: authState?.user_id,
@@ -170,7 +154,6 @@ const BillingDetailsPage = () => {
             patient: patientId,
             current_state: "BILLING",
             next_state: "COMPLETED",
-            visit_status: "completed",
           },
           {
             headers: {
@@ -284,6 +267,7 @@ const BillingDetailsPage = () => {
       setIsLoading(false);
     }
   };
+  console.log(visitData?.visit_status);
 
   const ConsultationCard = () => (
     <Card>
@@ -317,7 +301,20 @@ const BillingDetailsPage = () => {
   return (
     <PageTransition>
       {isLoading && <LoadingPage />}
-      <Button onClick={handleRefresh}>Refresh Page</Button>
+      <div className="flex justify-between">
+        <Button onClick={handleRefresh}>Refresh Page</Button>
+        {visitData?.visit_status === "completed" && (
+          <div className="flex items-center gap-2">
+            <Badge className="bg-green-500 hover:bg-green-500 text-white dark:bg-green-600 dark:text-white">
+              <CheckCircle className="h-4 w-4 mr-1" />
+              Patient Cleared
+            </Badge>
+            <span className="text-sm text-muted-foreground">
+              {new Date().toLocaleString()}
+            </span>
+          </div>
+        )}
+      </div>
       <div className="p-6 space-y-6">
         {/* Consultation Card */}
 
@@ -467,41 +464,28 @@ const BillingDetailsPage = () => {
               />
             </div>
 
-            {/* <div className="mb-4">
-              <label className="font-medium">Discount Percentage (%):</label>
-              <Input
-                type="number"
-                value={discountPercentage}
-                onChange={handleDiscountPercentageChange}
-                min="0"
-                max="100"
-              />
-            </div> */}
-
             <div className="mt-4 space-y-2">
               <p className="font-medium text-lg">
                 Subtotal: Ksh {totalCost.toFixed(2)}
               </p>
-              {/* {discountPercentage > 0 && (
-                <>
-                  <p className="font-medium">
-                    Discount ({discountPercentage}%): -Ksh{" "}
-                    {discountAmount.toFixed(2)}
-                  </p>
-                  <p className="font-bold text-xl">
-                    Total Amount Due: Ksh {finalCost.toFixed(2)}
-                  </p>
-                </>
-              )} */}
             </div>
 
-            <Button
-              className="mt-4 bg-blue-600 dark:text-white hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white"
-              onClick={handleSaveBilling}
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? "Processing..." : "Save & Complete Visit"}
-            </Button>
+            {visitData?.visit_status === "completed" ? (
+              <Button
+                className="mt-4 bg-blue-600 dark:text-white hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white"
+                onClick={handleSaveBilling}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Processing..." : "Save & Complete Visit"}
+              </Button>
+            ) : (
+              <Button
+                className="mt-4 bg-gray-400 dark:bg-gray-600 text-white cursor-not-allowed"
+                disabled
+              >
+                Pending
+              </Button>
+            )}
           </CardContent>
         </Card>
 

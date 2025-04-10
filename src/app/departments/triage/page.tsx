@@ -1,5 +1,11 @@
 "use client";
-import { Server, ClipboardCheck, Settings, Users } from "lucide-react";
+import {
+  Server,
+  ClipboardCheck,
+  Settings,
+  Users,
+  ClipboardList,
+} from "lucide-react";
 import {
   Card,
   CardHeader,
@@ -21,8 +27,13 @@ export default function Dashboard() {
       href: "/departments/triage/analytics",
       icon: ClipboardCheck,
     },
-    { label: "Profile", href: "/departments/triage/profile", icon: Settings },
     { label: "Patients List", href: "/departments/patients", icon: Users },
+    {
+      label: "Visits",
+      href: "/departments/admin/reports",
+      icon: ClipboardList,
+    },
+    { label: "Profile", href: "/departments/triage/profile", icon: Settings },
   ];
 
   // Handle navigation when a card is clicked
